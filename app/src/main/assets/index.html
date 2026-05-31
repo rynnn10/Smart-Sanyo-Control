@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Sanyo Control</title>
+    <!-- Google Fonts: Plus Jakarta Sans for a premium visual aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for high-quality symbols -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-glow: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(79, 172, 254, 0) 70%);
+            --secondary-glow: radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, rgba(224, 170, 255, 0) 70%);
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-bg-hover: rgba(15, 23, 42, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-focused: rgba(0, 242, 254, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4f93fe;
+            --accent-purple: #9d4ede;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --off-color: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #05070f;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Container & Glassmorphism Card Style */
+        .dashboard {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 2;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Header Style */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 22px;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header h1 i {
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+            /* drop-shadow removed for perf */
+        }
+
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+            transition: all 0.3s;
+        }
+
+        .connection-badge.offline .connection-indicator {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 10px var(--danger-color);
+        }
+
+        /* Circular Water Level Visualizer */
+        .visualizer-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .visualizer-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .water-container {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.6);
+            background: rgba(15, 23, 42, 0.8);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Animated Water Liquid & Wave */
+        .water-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 75%; /* Updated dynamically by JS */
+            background: linear-gradient(180deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.9) 100%);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .water-wave {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 43%;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .water-wave-secondary {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 40%;
+            bottom: 102%;
+            left: 48%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .water-level-text {
+            position: relative;
+            z-index: 10;
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .water-level-text span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 2px;
+        }
+
+        /* Status & Dynamic Info Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .status-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+            transition: all 0.3s;
+        }
+
+        .status-text-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-text-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .badge-on {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        .badge-off {
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--off-color);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        /* Controls Style (Buttons & Custom Toggle Layout) */
+        .control-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-label-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .control-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Custom iOS Style Glass Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 3px;
+            background-color: #ffffff;
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        input:checked + .slider {
+            background-color: rgba(0, 242, 254, 0.2);
+            border-color: rgba(0, 242, 254, 0.4);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 6px var(--accent-cyan);
+        }
+
+        /* Large Action Button for Manual Control */
+        .manual-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            width: 100%;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 6px;
+        }
+
+        .manual-btn.active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.35) 0%, rgba(79, 172, 254, 0.2) 100%);
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+        }
+
+        .manual-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .manual-btn:active {
+            transform: translateY(1px);
+        }
+
+        .manual-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        /* Scheduling Section */
+        .scheduler-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .scheduler-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scheduler-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+
+        .scheduler-title i {
+            color: var(--accent-purple);
+        }
+
+        .scheduler-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .scheduler-form.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .time-input-group label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Modern styled glass input */
+        .time-picker {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .time-picker:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
+        }
+
+        .custom-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .custom-select option {
+            background: #0f172a;
+            color: var(--text-primary);
+        }
+
+        .day-selector {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        .day-chip {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .day-chip.active {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Custom DEV/DUMMY Control panel at the bottom to test interactivity */
+        .dev-panel {
+            background: rgba(10, 11, 20, 0.7);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            padding: 16px;
+            border-radius: 20px;
+        }
+
+        .dev-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dev-row {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .dev-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .dev-slider {
+            width: 100%;
+            margin-top: 4px;
+            accent-color: var(--accent-cyan);
+            height: 24px;
+        }
+
+        .dev-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: 0.20s;
+            text-align: center;
+        }
+
+        .dev-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Multiple Schedules & Add Button */
+        .scheduler-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .scheduler-list.disabled, .add-schedule-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .schedule-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .schedule-delete-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .add-schedule-btn {
+            background: rgba(157, 78, 221, 0.1);
+            border: 1px dashed var(--accent-purple);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        /* ESP8266 View Code Modal */
+        .code-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .code-modal.show {
+            display: flex;
+        }
+        .code-container {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 242, 254, 0.2);
+        }
+        .code-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-header h3 {
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+        }
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .code-content {
+            padding: 16px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            color: #a5d6ff;
+            background: #0d1117;
+            white-space: pre-wrap;
+            user-select: all;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            padding: 10px;
+            font-weight: 500;
+        }
+
+        /* Toast notifications inside WebView */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150px);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: normal;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .toast-container.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast-container i {
+            color: var(--accent-cyan);
+        }
+
+        /* Water splash particle decorations */
+        .decorations {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bubble {
+            display: none;
+        }
+        
+        /* Dynamic Backgrounds */
+        .bg-anim-container {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Mesh Gradient */
+        .bg-mesh {
+            width: 100%;
+            height: 100%;
+        }
+        .bg-mesh::before, .bg-mesh::after {
+            content: '';
+            position: absolute;
+            width: 60vw;
+            height: 60vh;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: meshFloat 15s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+        .bg-mesh::before {
+            background: var(--accent-cyan);
+            top: -10%;
+            left: -10%;
+        }
+        .bg-mesh::after {
+            background: var(--accent-blue);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -7s;
+        }
+
+        @keyframes meshFloat {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.2) translate(10%, 10%); }
+            100% { transform: scale(0.9) translate(-10%, -10%); }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            bottom: -50px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.4) 0%, rgba(0, 242, 254, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: rise linear infinite;
+            will-change: transform, opacity;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1.5); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-anim-container" id="bgMeshContainer">
+        <div class="bg-mesh"></div>
+    </div>
+    
+    <div class="bg-anim-container" id="bgParticlesContainer">
+        <!-- Particles injected by JS -->
+    </div>
+
+    <div class="bg-anim-container" id="bgThreeContainer" style="z-index: -1;">
+        <!-- Three.js injected here -->
+    </div>
+    <div class="bg-anim-container" id="bgThree2Container" style="z-index: -1;">
+        <!-- Three.js v2 injected here -->
+    </div>
+
+    <div class="decorations" id="decorations">
+        <!-- Generates bubbles randomly -->
+    </div>
+
+    <div class="dashboard">
+        
+        <!-- Header Section -->
+        <div class="glass-card header" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 18px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 style="margin: 0; line-height: 1.1; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;"><i class="fa-solid fa-droplet" style="-webkit-text-fill-color: var(--accent-cyan);"></i> Smart Sanyo Control</h1>
+                <button id="settingsBtn" style="background:transparent; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; outline:none; transition: color 0.3s; padding: 0; margin-top: 2px;"><i class="fa-solid fa-gear"></i></button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div class="connection-badge" id="connBadge" style="margin: 0;">
+                    <div class="connection-indicator"></div>
+                    <span id="connLabel">ONLINE</span>
+                </div>
+                <div id="espInfo" style="font-size: 0.75rem; color: var(--text-secondary); text-align: right; line-height: 1.3;">
+                    <div id="espSSID" style="color: var(--text-primary); font-weight: 600;"><i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> Menunggu...</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px;"><i class="fa-solid fa-signal" style="font-size:0.6rem; margin-right: 2px;"></i> <span id="espdB">-</span> dBm &bull; Qual: <span id="espQual">-</span>%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Water Level Circle Visualizer Card -->
+        <div class="glass-card visualizer-card">
+            <div class="visualizer-title">
+                <i class="fa-solid fa-water"></i> Ketinggian Air
+            </div>
+            
+            <div class="water-container">
+                <div class="water-liquid" id="waterLiquid">
+                    <div class="water-wave"></div>
+                    <div class="water-wave-secondary"></div>
+                </div>
+                <div class="water-level-text" id="waterLevelVal">
+                    75%
+                    <span>Isi Tangki</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="glass-card status-card">
+            <div class="status-info">
+                <div class="status-icon-wrapper" id="pumpIconWrapper">
+                    <i class="fa-solid fa-soap"></i> <!-- Represents the pump mechanism -->
+                </div>
+                <div class="status-text-container">
+                    <span class="status-text-label">Sanyo Status</span>
+                    <span class="status-value" id="pumpLabelText">OFFLINE MODE</span>
+                </div>
+            </div>
+            <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
+        </div>
+
+        <!-- Toggle Controls (Auto Mode & Manual Control Button) -->
+        <div class="glass-card control-section">
+            <div class="control-row">
+                <div class="control-label">
+                    <div class="status-icon-wrapper">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="control-label-wrapper">
+                        <span class="control-title">Auto Mode</span>
+                        <span class="control-desc">Pompa otomatis menyala saat air kritis</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="autoModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button class="manual-btn" id="manualPumpBtn">
+                <i class="fa-solid fa-power-off"></i>
+                <span id="manualPumpBtnLabel">Nyalakan Saklar</span>
+            </button>
+        </div>
+
+        <!-- Scheduling Section -->
+        <div class="glass-card scheduler-card">
+            <div class="scheduler-header">
+                <div class="scheduler-title">
+                    <i class="fa-regular fa-clock"></i> Penjadwalan Sanyo
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="schedToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="scheduler-list disabled" id="schedulerList">
+                <!-- Schedules injected via JS -->
+            </div>
+            <button class="add-schedule-btn disabled" id="addScheduleBtn">
+                <i class="fa-solid fa-plus"></i> Tambah Jadwal Baru
+            </button>
+        </div>
+
+        <!-- SIMULASI DEV TOOL PANEL -->
+        <div class="dev-panel" id="devPanel">
+            <div class="dev-title">
+                <i class="fa-solid fa-sliders"></i> Panel Pengujian Integrasi
+            </div>
+            <div class="dev-row">
+                <span>Konektivitas ESP8266:</span>
+                <button class="dev-btn" id="toggleConnBtn">Toggle Online/Offline</button>
+            </div>
+            <div class="dev-row">
+                <span>API Google Sheet:</span>
+                <button class="dev-btn" id="showAppsScriptBtn"><i class="fa-solid fa-file-code"></i> Script</button>
+            </div>
+            <div class="dev-row">
+                <span>Kode IDE ESP8266:</span>
+                <button class="dev-btn" id="showCodeBtn"><i class="fa-solid fa-microchip"></i> Lihat</button>
+            </div>
+            <div class="dev-row">
+                <span>Ketinggian Air (API):</span>
+                <input type="range" class="dev-slider" id="waterLevelSlider" min="0" max="100" value="75">
+            </div>
+        </div>
+
+        <div class="footer">
+            Dibuat oleh Riyan &copy; 2026
+        </div>
+
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="code-modal" id="settingsModal">
+        <div class="code-container" style="max-width: 400px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-sliders"></i> Pengaturan Aplikasi</h3>
+                <button class="close-btn" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="control-row">
+                    <div class="control-label-wrapper">
+                        <span class="control-title">Mode Demo</span>
+                        <span class="control-desc">Tampilkan panel pengujian fitur</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="demoModeToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="control-row" style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 12px;">
+                    <div class="control-label-wrapper">
+                        <span class="control-title">Animasi Latar</span>
+                        <span class="control-desc">Pilih gaya visual background</span>
+                    </div>
+                    <select id="bgAnimSelect" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.9rem; outline: none; transition: 0.3s; appearance: none; cursor: pointer;">
+                        <option value="none" style="background: #0f172a; color: white;">Static Dark (Ringan)</option>
+                        <option value="mesh" style="background: #0f172a; color: white;">Aurora Mesh</option>
+                        <option value="bubbles" style="background: #0f172a; color: white;">Floating Particles</option>
+                        <option value="threejs" style="background: #0f172a; color: white;">Sihir Partikel 3D</option>
+                        <option value="threejs2" style="background: #0f172a; color: white;">Sihir Partikel v2</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="code-modal" id="deleteConfirmModal">
+        <div class="code-container" style="max-width: 320px; text-align: center; padding: 30px 24px;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--danger-color); margin-bottom: 16px;"></i>
+            <h3 style="margin-bottom: 8px;">Hapus Jadwal?</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">Jadwal ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancelDeleteBtn" style="flex:1; background: rgba(255,255,255,0.1); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Batal</button>
+                <button id="confirmDeleteBtn" style="flex:1; background: var(--danger-color); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Schedule Modal -->
+    <div class="code-modal" id="editScheduleModal">
+        <div class="code-container" style="max-width: 360px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Edit Jadwal</h3>
+                <button class="close-btn" id="closeEditScheduleBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px; display:flex; flex-direction: column; gap: 20px;">
+                <div class="time-input-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Hari</label>
+                    <div class="day-selector" id="editScheduleDays">
+                        <div class="day-chip" data-day="1">Sen</div>
+                        <div class="day-chip" data-day="2">Sel</div>
+                        <div class="day-chip" data-day="3">Rab</div>
+                        <div class="day-chip" data-day="4">Kam</div>
+                        <div class="day-chip" data-day="5">Jum</div>
+                        <div class="day-chip" data-day="6">Sab</div>
+                        <div class="day-chip" data-day="0">Min</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button type="button" id="btnEveryday" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Setiap Hari</button>
+                        <button type="button" id="btnToday" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Hari Ini</button>
+                    </div>
+                </div>
+                <div class="time-input-group">
+                    <label><i class="fa-solid fa-play"></i> Waktu Nyala (ON)</label>
+                    <input type="time" class="time-picker" id="editOnTime">
+                </div>
+                <div class="time-input-group">
+                    <label><i class="fa-solid fa-stop"></i> Waktu Mati (OFF)</label>
+                    <input type="time" class="time-picker" id="editOffTime">
+                </div>
+                <button id="saveScheduleBtn" style="background: var(--accent-cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor:pointer; font-size: 0.9rem;">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integration Code Modal for ESP8266 -->
+    <div class="code-modal" id="codeModal">
+        <div class="code-container" style="max-width: 600px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-microchip"></i> Kode Arduino IDE ESP8266 (GAS HTTP)</h3>
+                <button class="close-btn" id="closeCodeBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="code-content">#include &lt;ESP8266WiFi.h&gt;
+#include &lt;ESP8266HTTPClient.h&gt;
+#include &lt;WiFiClientSecureBearSSL.h&gt;
+#include &lt;ArduinoJson.h&gt;
+
+const char* ssid = "WIFI_SSID";
+const char* password = "WIFI_PASSWORD";
+// URL Google Apps Script Web App
+String GAS_URL = "https://script.google.com/macros/s/AKfycbyQctFYdJ77wJfE2gSMWjjfoa7FGpLTMzJ2bXf8e33Y3aJ7UGuN0PHNIE9Tn5_nLDl5/exec";
+
+const int RELAY_PIN = D1;
+const int TRIG_PIN = D2;
+const int ECHO_PIN = D3;
+
+void setup_wifi() {
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) { delay(500); }
+}
+
+void sendDataAndGetCommands(int waterLevel) {
+  if (WiFi.status() == WL_CONNECTED) {
+    std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt;client(new BearSSL::WiFiClientSecure);
+    client-&gt;setInsecure(); // Abaikan sertifikat SSL untuk GAS
+    HTTPClient https;
+    
+    // URL Request untuk update sensor dan get command
+    String finalPath = GAS_URL + "?action=sync&waterLevel=" + String(waterLevel);
+    
+    if (https.begin(*client, finalPath)) {
+      int httpCode = https.GET();
+      if (httpCode &gt; 0 && httpCode == HTTP_CODE_OK) {
+        String payload = https.getString();
+        
+        // Parse JSON Respons: {"pumpStatus": true/false}
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, payload);
+        bool pumpStatus = doc["pumpStatus"];
+        
+        if (pumpStatus) {
+            digitalWrite(RELAY_PIN, HIGH); // NYALA
+        } else {
+            digitalWrite(RELAY_PIN, LOW); // MATI
+        }
+      }
+      https.end();
+    }
+  }
+}
+
+void setup() {
+  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  digitalWrite(RELAY_PIN, LOW);
+  setup_wifi();
+}
+
+void loop() {
+  // Baca Sensor Ultrasonik
+  digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  int distance = duration * 0.034 / 2;
+  
+  // Kalkulasi % air
+  int percent = map(distance, 100, 10, 0, 100);
+  percent = constrain(percent, 0, 100);
+  
+  // Sinkronisasi ke Google Sheet & Ambil Status Relay setiap 3 detik
+  sendDataAndGetCommands(percent);
+  delay(3000); 
+}</div>
+        </div>
+    </div>
+
+    <!-- Apps Script Code Modal -->
+    <div class="code-modal" id="appsScriptModal">
+        <div class="code-container" style="max-width: 600px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-file-code"></i> Google Apps Script (Code.gs)</h3>
+                <button class="close-btn" id="closeAppsScriptBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="code-content">/* 
+ * 1. Buka Google Sheet Baru 
+ * 2. Klik Ekstensi > Apps Script
+ * 3. Paste kode ini. Buat Sheet 'Dashboard' dan beri header: Action, Timestamp, dll
+ * 4. Terapkan > Deployment Baru > Aplikasi Web
+ */
+
+function doGet(e) {
+  var action = e.parameter.action;
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Dashboard");
+  
+  // Jika parameter missing, berikan state standar
+  if(!action) {
+    return ContentService.createTextOutput(JSON.stringify({error: "No Action"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Menyimpan properti aplikasi menggunakan PropertiesService
+  var props = PropertiesService.getScriptProperties();
+  
+  if (action === "set") {
+    // Android App mengirim push commands (e.g., pumpStatus=true)
+    if(e.parameter.pumpStatus !== undefined) {
+      props.setProperty("pumpStatus", e.parameter.pumpStatus);
+      sheet.appendRow([new Date(), "PUMP_STATUS_CHANGED", e.parameter.pumpStatus]);
+    }
+    if(e.parameter.autoMode !== undefined) {
+      props.setProperty("autoMode", e.parameter.autoMode);
+    }
+    return ContentService.createTextOutput(JSON.stringify({success: true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } 
+  else if (action === "sync") {
+    // ESP8266 melaporkan water level dan meminta status
+    if(e.parameter.waterLevel) {
+       props.setProperty("waterLevel", e.parameter.waterLevel);
+       sheet.appendRow([new Date(), "WATER_LEVEL", e.parameter.waterLevel]);
+    }
+    var currentPump = props.getProperty("pumpStatus") === "true";
+    return ContentService.createTextOutput(JSON.stringify({
+      pumpStatus: currentPump,
+      status: "OK"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  else if (action === "get") {
+    // Android WebApp fetch semua state API
+    var s = {
+      pumpStatus: props.getProperty("pumpStatus") === "true",
+      autoMode: props.getProperty("autoMode") === "true",
+      waterLevel: parseInt(props.getProperty("waterLevel") || "0")
+    };
+    return ContentService.createTextOutput(JSON.stringify(s))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</div>
+        </div>
+    </div>
+
+    <!-- Transparent toast for events -->
+    <div class="toast-container" id="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toastMsg">State updated!</span>
+    </div>
+
+    <script>
+        // ==========================================
+        // DUMMY ENVIRONMENT VARIABLES & STATE
+        // ==========================================
+        let currentWaterLevel = 75;    // Rentang: 0 - 100%
+        let pumpStatus = false;         // true = ON, false = OFF
+        let autoMode = false;          // true = Auto, false = Manual
+        let scheduleEnabled = false;   // true = Aktif, false = Nonaktif
+        let isDemoMode = true;         // true = Tampilkan panel pengujian
+        let schedules = [];
+        try {
+            const savedSchedules = localStorage.getItem('schedules');
+            if (savedSchedules) {
+                schedules = JSON.parse(savedSchedules);
+            } else {
+                schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
+            }
+        } catch(e) {
+            schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
+        }
+        let isOnline = true;           // Status Koneksi ESP8266/MQTT
+        let espSSIDValue = "Menunggu...";
+        let espRssiValue = 0;
+        let espQualValue = 0;
+
+        let scheduleToDelete = null;
+        let scheduleToEdit = null;
+
+        // Integrasi GAS URL API
+        const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbyQctFYdJ77wJfE2gSMWjjfoa7FGpLTMzJ2bXf8e33Y3aJ7UGuN0PHNIE9Tn5_nLDl5/exec';
+
+        // ==========================================
+        // DOM ELEMENTS SELECTION
+        // ==========================================
+        const waterLiquid = document.getElementById('waterLiquid');
+        const waterLevelVal = document.getElementById('waterLevelVal');
+        const pumpStatusBadge = document.getElementById('pumpStatusBadge');
+        const pumpLabelText = document.getElementById('pumpLabelText');
+        const pumpIconWrapper = document.getElementById('pumpIconWrapper');
+        const autoModeToggle = document.getElementById('autoModeToggle');
+        const manualPumpBtn = document.getElementById('manualPumpBtn');
+        const manualPumpBtnLabel = document.getElementById('manualPumpBtnLabel');
+        const schedToggle = document.getElementById('schedToggle');
+        const schedulerList = document.getElementById('schedulerList');
+        const addScheduleBtn = document.getElementById('addScheduleBtn');
+        const connBadge = document.getElementById('connBadge');
+        const connLabel = document.getElementById('connLabel');
+        const espSSIDEl = document.getElementById('espSSID');
+        const espdBEl = document.getElementById('espdB');
+        const espQualEl = document.getElementById('espQual');
+        const toastEl = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        
+        // Modals & Extras
+        const devPanel = document.getElementById('devPanel');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const demoModeToggle = document.getElementById('demoModeToggle');
+        
+        let threeSceneCreated = false;
+        let particlesThree = null;
+
+        function initThreeJSBg() {
+            if(threeSceneCreated) return;
+            threeSceneCreated = true;
+            
+            const container = document.getElementById('bgThreeContainer');
+            if(!container || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x05070f, 0.005);
+            
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            const PARTICLE_COUNT = 3000;
+            const TRANSITION_SPEED = 0.05;
+            const shapes = { galaxy: [], sphere: [], ring: [], tornado: [], cube: [], star: [], text: [] };
+            const initialPositions = new Float32Array(PARTICLE_COUNT * 3);
+            const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+            // 1. GALAXY
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                shapes.galaxy.push((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
+                initialPositions[i * 3] = shapes.galaxy[i * 3];
+                initialPositions[i * 3 + 1] = shapes.galaxy[i * 3 + 1];
+                initialPositions[i * 3 + 2] = shapes.galaxy[i * 3 + 2];
+                colors[i * 3] = 0.2; colors[i * 3 + 1] = 0.8; colors[i * 3 + 2] = 1.0;
+            }
+            // 2. SPHERE
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+                const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+                const r = 10;
+                shapes.sphere.push(r * Math.cos(theta) * Math.sin(phi), r * Math.sin(theta) * Math.sin(phi), r * Math.cos(phi));
+            }
+            // 3. RING
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const u = Math.random() * Math.PI * 2, v = Math.random() * Math.PI * 2, tube = 2, radius = 12;
+                shapes.ring.push((radius + tube * Math.cos(v)) * Math.cos(u), (radius + tube * Math.cos(v)) * Math.sin(u), tube * Math.sin(v));
+            }
+            // 4. TORNADO
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const height = (i / PARTICLE_COUNT) * 30 - 15;
+                const t = i * 0.1;
+                const radius = 1 + Math.abs(height) * 0.6;
+                shapes.tornado.push(radius * Math.cos(t), height, radius * Math.sin(t));
+            }
+            // 5. CUBE
+            const cubeSize = 14;
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                let x, y, z;
+                const r = Math.random();
+                if (r < 0.2) { x = (Math.random() - 0.5) * cubeSize; y = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                else {
+                    const axis = Math.floor(Math.random() * 3);
+                    const val = (Math.random() > 0.5 ? 0.5 : -0.5) * cubeSize;
+                    if (axis === 0) { x = val; y = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                    else if (axis === 1) { y = val; x = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                    else { z = val; x = (Math.random() - 0.5) * cubeSize; y = (Math.random() - 0.5) * cubeSize; }
+                }
+                shapes.cube.push(x, y, z);
+            }
+            // 6. STAR
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const seg = (Math.PI * 2) / 5;
+                const a = (angle % seg) / seg;
+                const r = Math.abs(a - 0.5) * 2 * (14 - 5) + 5;
+                shapes.star.push(r * Math.cos(angle), r * Math.sin(angle), (Math.random() - 0.5) * 4);
+            }
+            // 7. TEXT
+            const textPoints = [];
+            function addPt(x, y) { textPoints.push(x, y, (Math.random() - 0.5) * 2); }
+            for (let y = -5; y <= 5; y += 0.6) addPt(-10, y);
+            for (let t = 0; t < 6.28; t += 0.1) {
+                let x = 12 * Math.pow(Math.sin(t), 3);
+                let y = 10 * Math.cos(t) - 4 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                addPt(x * 0.3, y * 0.3 + 1);
+            }
+            for (let y = -1; y <= 5; y += 0.6) { addPt(8, y); addPt(12, y); }
+            for (let t = 0; t <= 3.14; t += 0.2) addPt(10 + 2 * Math.cos(t + 3.14), -1 + 2 * Math.sin(t + 3.14));
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const idx = i % Math.max(1, Math.floor(textPoints.length / 3));
+                if (textPoints.length > 0) { shapes.text.push(textPoints[idx * 3], textPoints[idx * 3 + 1], textPoints[idx * 3 + 2]); }
+                else { shapes.text.push(0, 0, 0); }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(initialPositions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext("2d");
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+            gradient.addColorStop(0.4, "rgba(255, 255, 255, 0.3)");
+            gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, 32, 32);
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.6,
+                vertexColors: true,
+                map: new THREE.CanvasTexture(canvas),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particlesThree = new THREE.Points(geometry, material);
+            scene.add(particlesThree);
+
+            let currentShapeId = 'galaxy';
+            const shapeNames = ['galaxy', 'sphere', 'ring', 'tornado', 'cube', 'star', 'text'];
+            
+            setInterval(() => {
+                const colorsAttr = particlesThree.geometry.attributes.color.array;
+                let cTargetHex = 0xffffff;
+                let nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
+                currentShapeId = nextShape;
+
+                switch(currentShapeId) {
+                    case 'galaxy': cTargetHex = 0x00ffff; break;
+                    case 'sphere': cTargetHex = 0xffaa00; break;
+                    case 'ring': cTargetHex = 0x00ff00; break;
+                    case 'text': cTargetHex = 0xff0080; break;
+                    case 'tornado': cTargetHex = 0xaaaaff; break;
+                    case 'cube': cTargetHex = 0x0000ff; break;
+                    case 'star': cTargetHex = 0xffd700; break;
+                }
+                const cTarget = new THREE.Color(cTargetHex);
+                const cBase = new THREE.Color(0xffffff);
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const mixed = cTarget.clone().lerp(cBase, Math.random() * 0.4);
+                    colorsAttr[i * 3] = mixed.r; colorsAttr[i * 3 + 1] = mixed.g; colorsAttr[i * 3 + 2] = mixed.b;
+                }
+                particlesThree.geometry.attributes.color.needsUpdate = true;
+
+            }, 6000);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (bgAnimMode === 'threejs' && particlesThree) {
+                    const positions = particlesThree.geometry.attributes.position.array;
+                    const target = shapes[currentShapeId];
+
+                    for (let i = 0; i < PARTICLE_COUNT; i++) {
+                        const ix = i * 3;
+                        positions[ix] += (target[ix] - positions[ix]) * TRANSITION_SPEED;
+                        positions[ix + 1] += (target[ix + 1] - positions[ix + 1]) * TRANSITION_SPEED;
+                        positions[ix + 2] += (target[ix + 2] - positions[ix + 2]) * TRANSITION_SPEED;
+                    }
+                    particlesThree.geometry.attributes.position.needsUpdate = true;
+                    particlesThree.rotation.y += 0.002;
+                    particlesThree.rotation.x += 0.0005;
+                    renderer.render(scene, camera);
+                }
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        let three2SceneCreated = false;
+        let particlesThree2 = null;
+        let positionsTarget = null;
+        const count2 = 2500;
+
+        function initThreeJSBg2() {
+            if(three2SceneCreated) return;
+            three2SceneCreated = true;
+            
+            const container = document.getElementById('bgThree2Container');
+            if(!container || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.0025);
+            
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const positionsOriginal = new Float32Array(count2 * 3);
+            positionsTarget = new Float32Array(count2 * 3);
+            const colors = new Float32Array(count2 * 3);
+
+            for (let i = 0; i < count2; i++) {
+                const i3 = i * 3;
+                positionsOriginal[i3] = (Math.random() - 0.5) * 50;
+                positionsOriginal[i3 + 1] = (Math.random() - 0.5) * 50;
+                positionsOriginal[i3 + 2] = (Math.random() - 0.5) * 50;
+                positionsTarget[i3] = positionsOriginal[i3];
+                positionsTarget[i3 + 1] = positionsOriginal[i3 + 1];
+                positionsTarget[i3 + 2] = positionsOriginal[i3 + 2];
+
+                const color = new THREE.Color();
+                color.setHSL((i / count2) * 0.8 + 0.1, 0.9, 0.6);
+                colors[i3] = color.r;
+                colors[i3 + 1] = color.g;
+                colors[i3 + 2] = color.b;
+            }
+
+            geometry.setAttribute("position", new THREE.BufferAttribute(positionsOriginal, 3));
+            geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext("2d");
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, "rgba(255,255,255,1)");
+            gradient.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.6,
+                map: new THREE.CanvasTexture(canvas),
+                color: new THREE.Color("#ffffff"),
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                sizeAttenuation: true,
+            });
+
+            particlesThree2 = new THREE.Points(geometry, material);
+            scene.add(particlesThree2);
+            
+            function morphTo(targetArray) {
+                for(let i=0; i<count2*3; i++) {
+                    positionsTarget[i] = targetArray[i];
+                }
+            }
+
+            function calculateGalaxy() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, angle = i * 0.002 + Math.random() * 0.5, r = 2 + Math.random() * 15;
+                    const off = (i % 3) * ((Math.PI * 2) / 3);
+                    p[i3] = Math.cos(angle + off) * r;
+                    p[i3 + 1] = (Math.random() - 0.5) * (r * 0.2);
+                    p[i3 + 2] = Math.sin(angle + off) * r;
+                }
+                morphTo(p);
+            }
+
+            function calculateHeart() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, t = Math.random() * Math.PI * 2;
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                    p[i3] = x * 0.8 + (Math.random() - 0.5);
+                    p[i3 + 1] = y * 0.8 + (Math.random() - 0.5);
+                    p[i3 + 2] = (Math.random() - 0.5) * 6;
+                }
+                morphTo(p);
+            }
+
+            function calculateSphere() {
+                const p = new Float32Array(count2 * 3);
+                const radius = 12;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const phi = Math.acos(-1 + (2 * i) / count2);
+                    const theta = Math.sqrt(count2 * Math.PI) * phi;
+                    p[i3] = radius * Math.cos(theta) * Math.sin(phi);
+                    p[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                    p[i3 + 2] = radius * Math.cos(phi);
+                }
+                morphTo(p);
+            }
+
+            function calculateCube() {
+                const p = new Float32Array(count2 * 3), s = 16;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    p[i3] = (Math.random() - 0.5) * s;
+                    p[i3 + 1] = (Math.random() - 0.5) * s;
+                    p[i3 + 2] = (Math.random() - 0.5) * s;
+                }
+                morphTo(p);
+            }
+
+            function calculateSaturn() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    if (i < count2 * 0.7) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 10 + Math.random() * 8;
+                        p[i3] = Math.cos(angle) * dist; p[i3 + 1] = (Math.random() - 0.5) * 0.5; p[i3 + 2] = Math.sin(angle) * dist;
+                    } else {
+                        const radius = 6;
+                        const phi = Math.acos(-1 + (2 * (i - count2 * 0.7)) / (count2 * 0.3));
+                        const theta = Math.sqrt(count2 * 0.3 * Math.PI) * phi;
+                        p[i3] = radius * Math.cos(theta) * Math.sin(phi);
+                        p[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                        p[i3 + 2] = radius * Math.cos(phi);
+                    }
+                }
+                morphTo(p);
+            }
+
+            function calculateFlower() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, theta = Math.random() * Math.PI * 2, k = 5, rBase = 12;
+                    const r = Math.abs(Math.cos(k * theta)) * rBase + Math.random() * 2;
+                    p[i3] = r * Math.cos(theta); p[i3 + 1] = r * Math.sin(theta); p[i3 + 2] = (rBase - r) * 0.5 + (Math.random() - 0.5);
+                }
+                morphTo(p);
+            }
+
+            function calculateDNA() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const strand = i % 2 === 0 ? 1 : -1;
+                    const y = (i / count2) * 30 - 15;
+                    const angle = y * 0.5;
+                    const radius = 5;
+                    p[i3] = Math.cos(angle) * radius * strand; p[i3 + 1] = y; p[i3 + 2] = Math.sin(angle) * radius * strand;
+                    if (Math.random() > 0.8) {
+                        const t = Math.random();
+                        p[i3] = Math.cos(angle) * radius * (1 - 2 * t); p[i3 + 2] = Math.sin(angle) * radius * (1 - 2 * t);
+                    }
+                }
+                morphTo(p);
+            }
+
+            function calculatePyramid() {
+                const p = new Float32Array(count2 * 3);
+                const height = 15, baseSize = 12;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const y = Math.random() * height - height / 2;
+                    const progress = 1 - (y + height / 2) / height;
+                    const r = progress * baseSize;
+                    p[i3] = (Math.random() - 0.5) * 2 * r; p[i3 + 1] = y; p[i3 + 2] = (Math.random() - 0.5) * 2 * r;
+                }
+                morphTo(p);
+            }
+            
+            let shapesMap = {
+                galaxy: calculateGalaxy,
+                heart: calculateHeart,
+                sphere: calculateSphere,
+                cube: calculateCube,
+                saturn: calculateSaturn,
+                flower: calculateFlower,
+                dna: calculateDNA,
+                pyramid: calculatePyramid
+            };
+            
+            calculateGalaxy();
+
+            let shapeNames = Object.keys(shapesMap);
+            setInterval(() => {
+                if (bgAnimMode === 'threejs2') {
+                    let nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
+                    shapesMap[nextShape]();
+                }
+            }, 6000);
+
+            let clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (bgAnimMode === 'threejs2' && particlesThree2 && positionsTarget) {
+                    const positions = particlesThree2.geometry.attributes.position.array;
+                    for (let i = 0; i < count2 * 3; i++) {
+                        positions[i] += (positionsTarget[i] - positions[i]) * 0.05;
+                    }
+                    particlesThree2.geometry.attributes.position.needsUpdate = true;
+                    
+                    let targetExpansion = 1.0 + Math.sin(clock.getElapsedTime()) * 0.1;
+                    particlesThree2.scale.setScalar(targetExpansion);
+                    
+                    particlesThree2.rotation.y += 0.002;
+                    particlesThree2.rotation.x += 0.000;
+                    
+                    renderer.render(scene, camera);
+                }
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        const bgAnimSelect = document.getElementById('bgAnimSelect');
+        const bgMeshContainer = document.getElementById('bgMeshContainer');
+        const bgParticlesContainer = document.getElementById('bgParticlesContainer');
+        const bgThreeContainer = document.getElementById('bgThreeContainer');
+        const bgThree2Container = document.getElementById('bgThree2Container');
+        let bgAnimMode = localStorage.getItem('bgAnimMode') || 'none';
+
+        function setBgAnimMode(mode) {
+            bgAnimMode = mode;
+            if(bgAnimSelect) bgAnimSelect.value = mode;
+            localStorage.setItem('bgAnimMode', mode);
+            
+            if(bgMeshContainer) bgMeshContainer.style.opacity = mode === 'mesh' ? '1' : '0';
+            
+            if(bgThreeContainer) {
+                bgThreeContainer.style.opacity = mode === 'threejs' ? '1' : '0';
+                if(mode === 'threejs') {
+                    initThreeJSBg();
+                }
+            }
+
+            if(bgThree2Container) {
+                bgThree2Container.style.opacity = mode === 'threejs2' ? '1' : '0';
+                if(mode === 'threejs2') {
+                    initThreeJSBg2();
+                }
+            }
+
+            if(bgParticlesContainer) {
+                bgParticlesContainer.style.opacity = mode === 'bubbles' ? '1' : '0';
+                
+                if (mode === 'bubbles' && bgParticlesContainer.children.length === 0) {
+                    for (let i = 0; i < 12; i++) {
+                        const p = document.createElement('div');
+                        p.className = 'particle';
+                        const size = Math.random() * 40 + 20;
+                        p.style.width = `${size}px`;
+                        p.style.height = `${size}px`;
+                        p.style.left = `${Math.random() * 100}vw`;
+                        p.style.animationDuration = `${Math.random() * 8 + 6}s`;
+                        p.style.animationDelay = `${Math.random() * 5}s`;
+                        bgParticlesContainer.appendChild(p);
+                    }
+                } else if (mode !== 'bubbles') {
+                    bgParticlesContainer.innerHTML = ''; 
+                }
+            }
+        }
+        setBgAnimMode(bgAnimMode);
+        
+        if(bgAnimSelect) {
+            bgAnimSelect.addEventListener('change', (e) => {
+                setBgAnimMode(e.target.value);
+            });
+        }
+
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        const editScheduleModal = document.getElementById('editScheduleModal');
+        const closeEditScheduleBtn = document.getElementById('closeEditScheduleBtn');
+        const editOnTime = document.getElementById('editOnTime');
+        const editOffTime = document.getElementById('editOffTime');
+        const editScheduleDays = document.getElementById('editScheduleDays');
+        const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+
+        const toggleConnBtn = document.getElementById('toggleConnBtn');
+        const waterLevelSlider = document.getElementById('waterLevelSlider');
+        const decorations = document.getElementById('decorations');
+        const codeModal = document.getElementById('codeModal');
+        const showCodeBtn = document.getElementById('showCodeBtn');
+        const closeCodeBtn = document.getElementById('closeCodeBtn');
+        const appsScriptModal = document.getElementById('appsScriptModal');
+        const showAppsScriptBtn = document.getElementById('showAppsScriptBtn');
+        const closeAppsScriptBtn = document.getElementById('closeAppsScriptBtn');
+
+        // ==========================================
+        // MAIN UPDATE UI FUNCTION (INTEGRATION FRIENDLY)
+        // ==========================================
+        // Hubungkan fungsi ini ke respon AJAX / Fetch API / MQTT OnMessageReceived
+        function updateUI() {
+            // 1. Update Water Level Visualizer
+            waterLiquid.style.height = `${currentWaterLevel}%`;
+            waterLevelVal.innerHTML = `${currentWaterLevel}% <span>Isi Tangki</span>`;
+            
+            // Adjust wave speed or visual styling depending on low/high level
+            if (currentWaterLevel < 20) {
+                waterLiquid.style.background = 'linear-gradient(180deg, #ef4444 0%, #b91c1c 100%)';
+            } else if (currentWaterLevel < 50) {
+                waterLiquid.style.background = 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)';
+            } else {
+                waterLiquid.style.background = 'linear-gradient(180deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.9) 100%)';
+            }
+
+            // 2. Update Pump Badge & Card UI
+            if (pumpStatus) {
+                pumpStatusBadge.innerText = 'ON';
+                pumpStatusBadge.className = 'badge badge-on';
+                pumpLabelText.innerText = 'Pompa Air Menyala';
+                pumpIconWrapper.style.color = 'var(--success-color)';
+                pumpIconWrapper.style.filter = 'none';
+                pumpIconWrapper.classList.add('fa-spin-slow');
+                
+                manualPumpBtn.className = 'manual-btn active';
+                manualPumpBtnLabel.innerText = 'Matikan Saklar';
+            } else {
+                pumpStatusBadge.innerText = 'OFF';
+                pumpStatusBadge.className = 'badge badge-off';
+                pumpLabelText.innerText = 'Pompa Air Mati';
+                pumpIconWrapper.style.color = 'var(--text-secondary)';
+                pumpIconWrapper.style.filter = 'none';
+                
+                manualPumpBtn.className = 'manual-btn';
+                manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
+            }
+
+            // 3. Auto Mode State
+            autoModeToggle.checked = autoMode;
+            if (autoMode) {
+                // Di Mode Auto, Tombol Manual Dinonaktifkan (karena dikoordinasikan otomatis)
+                manualPumpBtn.classList.add('disabled');
+                manualPumpBtn.style.opacity = '0.4';
+                manualPumpBtn.style.pointerEvents = 'none';
+            } else {
+                manualPumpBtn.classList.remove('disabled');
+                manualPumpBtn.style.opacity = '1';
+                manualPumpBtn.style.pointerEvents = 'auto';
+            }
+
+            // 4. Connection State
+            if (isOnline) {
+                connBadge.classList.remove('offline');
+                connLabel.innerText = 'ONLINE';
+                if(espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${espSSIDValue}`;
+                if(espdBEl) espdBEl.innerText = espRssiValue;
+                if(espQualEl) espQualEl.innerText = espQualValue;
+            } else {
+                connBadge.classList.add('offline');
+                connLabel.innerText = 'OFFLINE';
+                if(espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--text-secondary); margin-right: 4px;"></i> Terputus`;
+                if(espdBEl) espdBEl.innerText = '-';
+                if(espQualEl) espQualEl.innerText = '-';
+            }
+
+            // 5. Scheduler Section State
+            schedToggle.checked = scheduleEnabled;
+            if (scheduleEnabled) {
+                schedulerList.classList.remove('disabled');
+                addScheduleBtn.classList.remove('disabled');
+            } else {
+                schedulerList.classList.add('disabled');
+                addScheduleBtn.classList.add('disabled');
+            }
+            
+            // Sync Simulator Inputs (Just for matching simulation)
+            waterLevelSlider.value = currentWaterLevel;
+            
+            if (isDemoMode) {
+                devPanel.style.display = 'block';
+            } else {
+                devPanel.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // NOTIFICATION & ENGAGEMENT FEEDBACK (TOAST)
+        // ==========================================
+        let toastTimeout;
+        function showNotification(message, iconClass = 'fa-info-circle') {
+            toastMsg.innerText = message;
+            const icon = toastEl.querySelector('i');
+            icon.className = `fa-solid ${iconClass}`;
+            
+            toastEl.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 2500);
+        }
+
+        // ==========================================
+        // INTERACTIVE ACTIONS & HANDLERS
+        // ==========================================
+        // A. Toggle Mode Auto
+        autoModeToggle.addEventListener('change', (e) => {
+            autoMode = e.target.checked;
+            sendToGas('autoMode', autoMode);
+            if (autoMode) {
+                showNotification('Auto Mode Aktif. Pompa dikontrol sisa tangki!', 'fa-robot');
+                // Simulasi mematikan atau menyalakan sanyo berdasarkan air jika auto mode diaktifkan
+                if (currentWaterLevel <= 20) {
+                    pumpStatus = true;
+                } else if (currentWaterLevel >= 95) {
+                    pumpStatus = false;
+                }
+            } else {
+                showNotification('Auto Mode Mati. Anda dapat menghidupkan manual.', 'fa-user-gear');
+            }
+            updateUI();
+        });
+
+        // B. Manual Saklar Button
+        manualPumpBtn.addEventListener('click', () => {
+            if (autoMode) return; // Prevent clicking when Auto is active
+            
+            pumpStatus = !pumpStatus;
+            
+            // Sync to GAS
+            sendToGas('pumpStatus', pumpStatus);
+
+            showNotification(
+                pumpStatus ? 'Sanyo dinyalakan secara manual!' : 'Sanyo dimatikan secara manual!', 
+                pumpStatus ? 'fa-bolt' : 'fa-power-off'
+            );
+            updateUI();
+        });
+
+        // C. Schedule Toggle
+        schedToggle.addEventListener('change', (e) => {
+            scheduleEnabled = e.target.checked;
+            sendToGas('scheduleEnabled', scheduleEnabled);
+            showNotification(
+                scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!', 
+                'fa-calendar-check'
+            );
+            updateUI();
+        });
+
+        function saveSchedulesToGas() {
+            localStorage.setItem('schedules', JSON.stringify(schedules));
+            sendToGas('schedules', JSON.stringify(schedules));
+        }
+
+        // Add Schedule
+        addScheduleBtn.addEventListener('click', () => {
+            if(!scheduleEnabled) return;
+            const newId = schedules.length > 0 ? Math.max(...schedules.map(s => s.id)) + 1 : 1;
+            schedules.push({ id: newId, onTime: '12:00', offTime: '13:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] });
+            saveSchedulesToGas();
+            renderSchedules();
+            showNotification('Jadwal baru ditambahkan', 'fa-plus');
+        });
+
+        function formatDays(daysArray) {
+            if (!daysArray || daysArray.length === 0) return 'Tidak ada hari';
+            if (daysArray.length === 7) return 'Setiap Hari';
+            
+            const daysMap = {1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 0: 'Min'};
+            // Sort to ensure Monday to Sunday order
+            const sorted = [...daysArray].sort((a,b) => (a===0?7:a) - (b===0?7:b));
+            return sorted.map(d => daysMap[d]).join(', ');
+        }
+
+        function renderSchedules() {
+            schedulerList.innerHTML = '';
+            schedules.forEach(sched => {
+                const item = document.createElement('div');
+                item.className = 'schedule-item';
+                item.style.flexDirection = 'column';
+                item.style.alignItems = 'stretch';
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 1.1rem; font-weight: 700; display:flex; align-items:center; gap:8px;">
+                                ${sched.onTime} <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem; color:var(--text-secondary);"></i> ${sched.offTime}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 4px;">
+                                <i class="fa-solid fa-rotate-right"></i> ${formatDays(sched.repeat)}
+                            </div>
+                        </div>
+                        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+                            <input type="checkbox" class="schedule-toggle" data-id="${sched.id}" ${sched.enabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="openEditSchedule(${sched.id})" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; font-weight: 600; flex-grow: 1; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition: 0.2s;">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="promptDeleteSchedule(${sched.id})" style="background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; font-weight: 600; flex-grow: 1; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition: 0.2s;">
+                            <i class="fa-solid fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                `;
+                if(!sched.enabled) {
+                    item.style.opacity = '0.5';
+                }
+                schedulerList.appendChild(item);
+            });
+            
+            // Attach event listeners to toggles
+            document.querySelectorAll('.schedule-toggle').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    const sched = schedules.find(s => s.id === id);
+                    if (sched) {
+                        sched.enabled = e.target.checked;
+                        saveSchedulesToGas();
+                    }
+                    renderSchedules();
+                    showNotification(e.target.checked ? 'Jadwal diaktifkan' : 'Jadwal dinonaktifkan', 'fa-clock');
+                });
+            });
+        }
+
+        window.promptDeleteSchedule = function(id) {
+            scheduleToDelete = id;
+            deleteConfirmModal.classList.add('show');
+        }
+
+        // ==========================================
+        // SIMULATORS / TESTING (FOR API AND USER DEMO)
+        // ==========================================
+        let isDraggingSlider = false;
+
+        waterLevelSlider.addEventListener('mousedown', () => isDraggingSlider = true);
+        waterLevelSlider.addEventListener('touchstart', () => isDraggingSlider = true, {passive: true});
+
+        waterLevelSlider.addEventListener('change', (e) => {
+            isDraggingSlider = false;
+            currentWaterLevel = parseInt(e.target.value);
+            
+            // Logic simulated: if in Auto Mode, adjust pump on water critical limits
+            if (autoMode) {
+                if (currentWaterLevel <= 15 && !pumpStatus) {
+                    pumpStatus = true;
+                    showNotification('Air Kritis! Sanyo Otomatis DIHIDUPKAN.', 'fa-triangle-exclamation');
+                } else if (currentWaterLevel >= 98 && pumpStatus) {
+                    pumpStatus = false;
+                    showNotification('Tangki Penuh! Sanyo Otomatis DIMATIKAN.', 'fa-circle-check');
+                }
+            }
+            updateUI();
+            
+            // Sync demo slider to GAS
+            if (appsScriptUrl && isOnline) {
+                try {
+                    const url = new URL(appsScriptUrl);
+                    url.searchParams.append('action', 'sync');
+                    url.searchParams.append('waterLevel', currentWaterLevel);
+                    fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
+                } catch(e) {}
+            }
+        });
+
+        waterLevelSlider.addEventListener('input', (e) => {
+            currentWaterLevel = parseInt(e.target.value);
+            updateUI();
+        });
+
+        // Connection switch simulation
+        toggleConnBtn.addEventListener('click', () => {
+            isOnline = !isOnline;
+            showNotification(
+                isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266 (GAS/HTTP)', 
+                isOnline ? 'fa-wifi' : 'fa-triangle-exclamation'
+            );
+            updateUI();
+            if(isOnline) syncFromGas();
+        });
+
+        // ==========================================
+        // GOOGLE APPS SCRIPT API INTEGRATION CALLS
+        // ==========================================
+        function sendToGas(key, value) {
+            if (!appsScriptUrl) return;
+            try {
+                const url = new URL(appsScriptUrl);
+                url.searchParams.append('action', 'set');
+                url.searchParams.append(key, value);
+                
+                fetch(url.toString(), { method: 'GET', mode: 'no-cors' })
+                    .then(() => console.log('Data async sent to GAS:', key, value))
+                    .catch(e => console.error('GAS Send Error:', e));
+            } catch(e) {
+                console.error('Invalid GAS URL', e);
+            }
+        }
+
+        function syncFromGas() {
+            if (!appsScriptUrl || !isOnline) return;
+            try {
+                const url = new URL(appsScriptUrl);
+                url.searchParams.append('action', 'get');
+                
+                fetch(url.toString())
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.pumpStatus !== undefined) pumpStatus = data.pumpStatus;
+                        if (data.autoMode !== undefined) autoMode = data.autoMode;
+                        if (data.waterLevel !== undefined && !isDraggingSlider) {
+                            currentWaterLevel = data.waterLevel;
+                        }
+                        if (data.scheduleEnabled !== undefined) {
+                            scheduleEnabled = data.scheduleEnabled;
+                            schedToggle.checked = scheduleEnabled;
+                        }
+                        // Info ESP (opsional)
+                        if (data.isOnline !== undefined) isOnline = data.isOnline;
+                        if (data.ssid !== undefined) espSSIDValue = data.ssid;
+                        if (data.rssi !== undefined) espRssiValue = data.rssi;
+                        if (data.quality !== undefined) espQualValue = data.quality;
+                        
+                        if (data.schedules) {
+                            try {
+                                schedules = JSON.parse(data.schedules);
+                                renderSchedules();
+                            } catch(e) {}
+                        }
+                        updateUI();
+                    })
+                    .catch(e => console.error('GAS Request Error or invalid JSON:', e));
+            } catch(e) {
+                console.error('Invalid GAS URL', e);
+            }
+        }
+
+        // Periodic API Syncing
+        setInterval(() => {
+             syncFromGas();
+        }, 5000); // Polling 5 seconds
+
+        // Modal Handlers
+        cancelDeleteBtn.addEventListener('click', () => {
+            scheduleToDelete = null;
+            deleteConfirmModal.classList.remove('show');
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            if(scheduleToDelete !== null) {
+                schedules = schedules.filter(s => s.id !== scheduleToDelete);
+                saveSchedulesToGas();
+                renderSchedules();
+                showNotification('Jadwal dihapus', 'fa-trash');
+                scheduleToDelete = null;
+                deleteConfirmModal.classList.remove('show');
+            }
+        });
+
+        window.openEditSchedule = function(id) {
+            scheduleToEdit = schedules.find(s => s.id === id);
+            if(scheduleToEdit) {
+                editOnTime.value = scheduleToEdit.onTime;
+                editOffTime.value = scheduleToEdit.offTime;
+                
+                // Set chips
+                const chips = document.querySelectorAll('#editScheduleDays .day-chip');
+                chips.forEach(chip => {
+                    const dayVal = parseInt(chip.getAttribute('data-day'));
+                    if (scheduleToEdit.repeat && scheduleToEdit.repeat.includes(dayVal)) {
+                        chip.classList.add('active');
+                    } else {
+                        chip.classList.remove('active');
+                    }
+                });
+                
+                // Reset quick buttons styling
+                const btnEv = document.getElementById('btnEveryday');
+                const btnTd = document.getElementById('btnToday');
+                btnEv.style.borderColor = 'rgba(255,255,255,0.2)';
+                btnEv.style.color = 'var(--text-secondary)';
+                btnEv.style.background = 'rgba(255,255,255,0.05)';
+                btnTd.style.borderColor = 'rgba(255,255,255,0.2)';
+                btnTd.style.color = 'var(--text-secondary)';
+                btnTd.style.background = 'rgba(255,255,255,0.05)';
+                
+                editScheduleModal.classList.add('show');
+            }
+        }
+
+        // Add event listener for chips
+        document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+
+        // Quick Selector Buttons
+        const btnEveryday = document.getElementById('btnEveryday');
+        const btnToday = document.getElementById('btnToday');
+
+        btnEveryday.addEventListener('click', () => {
+            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
+                chip.classList.add('active');
+            });
+            btnEveryday.style.borderColor = 'var(--accent-cyan)';
+            btnEveryday.style.color = 'var(--accent-cyan)';
+            btnEveryday.style.background = 'rgba(0, 242, 254, 0.1)';
+            
+            btnToday.style.borderColor = 'rgba(255,255,255,0.2)';
+            btnToday.style.color = 'var(--text-secondary)';
+            btnToday.style.background = 'rgba(255,255,255,0.05)';
+        });
+
+        btnToday.addEventListener('click', () => {
+            const today = new Date().getDay();
+            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
+                const dayVal = parseInt(chip.getAttribute('data-day'));
+                if (dayVal === today) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+            btnToday.style.borderColor = 'var(--accent-cyan)';
+            btnToday.style.color = 'var(--accent-cyan)';
+            btnToday.style.background = 'rgba(0, 242, 254, 0.1)';
+            
+            btnEveryday.style.borderColor = 'rgba(255,255,255,0.2)';
+            btnEveryday.style.color = 'var(--text-secondary)';
+            btnEveryday.style.background = 'rgba(255,255,255,0.05)';
+        });
+
+        closeEditScheduleBtn.addEventListener('click', () => {
+            editScheduleModal.classList.remove('show');
+            scheduleToEdit = null;
+        });
+
+        saveScheduleBtn.addEventListener('click', () => {
+            if(scheduleToEdit) {
+                scheduleToEdit.onTime = editOnTime.value;
+                scheduleToEdit.offTime = editOffTime.value;
+                
+                // Get selected chips
+                const selectedDays = [];
+                document.querySelectorAll('#editScheduleDays .day-chip.active').forEach(chip => {
+                    selectedDays.push(parseInt(chip.getAttribute('data-day')));
+                });
+                scheduleToEdit.repeat = selectedDays;
+                
+                saveSchedulesToGas();
+                renderSchedules();
+                showNotification('Perubahan jadwal disimpan', 'fa-floppy-disk');
+                editScheduleModal.classList.remove('show');
+                scheduleToEdit = null;
+            }
+        });
+
+        // Settings Handlers
+        settingsBtn.addEventListener('click', () => {
+            demoModeToggle.checked = isDemoMode;
+            settingsModal.classList.add('show');
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('show');
+        });
+
+        demoModeToggle.addEventListener('change', (e) => {
+            isDemoMode = e.target.checked;
+            updateUI();
+            showNotification(isDemoMode ? 'Mode Demo diaktifkan' : 'Mode Asli aktif. Panel pengujian disembunyikan.', 'fa-sliders');
+        });
+
+        showCodeBtn.addEventListener('click', () => {
+            codeModal.classList.add('show');
+        });
+        closeCodeBtn.addEventListener('click', () => {
+            codeModal.classList.remove('show');
+        });
+
+        showAppsScriptBtn.addEventListener('click', () => {
+            appsScriptModal.classList.add('show');
+        });
+        closeAppsScriptBtn.addEventListener('click', () => {
+            appsScriptModal.classList.remove('show');
+        });
+
+        // ==========================================
+        // APP INITIALIZATION
+        // ==========================================
+        window.onload = function() {
+            createDecorativeBubbles();
+            renderSchedules();
+            updateUI();
+        };
+    </script>
+</body>
+</html>
