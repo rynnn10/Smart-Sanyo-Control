@@ -11,6 +11,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,12 +29,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.ui.theme.MyApplicationTheme
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val token = task.result
+            // Ini akan mencetak token ke log sistem Android (Logcat)
+            Log.d("FCM_TOKEN_ANDA", token)
+            println("FCM_TOKEN_ANDA: $token")
+        } else {
+            Log.e("FCM_TOKEN_ANDA", "Gagal mengambil token", task.exception)
+        }
+    }
         setContent {
             MyApplicationTheme {
                 val context = androidx.compose.ui.platform.LocalContext.current
@@ -54,12 +67,14 @@ class MainActivity : ComponentActivity() {
                                 tint = androidx.compose.material3.MaterialTheme.colorScheme.primary
                             )
                         },
-                        title = { 
+                        title = {
                             Text(
                                 "Keluar Aplikasi",
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                style = androidx.compose.material3.MaterialTheme.typography.titleLarge
-                            ) 
+                                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         },
                         text = { 
                             Text(
@@ -69,22 +84,30 @@ class MainActivity : ComponentActivity() {
                             ) 
                         },
                         confirmButton = {
-                            androidx.compose.material3.Button(
-                                onClick = { 
-                                    showExitDialog = false
-                                    this@MainActivity.finish() 
-                                },
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                            androidx.compose.foundation.layout.Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
                             ) {
-                                Text("Ya, Keluar")
-                            }
-                        },
-                        dismissButton = {
-                            androidx.compose.material3.OutlinedButton(
-                                onClick = { showExitDialog = false },
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Kembali")
+                                androidx.compose.material3.OutlinedButton(
+                                    onClick = { showExitDialog = false },
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Kembali")
+                                }
+
+                                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
+
+                                androidx.compose.material3.Button(
+                                    onClick = {
+                                        showExitDialog = false
+                                        this@MainActivity.finish()
+                                    },
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Ya, Keluar")
+                                }
                             }
                         },
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
@@ -110,7 +133,30 @@ class MainActivity : ComponentActivity() {
                                 // Matches the HTML background to prevent visual flashing during load
                                 setBackgroundColor(android.graphics.Color.parseColor("#05070f"))
                                 
-                                webViewClient = WebViewClient()
+                                webViewClient = object : WebViewClient() {
+                                    override fun onPageFinished(view: WebView, url: String) {
+                                        super.onPageFinished(view, url)
+                                        // Inject build timestamp ke halaman
+                                        val timestamp = BuildConfig.BUILD_TIMESTAMP
+                                        val js = "javascript:(function(){ " +
+                                            "var el = document.getElementById('buildTimestamp'); " +
+                                            "if(el) { " +
+                                            "  var d = new Date(parseInt('$timestamp')); " +
+                                            "  var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']; " +
+                                            "  var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']; " +
+                                            "  var dayName = days[d.getDay()]; " +
+                                            "  var date = d.getDate(); " +
+                                            "  var month = months[d.getMonth()]; " +
+                                            "  var year = d.getFullYear(); " +
+                                            "  var hours = String(d.getHours()).padStart(2,'0'); " +
+                                            "  var mins = String(d.getMinutes()).padStart(2,'0'); " +
+                                            "  var secs = String(d.getSeconds()).padStart(2,'0'); " +
+                                            "  el.innerHTML = dayName + ', ' + date + ' ' + month + ' ' + year + ' | ' + hours + ':' + mins + ':' + secs; " +
+                                            "} " +
+                                            "})()"
+                                        view.evaluateJavascript(js, null)
+                                    }
+                                }
                                 settings.apply {
                                     javaScriptEnabled = true
                                     domStorageEnabled = true

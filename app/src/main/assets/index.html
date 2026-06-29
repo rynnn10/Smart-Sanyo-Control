@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Sanyo Control</title>
     <!-- Google Fonts: Plus Jakarta Sans for a premium visual aesthetic -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- FontAwesome for high-quality symbols -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+    <script src="config.js"></script>
+
     <style>
         :root {
             --primary-glow: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(79, 172, 254, 0) 70%);
@@ -167,7 +171,8 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 75%; /* Updated dynamically by JS */
+            height: 75%;
+            /* Updated dynamically by JS */
             background: linear-gradient(180deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.9) 100%);
             box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
             transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -368,19 +373,19 @@
             background-color: #ffffff;
             transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
         }
 
-        input:checked + .slider {
+        input:checked+.slider {
             background-color: rgba(0, 242, 254, 0.2);
             border-color: rgba(0, 242, 254, 0.4);
         }
 
-        input:focus + .slider {
+        input:focus+.slider {
             box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
         }
 
-        input:checked + .slider:before {
+        input:checked+.slider:before {
             transform: translateX(22px);
             background-color: var(--accent-cyan);
             box-shadow: 0 0 6px var(--accent-cyan);
@@ -509,6 +514,7 @@
             outline: none;
             cursor: pointer;
         }
+
         .custom-select option {
             background: #0f172a;
             color: var(--text-primary);
@@ -520,6 +526,7 @@
             justify-content: space-between;
             margin-top: 5px;
         }
+
         .day-chip {
             flex: 1;
             padding: 10px 0;
@@ -533,6 +540,7 @@
             transition: all 0.2s ease;
             text-align: center;
         }
+
         .day-chip.active {
             background: rgba(0, 242, 254, 0.2);
             border-color: var(--accent-cyan);
@@ -605,8 +613,9 @@
             gap: 12px;
             transition: all 0.3s ease;
         }
-        
-        .scheduler-list.disabled, .add-schedule-btn.disabled {
+
+        .scheduler-list.disabled,
+        .add-schedule-btn.disabled {
             opacity: 0.4;
             pointer-events: none;
         }
@@ -665,16 +674,21 @@
         .code-modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: rgba(0, 0, 0, 0.8);
             z-index: 2000;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
+
         .code-modal.show {
             display: flex;
         }
+
         .code-container {
             background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--accent-cyan);
@@ -687,6 +701,7 @@
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0, 242, 254, 0.2);
         }
+
         .code-header {
             padding: 16px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -694,10 +709,12 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .code-header h3 {
             font-size: 0.95rem;
             color: var(--accent-cyan);
         }
+
         .close-btn {
             background: transparent;
             border: none;
@@ -705,6 +722,7 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
+
         .code-content {
             padding: 16px;
             overflow-y: auto;
@@ -716,7 +734,7 @@
             white-space: pre-wrap;
             user-select: all;
         }
-        
+
         .footer {
             text-align: center;
             font-size: 0.75rem;
@@ -736,7 +754,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 12px 20px;
             border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             z-index: 1000;
             pointer-events: none;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -776,7 +794,7 @@
         .bubble {
             display: none;
         }
-        
+
         /* Dynamic Backgrounds */
         .bg-anim-container {
             position: fixed;
@@ -796,7 +814,9 @@
             width: 100%;
             height: 100%;
         }
-        .bg-mesh::before, .bg-mesh::after {
+
+        .bg-mesh::before,
+        .bg-mesh::after {
             content: '';
             position: absolute;
             width: 60vw;
@@ -807,11 +827,13 @@
             animation: meshFloat 15s infinite alternate ease-in-out;
             will-change: transform;
         }
+
         .bg-mesh::before {
             background: var(--accent-cyan);
             top: -10%;
             left: -10%;
         }
+
         .bg-mesh::after {
             background: var(--accent-blue);
             bottom: -10%;
@@ -820,9 +842,17 @@
         }
 
         @keyframes meshFloat {
-            0% { transform: scale(1) translate(0, 0); }
-            50% { transform: scale(1.2) translate(10%, 10%); }
-            100% { transform: scale(0.9) translate(-10%, -10%); }
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            50% {
+                transform: scale(1.2) translate(10%, 10%);
+            }
+
+            100% {
+                transform: scale(0.9) translate(-10%, -10%);
+            }
         }
 
         /* Particles */
@@ -837,19 +867,52 @@
         }
 
         @keyframes rise {
-            0% { transform: translateY(0) scale(1.5); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+            0% {
+                transform: translateY(0) scale(1.5);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(0.5);
+                opacity: 0;
+            }
         }
     </style>
 </head>
+
 <body>
+
+    <div id="loading-screen"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div
+            style="border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;">
+        </div>
+        <h3 style="margin-top: 15px; font-family: sans-serif; color: #3b82f6;">Memuat Sanyo...</h3>
+        <style>
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
 
     <div class="bg-anim-container" id="bgMeshContainer">
         <div class="bg-mesh"></div>
     </div>
-    
+
     <div class="bg-anim-container" id="bgParticlesContainer">
         <!-- Particles injected by JS -->
     </div>
@@ -866,22 +929,35 @@
     </div>
 
     <div class="dashboard">
-        
+
         <!-- Header Section -->
-        <div class="glass-card header" style="flex-direction: column; align-items: stretch; gap: 14px; padding: 18px 20px;">
+        <div class="glass-card header"
+            style="flex-direction: column; align-items: stretch; gap: 14px; padding: 18px 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1 style="margin: 0; line-height: 1.1; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;"><i class="fa-solid fa-droplet" style="-webkit-text-fill-color: var(--accent-cyan);"></i> Smart Sanyo Control</h1>
-                <button id="settingsBtn" style="background:transparent; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; outline:none; transition: color 0.3s; padding: 0; margin-top: 2px;"><i class="fa-solid fa-gear"></i></button>
+                <h1
+                    style="margin: 0; line-height: 1.1; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
+                    <i class="fa-solid fa-droplet" style="-webkit-text-fill-color: var(--accent-cyan);"></i> Smart Sanyo
+                    Control
+                </h1>
+                <button id="settingsBtn"
+                    style="background:transparent; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; outline:none; transition: color 0.3s; padding: 0; margin-top: 2px;"><i
+                        class="fa-solid fa-gear"></i></button>
             </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                 <div class="connection-badge" id="connBadge" style="margin: 0;">
                     <div class="connection-indicator"></div>
                     <span id="connLabel">ONLINE</span>
                 </div>
-                <div id="espInfo" style="font-size: 0.75rem; color: var(--text-secondary); text-align: right; line-height: 1.3;">
-                    <div id="espSSID" style="color: var(--text-primary); font-weight: 600;"><i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> Menunggu...</div>
-                    <div style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px;"><i class="fa-solid fa-signal" style="font-size:0.6rem; margin-right: 2px;"></i> <span id="espdB">-</span> dBm &bull; Qual: <span id="espQual">-</span>%</div>
+                <div id="espInfo"
+                    style="font-size: 0.75rem; color: var(--text-secondary); text-align: right; line-height: 1.3;">
+                    <div id="espSSID" style="color: var(--text-primary); font-weight: 600;"><i class="fa-solid fa-wifi"
+                            style="color: var(--accent-cyan); margin-right: 4px;"></i> Menunggu...</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px;"><i class="fa-solid fa-signal"
+                            style="font-size:0.6rem; margin-right: 2px;"></i> <span id="espdB">-</span> dBm &bull; Qual:
+                        <span id="espQual">-</span>%
+                    </div>
                 </div>
             </div>
         </div>
@@ -891,7 +967,7 @@
             <div class="visualizer-title">
                 <i class="fa-solid fa-water"></i> Ketinggian Air
             </div>
-            
+
             <div class="water-container">
                 <div class="water-liquid" id="waterLiquid">
                     <div class="water-wave"></div>
@@ -986,7 +1062,10 @@
         </div>
 
         <div class="footer">
-            Dibuat oleh Riyan &copy; 2026
+            Dibuat oleh Riyan &copy; 2026<br>
+            <span style="font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 4px;">
+                <i class="fa-regular fa-calendar-check"></i> Update: <span id="buildTimestamp">memuat...</span>
+            </span>
         </div>
 
     </div>
@@ -1005,23 +1084,248 @@
                         <span class="control-desc">Tampilkan panel pengujian fitur</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="demoModeToggle" checked>
+                        <input type="checkbox" id="demoModeToggle">
                         <span class="slider"></span>
                     </label>
                 </div>
-                
-                <div class="control-row" style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 12px;">
+
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 12px;">
                     <div class="control-label-wrapper">
                         <span class="control-title">Animasi Latar</span>
                         <span class="control-desc">Pilih gaya visual background</span>
                     </div>
-                    <select id="bgAnimSelect" style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.9rem; outline: none; transition: 0.3s; appearance: none; cursor: pointer;">
+                    <select id="bgAnimSelect"
+                        style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.9rem; outline: none; transition: 0.3s; appearance: none; cursor: pointer;">
                         <option value="none" style="background: #0f172a; color: white;">Static Dark (Ringan)</option>
                         <option value="mesh" style="background: #0f172a; color: white;">Aurora Mesh</option>
                         <option value="bubbles" style="background: #0f172a; color: white;">Floating Particles</option>
                         <option value="threejs" style="background: #0f172a; color: white;">Sihir Partikel 3D</option>
                         <option value="threejs2" style="background: #0f172a; color: white;">Sihir Partikel v2</option>
                     </select>
+                </div>
+
+                <!-- Batas Mati Otomatis -->
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
+                    <div class="control-label-wrapper">
+                        <span class="control-title"><i class="fa-solid fa-droplet"
+                                style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Mati Otomatis</span>
+                        <span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95"
+                            style="flex: 1; accent-color: var(--accent-cyan); height: 4px; cursor: pointer;">
+                        <span id="autoOffLevelDisplay"
+                            style="color: var(--accent-cyan); font-weight: 700; min-width: 42px; text-align: right; font-size: 1rem;">95%</span>
+                    </div>
+                </div>
+
+                <!-- Toggle ON/OFF Batas Mati Otomatis -->
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
+                    <div class="control-label-wrapper">
+                        <span class="control-title"><i class="fa-solid fa-toggle-on"
+                                style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati
+                            Otomatis</span>
+                        <span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis meski air penuh</span>
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <span id="autoOffStateLabel">Aktif</span>
+                        </span>
+                        <label class="switch">
+                            <input type="checkbox" id="autoOffEnabledToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <button id="wiringGuideBtn"
+                    style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+                    <i class="fa-solid fa-diagram-project"></i> Cara Wiring Modul
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wiring Guide Modal -->
+    <div class="code-modal" id="wiringModal">
+        <div class="code-container" style="max-width: 480px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-diagram-project" style="color: var(--accent-cyan);"></i> Wiring Diagram Wemos
+                    D1</h3>
+                <button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; max-height: 70vh;">
+                <!-- Wiring Table -->
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px;">
+                    <thead>
+                        <tr style="background: rgba(0, 242, 254, 0.1);">
+                            <th
+                                style="padding: 10px 8px; text-align: left; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Modul</th>
+                            <th
+                                style="padding: 10px 8px; text-align: center; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Pin Modul</th>
+                            <th
+                                style="padding: 10px 8px; text-align: center; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Hubung ke D1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Relay 1ch 5V</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                IN</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D1</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC / GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V / GND</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="3">
+                                <b>JSN-SR04T Waterproof</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                TRIG</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D2</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                ECHO</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D3</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC / GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V / GND</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="4">
+                                <b>LCD 1602 I2C</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                SDA</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D6</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                SCL</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D5</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Button ON</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 1</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D4</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 2</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Button OFF</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 1</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D7</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 2</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding: 10px 8px;" rowspan="2"><b>Buzzer Aktif</b></td>
+                            <td style="padding: 10px 8px; text-align: center;">Positif (+)</td>
+                            <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe;">D8</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; text-align: center;">Negatif (−)</td>
+                            <td style="padding: 10px 8px; text-align: center;">GND</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Wiring Notes -->
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem; margin-bottom: 8px;"><i
+                            class="fa-solid fa-circle-info"></i> Catatan Penting:</p>
+                    <ul style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.7; padding-left: 18px;">
+                        <li>Button menggunakan <b>INPUT_PULLUP</b> internal → tidak perlu resistor pull-up eksternal.
+                            Cukup hubungkan kaki satunya ke GND.</li>
+                        <li>LCD I2C secara default beralamat <b>0x27</b>. Jika LCD tidak menyala, coba alamat
+                            <b>0x3F</b> dengan mengganti <code>lcd(0x27,16,2)</code> menjadi
+                            <code>lcd(0x3F,16,2)</code>.
+                        </li>
+                        <li>Gunakan <b>adaptor 5V 2A</b> minimum untuk memberi daya ke semua modul secara stabil.</li>
+                        <li>Jangan sambungkan relay 5V ke pin 3.3V — dapat merusak komponen.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -1030,12 +1334,16 @@
     <!-- Delete Confirm Modal -->
     <div class="code-modal" id="deleteConfirmModal">
         <div class="code-container" style="max-width: 320px; text-align: center; padding: 30px 24px;">
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--danger-color); margin-bottom: 16px;"></i>
+            <i class="fa-solid fa-triangle-exclamation"
+                style="font-size: 3rem; color: var(--danger-color); margin-bottom: 16px;"></i>
             <h3 style="margin-bottom: 8px;">Hapus Jadwal?</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">Jadwal ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">Jadwal ini akan dihapus
+                secara permanen dan tidak dapat dikembalikan.</p>
             <div style="display: flex; gap: 12px; justify-content: center;">
-                <button id="cancelDeleteBtn" style="flex:1; background: rgba(255,255,255,0.1); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Batal</button>
-                <button id="confirmDeleteBtn" style="flex:1; background: var(--danger-color); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Hapus</button>
+                <button id="cancelDeleteBtn"
+                    style="flex:1; background: rgba(255,255,255,0.1); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Batal</button>
+                <button id="confirmDeleteBtn"
+                    style="flex:1; background: var(--danger-color); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Hapus</button>
             </div>
         </div>
     </div>
@@ -1060,8 +1368,12 @@
                         <div class="day-chip" data-day="0">Min</div>
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button type="button" id="btnEveryday" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Setiap Hari</button>
-                        <button type="button" id="btnToday" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Hari Ini</button>
+                        <button type="button" id="btnEveryday"
+                            style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Setiap
+                            Hari</button>
+                        <button type="button" id="btnToday"
+                            style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Hari
+                            Ini</button>
                     </div>
                 </div>
                 <div class="time-input-group">
@@ -1072,91 +1384,115 @@
                     <label><i class="fa-solid fa-stop"></i> Waktu Mati (OFF)</label>
                     <input type="time" class="time-picker" id="editOffTime">
                 </div>
-                <button id="saveScheduleBtn" style="background: var(--accent-cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor:pointer; font-size: 0.9rem;">Simpan Perubahan</button>
+                <button id="saveScheduleBtn"
+                    style="background: var(--accent-cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor:pointer; font-size: 0.9rem;">Simpan
+                    Perubahan</button>
             </div>
         </div>
     </div>
 
-    <!-- Integration Code Modal for ESP8266 -->
+    <!-- Integration Code Modal for ESP8266 (PlatformIO main.cpp) -->
     <div class="code-modal" id="codeModal">
         <div class="code-container" style="max-width: 600px;">
             <div class="code-header">
-                <h3><i class="fa-solid fa-microchip"></i> Kode Arduino IDE ESP8266 (GAS HTTP)</h3>
-                <button class="close-btn" id="closeCodeBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h3><i class="fa-solid fa-microchip"></i> PlatformIO ESP8266 (src/main.cpp)</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button id="downloadEspBtn" class="dev-btn" style="padding: 4px 10px; margin: 0;"><i
+                            class="fa-solid fa-download"></i> Unduh</button>
+                    <button class="close-btn" id="closeCodeBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
-            <div class="code-content">#include &lt;ESP8266WiFi.h&gt;
-#include &lt;ESP8266HTTPClient.h&gt;
-#include &lt;WiFiClientSecureBearSSL.h&gt;
-#include &lt;ArduinoJson.h&gt;
+            <div class="code-content">#include &lt;Arduino.h&gt;
+                #include &lt;ESP8266WiFi.h&gt;
+                #include &lt;ESP8266HTTPClient.h&gt;
+                #include &lt;WiFiClientSecureBearSSL.h&gt;
+                #include &lt;ArduinoJson.h&gt;
+                #include "config.h"
 
-const char* ssid = "WIFI_SSID";
-const char* password = "WIFI_PASSWORD";
-// URL Google Apps Script Web App
-String GAS_URL = "https://script.google.com/macros/s/AKfycbyQctFYdJ77wJfE2gSMWjjfoa7FGpLTMzJ2bXf8e33Y3aJ7UGuN0PHNIE9Tn5_nLDl5/exec";
+                bool isTelegramNotifSent = false;
 
-const int RELAY_PIN = D1;
-const int TRIG_PIN = D2;
-const int ECHO_PIN = D3;
+                void setup_wifi() {
+                Serial.print("Menghubungkan ke WiFi");
+                WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+                while (WiFi.status() != WL_CONNECTED) {
+                delay(500);
+                Serial.print(".");
+                }
+                Serial.println("\nWiFi Terhubung! IP: " + WiFi.localIP().toString());
+                }
 
-void setup_wifi() {
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) { delay(500); }
-}
+                void sendDataAndGetCommands(int waterLevel) {
+                if (WiFi.status() != WL_CONNECTED) return;
 
-void sendDataAndGetCommands(int waterLevel) {
-  if (WiFi.status() == WL_CONNECTED) {
-    std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt;client(new BearSSL::WiFiClientSecure);
-    client-&gt;setInsecure(); // Abaikan sertifikat SSL untuk GAS
-    HTTPClient https;
-    
-    // URL Request untuk update sensor dan get command
-    String finalPath = GAS_URL + "?action=sync&waterLevel=" + String(waterLevel);
-    
-    if (https.begin(*client, finalPath)) {
-      int httpCode = https.GET();
-      if (httpCode &gt; 0 && httpCode == HTTP_CODE_OK) {
-        String payload = https.getString();
-        
-        // Parse JSON Respons: {"pumpStatus": true/false}
-        DynamicJsonDocument doc(1024);
-        deserializeJson(doc, payload);
-        bool pumpStatus = doc["pumpStatus"];
-        
-        if (pumpStatus) {
-            digitalWrite(RELAY_PIN, HIGH); // NYALA
-        } else {
-            digitalWrite(RELAY_PIN, LOW); // MATI
-        }
-      }
-      https.end();
-    }
-  }
-}
+                std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt; client(new BearSSL::WiFiClientSecure);
+                client-&gt;setInsecure();
+                HTTPClient https;
 
-void setup() {
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-  digitalWrite(RELAY_PIN, LOW);
-  setup_wifi();
-}
+                String finalPath = String(GAS_URL) + "?action=sync&amp;waterLevel=" + String(waterLevel);
 
-void loop() {
-  // Baca Sensor Ultrasonik
-  digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long duration = pulseIn(ECHO_PIN, HIGH);
-  int distance = duration * 0.034 / 2;
-  
-  // Kalkulasi % air
-  int percent = map(distance, 100, 10, 0, 100);
-  percent = constrain(percent, 0, 100);
-  
-  // Sinkronisasi ke Google Sheet & Ambil Status Relay setiap 3 detik
-  sendDataAndGetCommands(percent);
-  delay(3000); 
-}</div>
+                if (https.begin(*client, finalPath)) {
+                int httpCode = https.GET();
+                if (httpCode == HTTP_CODE_OK) {
+                String payload = https.getString();
+                DynamicJsonDocument doc(1024);
+                deserializeJson(doc, payload);
+                bool pumpStatus = doc["pumpStatus"].as&lt;bool&gt;();
+                digitalWrite(RELAY_PIN, pumpStatus ? HIGH : LOW);
+                Serial.printf("Pompa: %s | Air: %d%%\n", pumpStatus ? "ON" : "OFF", waterLevel);
+                }
+                https.end();
+                }
+                }
+
+                void sendTelegramMessage(String message) {
+                if (WiFi.status() != WL_CONNECTED) return;
+
+                std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt; client(new BearSSL::WiFiClientSecure);
+                client-&gt;setInsecure();
+                HTTPClient https;
+
+                String url = "https://api.telegram.org/bot" + String(BOT_TOKEN)
+                + "/sendMessage?chat_id=" + String(CHAT_ID)
+                + "&amp;text=" + message;
+
+                if (https.begin(*client, url)) {
+                int httpCode = https.GET();
+                if (httpCode &gt; 0) Serial.println("Notifikasi Telegram terkirim!");
+                https.end();
+                }
+                }
+
+                void setup() {
+                Serial.begin(115200);
+                pinMode(RELAY_PIN, OUTPUT);
+                pinMode(TRIG_PIN, OUTPUT);
+                pinMode(ECHO_PIN, INPUT);
+                digitalWrite(RELAY_PIN, LOW);
+                setup_wifi();
+                }
+
+                void loop() {
+                digitalWrite(TRIG_PIN, LOW);
+                delayMicroseconds(2);
+                digitalWrite(TRIG_PIN, HIGH);
+                delayMicroseconds(10);
+                digitalWrite(TRIG_PIN, LOW);
+                long duration = pulseIn(ECHO_PIN, HIGH);
+                int distance = duration * 0.034 / 2;
+
+                int percent = map(distance, 100, 10, 0, 100);
+                percent = constrain(percent, 0, 100);
+
+                if (percent &lt;= 10 &amp;&amp; !isTelegramNotifSent) {
+                sendTelegramMessage("PERINGATAN: Air Tangki Kritis! Sisa " + String(percent) + "%. Mesin butuh dicek!");
+                isTelegramNotifSent = true;
+                } else if (percent &gt; 20) {
+                isTelegramNotifSent = false;
+                }
+
+                sendDataAndGetCommands(percent);
+                delay(3000);
+                }</div>
         </div>
     </div>
 
@@ -1164,64 +1500,171 @@ void loop() {
     <div class="code-modal" id="appsScriptModal">
         <div class="code-container" style="max-width: 600px;">
             <div class="code-header">
-                <h3><i class="fa-solid fa-file-code"></i> Google Apps Script (Code.gs)</h3>
-                <button class="close-btn" id="closeAppsScriptBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h3><i class="fa-solid fa-file-code"></i> Google Apps Script (code.gs)</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button id="downloadGasBtn" class="dev-btn" style="padding: 4px 10px; margin: 0;"><i
+                            class="fa-solid fa-download"></i> Unduh</button>
+                    <button class="close-btn" id="closeAppsScriptBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
-            <div class="code-content">/* 
- * 1. Buka Google Sheet Baru 
- * 2. Klik Ekstensi > Apps Script
- * 3. Paste kode ini. Buat Sheet 'Dashboard' dan beri header: Action, Timestamp, dll
- * 4. Terapkan > Deployment Baru > Aplikasi Web
- */
+            <div class="code-content">/*
+                * 1. Buka Google Spreadsheet &gt; Ekstensi &gt; Apps Script.
+                * 2. Ganti semua kode lama dengan kode di bawah ini.
+                * 3. Terapkan &gt; Deployment Baru (buat Deployment BARU setiap perubahan kode).
+                * 4. Perbarui appsScriptUrl di index.html jika URL berubah.
+                */
 
-function doGet(e) {
-  var action = e.parameter.action;
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Dashboard");
-  
-  // Jika parameter missing, berikan state standar
-  if(!action) {
-    return ContentService.createTextOutput(JSON.stringify({error: "No Action"}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  // Menyimpan properti aplikasi menggunakan PropertiesService
-  var props = PropertiesService.getScriptProperties();
-  
-  if (action === "set") {
-    // Android App mengirim push commands (e.g., pumpStatus=true)
-    if(e.parameter.pumpStatus !== undefined) {
-      props.setProperty("pumpStatus", e.parameter.pumpStatus);
-      sheet.appendRow([new Date(), "PUMP_STATUS_CHANGED", e.parameter.pumpStatus]);
-    }
-    if(e.parameter.autoMode !== undefined) {
-      props.setProperty("autoMode", e.parameter.autoMode);
-    }
-    return ContentService.createTextOutput(JSON.stringify({success: true}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } 
-  else if (action === "sync") {
-    // ESP8266 melaporkan water level dan meminta status
-    if(e.parameter.waterLevel) {
-       props.setProperty("waterLevel", e.parameter.waterLevel);
-       sheet.appendRow([new Date(), "WATER_LEVEL", e.parameter.waterLevel]);
-    }
-    var currentPump = props.getProperty("pumpStatus") === "true";
-    return ContentService.createTextOutput(JSON.stringify({
-      pumpStatus: currentPump,
-      status: "OK"
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  else if (action === "get") {
-    // Android WebApp fetch semua state API
-    var s = {
-      pumpStatus: props.getProperty("pumpStatus") === "true",
-      autoMode: props.getProperty("autoMode") === "true",
-      waterLevel: parseInt(props.getProperty("waterLevel") || "0")
-    };
-    return ContentService.createTextOutput(JSON.stringify(s))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}</div>
+                function doGet(e) {
+                var action = e.parameter.action;
+                var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Dashboard");
+
+                if (!action) {
+                return ContentService.createTextOutput(
+                JSON.stringify({ error: "No Action" })
+                ).setMimeType(ContentService.MimeType.JSON);
+                }
+
+                var props = PropertiesService.getScriptProperties();
+
+                if (e.parameter.waterLevel !== undefined) {
+                cekNotifikasiAir(e.parameter.waterLevel, props);
+                }
+
+                if (sheet &amp;&amp; sheet.getLastRow() === 0) {
+                sheet.appendRow(["Timestamp","Aktivitas","Status Pompa","Mode","Level Air","Jadwal","Data Jadwal"]);
+                sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#d9ead3");
+                sheet.setFrozenRows(1);
+                }
+
+                var logActivity = "";
+
+                if (action === "set") {
+                if (e.parameter.pumpStatus !== undefined) {
+                props.setProperty("pumpStatus", e.parameter.pumpStatus);
+                logActivity = "MENGUBAH STATUS POMPA: " + e.parameter.pumpStatus.toUpperCase();
+                }
+                if (e.parameter.autoMode !== undefined) {
+                props.setProperty("autoMode", e.parameter.autoMode);
+                logActivity = "MENGUBAH MODE: " + (e.parameter.autoMode === "true" ? "AUTO" : "MANUAL");
+                }
+                if (e.parameter.scheduleEnabled !== undefined) {
+                props.setProperty("scheduleEnabled", e.parameter.scheduleEnabled);
+                logActivity = (e.parameter.scheduleEnabled === "true" ? "MENGAKTIFKAN" : "MEMATIKAN") + " JADWAL";
+                }
+                if (e.parameter.schedules !== undefined) {
+                props.setProperty("schedules", e.parameter.schedules);
+                logActivity = "MEMPERBARUI DATA JADWAL";
+                }
+                } else if (action === "sync" &amp;&amp; e.parameter.waterLevel) {
+                props.setProperty("waterLevel", e.parameter.waterLevel);
+                logActivity = "SINKRONISASI ESP - LEVEL AIR: " + e.parameter.waterLevel + "%";
+                }
+
+                var currentPump = props.getProperty("pumpStatus") === "true";
+                var currentAuto = props.getProperty("autoMode") === "true";
+                var currentLevel = props.getProperty("waterLevel") || "0";
+                var currentScheduleState = props.getProperty("scheduleEnabled") === "true";
+                var schedulesData = props.getProperty("schedules") || "[]";
+
+                if (action === "set" || (action === "sync" &amp;&amp; e.parameter.waterLevel)) {
+                if (sheet) {
+                var ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+                sheet.appendRow([ts, logActivity, currentPump?"ON":"OFF", currentAuto?"AUTO":"MANUAL",
+                currentLevel+"%", currentScheduleState?"AKTIF":"MATI", schedulesData]);
+                }
+                }
+
+                if (action === "set") {
+                return ContentService.createTextOutput(JSON.stringify({ success: true }))
+                .setMimeType(ContentService.MimeType.JSON);
+                } else if (action === "sync") {
+                if (e.parameter.waterLevel) {
+                props.setProperty("waterLevel", e.parameter.waterLevel);
+                var waterInt = parseInt(e.parameter.waterLevel);
+                var now = new Date().getTime();
+                var lastKritis = parseInt(props.getProperty("lastKritisTime") || "0");
+                var lastPenuh = parseInt(props.getProperty("lastPenuhTime") || "0");
+                if (waterInt &lt;= 10 &amp;&amp; now - lastKritis &gt; 3600000) {
+                sendFCMNotification("Air Tangki Kritis!", "Sisa " + waterInt + "%. Segera nyalakan Sanyo!");
+                props.setProperty("lastKritisTime", now.toString());
+                props.setProperty("lastPenuhTime", "0");
+                } else if (waterInt &gt;= 90 &amp;&amp; now - lastPenuh &gt; 3600000) {
+                sendFCMNotification("Tangki Air Penuh", "Air sudah " + waterInt + "%. Pompa bisa dimatikan.");
+                props.setProperty("lastPenuhTime", now.toString());
+                props.setProperty("lastKritisTime", "0");
+                } else if (waterInt &gt; 10 &amp;&amp; waterInt &lt; 90) {
+                props.setProperty("lastKritisTime", "0");
+                props.setProperty("lastPenuhTime", "0");
+                }
+                }
+
+                var schedEnabled = props.getProperty("scheduleEnabled") === "true";
+                var schedsData = props.getProperty("schedules") || "[]";
+                if (schedEnabled &amp;&amp; schedsData !== "[]") {
+                var scheds = JSON.parse(schedsData);
+                var curTime = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "HH:mm");
+                for (var i = 0; i &lt; scheds.length; i++) {
+                if (scheds[i].isActive &amp;&amp; scheds[i].time === curTime) {
+                var act = scheds[i].action === "ON";
+                if (currentPump !== act) {
+                currentPump = act;
+                props.setProperty("pumpStatus", currentPump.toString());
+                var teks = currentPump ? "Menyala (ON)" : "Mati (OFF)";
+                sendFCMNotification("Jadwal Tereksekusi", "Sanyo otomatis " + teks + " pukul " + scheds[i].time);
+                }
+                }
+                }
+                }
+
+                return ContentService.createTextOutput(JSON.stringify({ pumpStatus: currentPump, status: "OK" }))
+                .setMimeType(ContentService.MimeType.JSON);
+                } else if (action === "get") {
+                return ContentService.createTextOutput(JSON.stringify({
+                pumpStatus: currentPump,
+                autoMode: currentAuto,
+                waterLevel: parseInt(currentLevel),
+                scheduleEnabled: currentScheduleState,
+                schedules: schedulesData
+                })).setMimeType(ContentService.MimeType.JSON);
+                }
+                }
+
+                function sendFCMNotification(title, body) {
+                var projectId = "FIREBASE_PROJECT_ID_ANDA";
+                var fcmToken = "FCM_TOKEN_DARI_LOGCAT_ANDROID";
+                var url = "https://fcm.googleapis.com/v1/projects/" + projectId + "/messages:send";
+                var payload = { message: { token: fcmToken, notification: { title: title, body: body } } };
+                var options = {
+                method: "post",
+                headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken(), "Content-Type": "application/json" },
+                payload: JSON.stringify(payload),
+                muteHttpExceptions: true
+                };
+                try { UrlFetchApp.fetch(url, options); } catch(e) { Logger.log("Error: " + e); }
+                }
+
+                function cekNotifikasiAir(waterLevelStr, props) {
+                var waterInt = parseInt(waterLevelStr);
+                var now = new Date().getTime();
+                var lastKritis = parseInt(props.getProperty("lastKritisTime") || "0");
+                var lastPenuh = parseInt(props.getProperty("lastPenuhTime") || "0");
+                if (waterInt &lt;= 10 &amp;&amp; now - lastKritis &gt; 3600000) {
+                sendFCMNotification("Air Tangki Kritis!", "Sisa " + waterInt + "%. Segera nyalakan Sanyo!");
+                props.setProperty("lastKritisTime", now.toString());
+                props.setProperty("lastPenuhTime", "0");
+                } else if (waterInt &gt;= 90 &amp;&amp; now - lastPenuh &gt; 3600000) {
+                sendFCMNotification("Tangki Air Penuh", "Air sudah " + waterInt + "%. Pompa bisa dimatikan.");
+                props.setProperty("lastPenuhTime", now.toString());
+                props.setProperty("lastKritisTime", "0");
+                } else if (waterInt &gt; 10 &amp;&amp; waterInt &lt; 90) {
+                props.setProperty("lastKritisTime", "0");
+                props.setProperty("lastPenuhTime", "0");
+                }
+                }
+
+                function tesNotifikasi() {
+                sendFCMNotification("Uji Coba Sanyo", "Berhasil! Notifikasi Firebase sudah terhubung.");
+                }</div>
         </div>
     </div>
 
@@ -1232,6 +1675,17 @@ function doGet(e) {
     </div>
 
     <script>
+
+        // Paksa loading screen hilang maksimal setelah 3 detik apapun yang terjadi
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var loader = document.getElementById('loading-screen');
+                if (loader && loader.style.display !== 'none') {
+                    loader.style.display = 'none';
+                    console.log("Loading screen dipaksa tutup karena timeout.");
+                }
+            }, 3000); // Angka 3000 = 3 detik (Bisa Anda ubah jika dirasa kurang lama)
+        });
         // ==========================================
         // DUMMY ENVIRONMENT VARIABLES & STATE
         // ==========================================
@@ -1239,7 +1693,7 @@ function doGet(e) {
         let pumpStatus = false;         // true = ON, false = OFF
         let autoMode = false;          // true = Auto, false = Manual
         let scheduleEnabled = false;   // true = Aktif, false = Nonaktif
-        let isDemoMode = true;         // true = Tampilkan panel pengujian
+        let isDemoMode = false;        // true = Tampilkan panel pengujian
         let schedules = [];
         try {
             const savedSchedules = localStorage.getItem('schedules');
@@ -1248,19 +1702,21 @@ function doGet(e) {
             } else {
                 schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
             }
-        } catch(e) {
+        } catch (e) {
             schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
         }
-        let isOnline = true;           // Status Koneksi ESP8266/MQTT
+        let isOnline = true;
         let espSSIDValue = "Menunggu...";
         let espRssiValue = 0;
         let espQualValue = 0;
+        let autoOffLevel = 95; // default, diperbarui dari GAS
+        let autoOffEnabled = true; // default
 
         let scheduleToDelete = null;
         let scheduleToEdit = null;
 
-        // Integrasi GAS URL API
-        const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbyQctFYdJ77wJfE2gSMWjjfoa7FGpLTMzJ2bXf8e33Y3aJ7UGuN0PHNIE9Tn5_nLDl5/exec';
+        // Integrasi GAS URL API — diambil dari config.js (sumber tunggal)
+        const appsScriptUrl = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.gasUrl : '';
 
         // ==========================================
         // DOM ELEMENTS SELECTION
@@ -1283,27 +1739,27 @@ function doGet(e) {
         const espQualEl = document.getElementById('espQual');
         const toastEl = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
-        
+
         // Modals & Extras
         const devPanel = document.getElementById('devPanel');
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const demoModeToggle = document.getElementById('demoModeToggle');
-        
+
         let threeSceneCreated = false;
         let particlesThree = null;
 
         function initThreeJSBg() {
-            if(threeSceneCreated) return;
+            if (threeSceneCreated) return;
             threeSceneCreated = true;
-            
+
             const container = document.getElementById('bgThreeContainer');
-            if(!container || typeof THREE === 'undefined') return;
+            if (!container || typeof THREE === 'undefined') return;
 
             const scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x05070f, 0.005);
-            
+
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 30;
 
@@ -1398,7 +1854,7 @@ function doGet(e) {
             gradient.addColorStop(0.4, "rgba(255, 255, 255, 0.3)");
             gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
             ctx.fillStyle = gradient; ctx.fillRect(0, 0, 32, 32);
-            
+
             const material = new THREE.PointsMaterial({
                 size: 0.6,
                 vertexColors: true,
@@ -1414,14 +1870,14 @@ function doGet(e) {
 
             let currentShapeId = 'galaxy';
             const shapeNames = ['galaxy', 'sphere', 'ring', 'tornado', 'cube', 'star', 'text'];
-            
+
             setInterval(() => {
                 const colorsAttr = particlesThree.geometry.attributes.color.array;
                 let cTargetHex = 0xffffff;
                 let nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
                 currentShapeId = nextShape;
 
-                switch(currentShapeId) {
+                switch (currentShapeId) {
                     case 'galaxy': cTargetHex = 0x00ffff; break;
                     case 'sphere': cTargetHex = 0xffaa00; break;
                     case 'ring': cTargetHex = 0x00ff00; break;
@@ -1473,15 +1929,15 @@ function doGet(e) {
         const count2 = 2500;
 
         function initThreeJSBg2() {
-            if(three2SceneCreated) return;
+            if (three2SceneCreated) return;
             three2SceneCreated = true;
-            
+
             const container = document.getElementById('bgThree2Container');
-            if(!container || typeof THREE === 'undefined') return;
+            if (!container || typeof THREE === 'undefined') return;
 
             const scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x050505, 0.0025);
-            
+
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 25;
 
@@ -1538,9 +1994,9 @@ function doGet(e) {
 
             particlesThree2 = new THREE.Points(geometry, material);
             scene.add(particlesThree2);
-            
+
             function morphTo(targetArray) {
-                for(let i=0; i<count2*3; i++) {
+                for (let i = 0; i < count2 * 3; i++) {
                     positionsTarget[i] = targetArray[i];
                 }
             }
@@ -1654,7 +2110,7 @@ function doGet(e) {
                 }
                 morphTo(p);
             }
-            
+
             let shapesMap = {
                 galaxy: calculateGalaxy,
                 heart: calculateHeart,
@@ -1665,7 +2121,7 @@ function doGet(e) {
                 dna: calculateDNA,
                 pyramid: calculatePyramid
             };
-            
+
             calculateGalaxy();
 
             let shapeNames = Object.keys(shapesMap);
@@ -1686,13 +2142,13 @@ function doGet(e) {
                         positions[i] += (positionsTarget[i] - positions[i]) * 0.05;
                     }
                     particlesThree2.geometry.attributes.position.needsUpdate = true;
-                    
+
                     let targetExpansion = 1.0 + Math.sin(clock.getElapsedTime()) * 0.1;
                     particlesThree2.scale.setScalar(targetExpansion);
-                    
+
                     particlesThree2.rotation.y += 0.002;
                     particlesThree2.rotation.x += 0.000;
-                    
+
                     renderer.render(scene, camera);
                 }
             }
@@ -1714,28 +2170,28 @@ function doGet(e) {
 
         function setBgAnimMode(mode) {
             bgAnimMode = mode;
-            if(bgAnimSelect) bgAnimSelect.value = mode;
+            if (bgAnimSelect) bgAnimSelect.value = mode;
             localStorage.setItem('bgAnimMode', mode);
-            
-            if(bgMeshContainer) bgMeshContainer.style.opacity = mode === 'mesh' ? '1' : '0';
-            
-            if(bgThreeContainer) {
+
+            if (bgMeshContainer) bgMeshContainer.style.opacity = mode === 'mesh' ? '1' : '0';
+
+            if (bgThreeContainer) {
                 bgThreeContainer.style.opacity = mode === 'threejs' ? '1' : '0';
-                if(mode === 'threejs') {
+                if (mode === 'threejs') {
                     initThreeJSBg();
                 }
             }
 
-            if(bgThree2Container) {
+            if (bgThree2Container) {
                 bgThree2Container.style.opacity = mode === 'threejs2' ? '1' : '0';
-                if(mode === 'threejs2') {
+                if (mode === 'threejs2') {
                     initThreeJSBg2();
                 }
             }
 
-            if(bgParticlesContainer) {
+            if (bgParticlesContainer) {
                 bgParticlesContainer.style.opacity = mode === 'bubbles' ? '1' : '0';
-                
+
                 if (mode === 'bubbles' && bgParticlesContainer.children.length === 0) {
                     for (let i = 0; i < 12; i++) {
                         const p = document.createElement('div');
@@ -1749,13 +2205,13 @@ function doGet(e) {
                         bgParticlesContainer.appendChild(p);
                     }
                 } else if (mode !== 'bubbles') {
-                    bgParticlesContainer.innerHTML = ''; 
+                    bgParticlesContainer.innerHTML = '';
                 }
             }
         }
         setBgAnimMode(bgAnimMode);
-        
-        if(bgAnimSelect) {
+
+        if (bgAnimSelect) {
             bgAnimSelect.addEventListener('change', (e) => {
                 setBgAnimMode(e.target.value);
             });
@@ -1787,10 +2243,12 @@ function doGet(e) {
         // ==========================================
         // Hubungkan fungsi ini ke respon AJAX / Fetch API / MQTT OnMessageReceived
         function updateUI() {
+            var loader = document.getElementById('loading-screen');
+            if (loader) loader.style.display = 'none';
             // 1. Update Water Level Visualizer
             waterLiquid.style.height = `${currentWaterLevel}%`;
             waterLevelVal.innerHTML = `${currentWaterLevel}% <span>Isi Tangki</span>`;
-            
+
             // Adjust wave speed or visual styling depending on low/high level
             if (currentWaterLevel < 20) {
                 waterLiquid.style.background = 'linear-gradient(180deg, #ef4444 0%, #b91c1c 100%)';
@@ -1808,7 +2266,7 @@ function doGet(e) {
                 pumpIconWrapper.style.color = 'var(--success-color)';
                 pumpIconWrapper.style.filter = 'none';
                 pumpIconWrapper.classList.add('fa-spin-slow');
-                
+
                 manualPumpBtn.className = 'manual-btn active';
                 manualPumpBtnLabel.innerText = 'Matikan Saklar';
             } else {
@@ -1817,7 +2275,7 @@ function doGet(e) {
                 pumpLabelText.innerText = 'Pompa Air Mati';
                 pumpIconWrapper.style.color = 'var(--text-secondary)';
                 pumpIconWrapper.style.filter = 'none';
-                
+
                 manualPumpBtn.className = 'manual-btn';
                 manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
             }
@@ -1839,15 +2297,15 @@ function doGet(e) {
             if (isOnline) {
                 connBadge.classList.remove('offline');
                 connLabel.innerText = 'ONLINE';
-                if(espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${espSSIDValue}`;
-                if(espdBEl) espdBEl.innerText = espRssiValue;
-                if(espQualEl) espQualEl.innerText = espQualValue;
+                if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${espSSIDValue}`;
+                if (espdBEl) espdBEl.innerText = espRssiValue;
+                if (espQualEl) espQualEl.innerText = espQualValue;
             } else {
                 connBadge.classList.add('offline');
                 connLabel.innerText = 'OFFLINE';
-                if(espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--text-secondary); margin-right: 4px;"></i> Terputus`;
-                if(espdBEl) espdBEl.innerText = '-';
-                if(espQualEl) espQualEl.innerText = '-';
+                if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--text-secondary); margin-right: 4px;"></i> Terputus`;
+                if (espdBEl) espdBEl.innerText = '-';
+                if (espQualEl) espQualEl.innerText = '-';
             }
 
             // 5. Scheduler Section State
@@ -1859,10 +2317,10 @@ function doGet(e) {
                 schedulerList.classList.add('disabled');
                 addScheduleBtn.classList.add('disabled');
             }
-            
+
             // Sync Simulator Inputs (Just for matching simulation)
             waterLevelSlider.value = currentWaterLevel;
-            
+
             if (isDemoMode) {
                 devPanel.style.display = 'block';
             } else {
@@ -1878,7 +2336,7 @@ function doGet(e) {
             toastMsg.innerText = message;
             const icon = toastEl.querySelector('i');
             icon.className = `fa-solid ${iconClass}`;
-            
+
             toastEl.classList.add('show');
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => {
@@ -1907,28 +2365,12 @@ function doGet(e) {
             updateUI();
         });
 
-        // B. Manual Saklar Button
-        manualPumpBtn.addEventListener('click', () => {
-            if (autoMode) return; // Prevent clicking when Auto is active
-            
-            pumpStatus = !pumpStatus;
-            
-            // Sync to GAS
-            sendToGas('pumpStatus', pumpStatus);
-
-            showNotification(
-                pumpStatus ? 'Sanyo dinyalakan secara manual!' : 'Sanyo dimatikan secara manual!', 
-                pumpStatus ? 'fa-bolt' : 'fa-power-off'
-            );
-            updateUI();
-        });
-
         // C. Schedule Toggle
         schedToggle.addEventListener('change', (e) => {
             scheduleEnabled = e.target.checked;
             sendToGas('scheduleEnabled', scheduleEnabled);
             showNotification(
-                scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!', 
+                scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!',
                 'fa-calendar-check'
             );
             updateUI();
@@ -1941,7 +2383,7 @@ function doGet(e) {
 
         // Add Schedule
         addScheduleBtn.addEventListener('click', () => {
-            if(!scheduleEnabled) return;
+            if (!scheduleEnabled) return;
             const newId = schedules.length > 0 ? Math.max(...schedules.map(s => s.id)) + 1 : 1;
             schedules.push({ id: newId, onTime: '12:00', offTime: '13:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] });
             saveSchedulesToGas();
@@ -1952,10 +2394,10 @@ function doGet(e) {
         function formatDays(daysArray) {
             if (!daysArray || daysArray.length === 0) return 'Tidak ada hari';
             if (daysArray.length === 7) return 'Setiap Hari';
-            
-            const daysMap = {1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 0: 'Min'};
+
+            const daysMap = { 1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 0: 'Min' };
             // Sort to ensure Monday to Sunday order
-            const sorted = [...daysArray].sort((a,b) => (a===0?7:a) - (b===0?7:b));
+            const sorted = [...daysArray].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
             return sorted.map(d => daysMap[d]).join(', ');
         }
 
@@ -1990,12 +2432,12 @@ function doGet(e) {
                         </button>
                     </div>
                 `;
-                if(!sched.enabled) {
+                if (!sched.enabled) {
                     item.style.opacity = '0.5';
                 }
                 schedulerList.appendChild(item);
             });
-            
+
             // Attach event listeners to toggles
             document.querySelectorAll('.schedule-toggle').forEach(input => {
                 input.addEventListener('change', (e) => {
@@ -2011,7 +2453,7 @@ function doGet(e) {
             });
         }
 
-        window.promptDeleteSchedule = function(id) {
+        window.promptDeleteSchedule = function (id) {
             scheduleToDelete = id;
             deleteConfirmModal.classList.add('show');
         }
@@ -2022,12 +2464,12 @@ function doGet(e) {
         let isDraggingSlider = false;
 
         waterLevelSlider.addEventListener('mousedown', () => isDraggingSlider = true);
-        waterLevelSlider.addEventListener('touchstart', () => isDraggingSlider = true, {passive: true});
+        waterLevelSlider.addEventListener('touchstart', () => isDraggingSlider = true, { passive: true });
 
         waterLevelSlider.addEventListener('change', (e) => {
             isDraggingSlider = false;
             currentWaterLevel = parseInt(e.target.value);
-            
+
             // Logic simulated: if in Auto Mode, adjust pump on water critical limits
             if (autoMode) {
                 if (currentWaterLevel <= 15 && !pumpStatus) {
@@ -2039,7 +2481,7 @@ function doGet(e) {
                 }
             }
             updateUI();
-            
+
             // Sync demo slider to GAS
             if (appsScriptUrl && isOnline) {
                 try {
@@ -2047,7 +2489,7 @@ function doGet(e) {
                     url.searchParams.append('action', 'sync');
                     url.searchParams.append('waterLevel', currentWaterLevel);
                     fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
-                } catch(e) {}
+                } catch (e) { }
             }
         });
 
@@ -2060,11 +2502,11 @@ function doGet(e) {
         toggleConnBtn.addEventListener('click', () => {
             isOnline = !isOnline;
             showNotification(
-                isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266 (GAS/HTTP)', 
+                isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266 (GAS/HTTP)',
                 isOnline ? 'fa-wifi' : 'fa-triangle-exclamation'
             );
             updateUI();
-            if(isOnline) syncFromGas();
+            if (isOnline) syncFromGas();
         });
 
         // ==========================================
@@ -2076,24 +2518,32 @@ function doGet(e) {
                 const url = new URL(appsScriptUrl);
                 url.searchParams.append('action', 'set');
                 url.searchParams.append(key, value);
-                
-                fetch(url.toString(), { method: 'GET', mode: 'no-cors' })
-                    .then(() => console.log('Data async sent to GAS:', key, value))
+
+                fetch(url.toString())
+                    .then(r => r.json())
+                    .then(data => console.log('GAS set OK:', key, value, data))
                     .catch(e => console.error('GAS Send Error:', e));
-            } catch(e) {
+            } catch (e) {
                 console.error('Invalid GAS URL', e);
             }
         }
 
+        function rssiToQuality(rssi) {
+            if (rssi >= -50) return 100;
+            if (rssi <= -100) return 0;
+            return Math.round(2 * (rssi + 100));
+        }
+
         function syncFromGas() {
-            if (!appsScriptUrl || !isOnline) return;
+            if (!appsScriptUrl) return;
             try {
                 const url = new URL(appsScriptUrl);
                 url.searchParams.append('action', 'get');
-                
+
                 fetch(url.toString())
                     .then(res => res.json())
                     .then(data => {
+                        isOnline = true;
                         if (data.pumpStatus !== undefined) pumpStatus = data.pumpStatus;
                         if (data.autoMode !== undefined) autoMode = data.autoMode;
                         if (data.waterLevel !== undefined && !isDraggingSlider) {
@@ -2103,30 +2553,102 @@ function doGet(e) {
                             scheduleEnabled = data.scheduleEnabled;
                             schedToggle.checked = scheduleEnabled;
                         }
-                        // Info ESP (opsional)
-                        if (data.isOnline !== undefined) isOnline = data.isOnline;
-                        if (data.ssid !== undefined) espSSIDValue = data.ssid;
+                        if (data.ssid !== undefined && data.ssid !== '') espSSIDValue = data.ssid;
                         if (data.rssi !== undefined) espRssiValue = data.rssi;
                         if (data.quality !== undefined) espQualValue = data.quality;
-                        
+                        if (data.isOnline !== undefined) isOnline = data.isOnline;
+                        if (data.autoOffLevel !== undefined) {
+                            autoOffLevel = data.autoOffLevel;
+                            const inp = document.getElementById('autoOffLevelInput');
+                            const disp = document.getElementById('autoOffLevelDisplay');
+                            if (inp) inp.value = autoOffLevel;
+                            if (disp) disp.innerText = autoOffLevel + '%';
+                        }
+                        if (data.autoOffEnabled !== undefined) {
+                            autoOffEnabled = data.autoOffEnabled;
+                            const tog = document.getElementById('autoOffEnabledToggle');
+                            const lbl = document.getElementById('autoOffStateLabel');
+                            if (tog) tog.checked = autoOffEnabled;
+                            if (lbl) lbl.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
+                        }
+
                         if (data.schedules) {
                             try {
                                 schedules = JSON.parse(data.schedules);
                                 renderSchedules();
-                            } catch(e) {}
+                            } catch (e) { }
                         }
                         updateUI();
                     })
-                    .catch(e => console.error('GAS Request Error or invalid JSON:', e));
-            } catch(e) {
+                    .catch(e => {
+                        isOnline = false;
+                        updateUI();
+                        console.error('GAS Error:', e);
+                    });
+            } catch (e) {
                 console.error('Invalid GAS URL', e);
             }
         }
 
-        // Periodic API Syncing
-        setInterval(() => {
-             syncFromGas();
-        }, 5000); // Polling 5 seconds
+        // ==========================================
+        // KONEKSI REAL-TIME MQTT & AUTO-PING
+        // ==========================================
+        const mqttHost = "broker.emqx.io"; // Bisa Anda ganti pakai variabel dinamis nanti
+        const mqttPort = 8083;
+        const mqttTopic = "smartsanyo/riyan123";
+        const clientId = "AndroidApp_" + Math.random().toString(16).substr(2, 8);
+        let mqttClient;
+
+        function connectMQTT() {
+            mqttClient = new Paho.MQTT.Client(mqttHost, mqttPort, clientId);
+
+            // Auto-Ping: Mendeteksi saat ESP/Koneksi terputus
+            mqttClient.onConnectionLost = () => {
+                setTimeout(connectMQTT, 5000);
+            };
+
+            // Menerima update ketinggian air & status Sanyo secara REALTIME
+            mqttClient.onMessageArrived = (message) => {
+                try {
+                    const data = JSON.parse(message.payloadString);
+                    if (data.waterLevel !== undefined) currentWaterLevel = parseInt(data.waterLevel);
+                    if (data.pumpStatus !== undefined) pumpStatus = data.pumpStatus;
+                    if (data.ssid !== undefined) espSSIDValue = data.ssid;
+                    if (data.rssi !== undefined) { espRssiValue = data.rssi; espQualValue = rssiToQuality(data.rssi); }
+                    isOnline = true;
+                    updateUI();
+                } catch (e) { }
+            };
+
+            mqttClient.connect({
+                onSuccess: () => {
+                    mqttClient.subscribe(mqttTopic + "/status");
+                },
+                useSSL: true
+            });
+        }
+
+        // Ganti logika event listener Tombol Manual Anda yang lama dengan ini:
+        manualPumpBtn.addEventListener('click', () => {
+            if (autoMode) return;
+            pumpStatus = !pumpStatus;
+
+            // 1. Tembak perintah secepat kilat ke ESP via MQTT
+            if (mqttClient && mqttClient.isConnected()) {
+                const message = new Paho.MQTT.Message(pumpStatus ? "ON" : "OFF");
+                message.destinationName = mqttTopic + "/control";
+                mqttClient.send(message);
+            }
+
+            // 2. Simpan jejak (history) ke database Google Sheet Anda
+            sendToGas('pumpStatus', pumpStatus);
+
+            showNotification(pumpStatus ? 'Sanyo dinyalakan!' : 'Sanyo dimatikan!', pumpStatus ? 'fa-bolt' : 'fa-power-off');
+            updateUI();
+        });
+
+        // Jalankan koneksi MQTT saat pertama kali buka aplikasi
+        window.addEventListener('load', connectMQTT);
 
         // Modal Handlers
         cancelDeleteBtn.addEventListener('click', () => {
@@ -2135,7 +2657,7 @@ function doGet(e) {
         });
 
         confirmDeleteBtn.addEventListener('click', () => {
-            if(scheduleToDelete !== null) {
+            if (scheduleToDelete !== null) {
                 schedules = schedules.filter(s => s.id !== scheduleToDelete);
                 saveSchedulesToGas();
                 renderSchedules();
@@ -2145,12 +2667,12 @@ function doGet(e) {
             }
         });
 
-        window.openEditSchedule = function(id) {
+        window.openEditSchedule = function (id) {
             scheduleToEdit = schedules.find(s => s.id === id);
-            if(scheduleToEdit) {
+            if (scheduleToEdit) {
                 editOnTime.value = scheduleToEdit.onTime;
                 editOffTime.value = scheduleToEdit.offTime;
-                
+
                 // Set chips
                 const chips = document.querySelectorAll('#editScheduleDays .day-chip');
                 chips.forEach(chip => {
@@ -2161,7 +2683,7 @@ function doGet(e) {
                         chip.classList.remove('active');
                     }
                 });
-                
+
                 // Reset quick buttons styling
                 const btnEv = document.getElementById('btnEveryday');
                 const btnTd = document.getElementById('btnToday');
@@ -2171,7 +2693,7 @@ function doGet(e) {
                 btnTd.style.borderColor = 'rgba(255,255,255,0.2)';
                 btnTd.style.color = 'var(--text-secondary)';
                 btnTd.style.background = 'rgba(255,255,255,0.05)';
-                
+
                 editScheduleModal.classList.add('show');
             }
         }
@@ -2194,7 +2716,7 @@ function doGet(e) {
             btnEveryday.style.borderColor = 'var(--accent-cyan)';
             btnEveryday.style.color = 'var(--accent-cyan)';
             btnEveryday.style.background = 'rgba(0, 242, 254, 0.1)';
-            
+
             btnToday.style.borderColor = 'rgba(255,255,255,0.2)';
             btnToday.style.color = 'var(--text-secondary)';
             btnToday.style.background = 'rgba(255,255,255,0.05)';
@@ -2213,7 +2735,7 @@ function doGet(e) {
             btnToday.style.borderColor = 'var(--accent-cyan)';
             btnToday.style.color = 'var(--accent-cyan)';
             btnToday.style.background = 'rgba(0, 242, 254, 0.1)';
-            
+
             btnEveryday.style.borderColor = 'rgba(255,255,255,0.2)';
             btnEveryday.style.color = 'var(--text-secondary)';
             btnEveryday.style.background = 'rgba(255,255,255,0.05)';
@@ -2225,23 +2747,66 @@ function doGet(e) {
         });
 
         saveScheduleBtn.addEventListener('click', () => {
-            if(scheduleToEdit) {
+            if (scheduleToEdit) {
                 scheduleToEdit.onTime = editOnTime.value;
                 scheduleToEdit.offTime = editOffTime.value;
-                
+
                 // Get selected chips
                 const selectedDays = [];
                 document.querySelectorAll('#editScheduleDays .day-chip.active').forEach(chip => {
                     selectedDays.push(parseInt(chip.getAttribute('data-day')));
                 });
                 scheduleToEdit.repeat = selectedDays;
-                
+
                 saveSchedulesToGas();
                 renderSchedules();
                 showNotification('Perubahan jadwal disimpan', 'fa-floppy-disk');
                 editScheduleModal.classList.remove('show');
                 scheduleToEdit = null;
             }
+        });
+
+        // Auto-Off Level Slider
+        const autoOffLevelInput = document.getElementById('autoOffLevelInput');
+        const autoOffLevelDisplay = document.getElementById('autoOffLevelDisplay');
+        const autoOffEnabledToggle = document.getElementById('autoOffEnabledToggle');
+        const autoOffStateLabel = document.getElementById('autoOffStateLabel');
+
+        if (autoOffLevelInput) {
+            autoOffLevelInput.addEventListener('input', () => {
+                autoOffLevel = parseInt(autoOffLevelInput.value);
+                autoOffLevelDisplay.innerText = autoOffLevel + '%';
+            });
+            autoOffLevelInput.addEventListener('change', () => {
+                sendToGas('autoOffLevel', autoOffLevel);
+                showNotification('Batas mati otomatis: ' + autoOffLevel + '%', 'fa-droplet');
+            });
+        }
+
+        if (autoOffEnabledToggle) {
+            autoOffEnabledToggle.addEventListener('change', (e) => {
+                autoOffEnabled = e.target.checked;
+                if (autoOffStateLabel) autoOffStateLabel.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
+                sendToGas('autoOffEnabled', autoOffEnabled);
+                showNotification(
+                    autoOffEnabled ? 'Batas mati otomatis DIAKTIFKAN' : 'Batas mati otomatis DINONAKTIFKAN',
+                    'fa-toggle-' + (autoOffEnabled ? 'on' : 'off')
+                );
+            });
+        }
+
+        // Wiring Modal Handlers
+        const wiringModal = document.getElementById('wiringModal');
+        const wiringGuideBtn = document.getElementById('wiringGuideBtn');
+        const closeWiringBtn = document.getElementById('closeWiringBtn');
+
+        wiringGuideBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('show');
+            wiringModal.classList.add('show');
+        });
+
+        closeWiringBtn.addEventListener('click', () => {
+            wiringModal.classList.remove('show');
         });
 
         // Settings Handlers
@@ -2274,14 +2839,34 @@ function doGet(e) {
             appsScriptModal.classList.remove('show');
         });
 
+        // FUNGSI DOWNLOAD KODE
+        function downloadCodeAsFile(elementId, fileName) {
+            const codeContent = document.querySelector(`#${elementId} .code-content`).innerText;
+            const blob = new Blob([codeContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('downloadEspBtn').addEventListener('click', () => downloadCodeAsFile('codeModal', 'main.cpp'));
+        document.getElementById('downloadGasBtn').addEventListener('click', () => downloadCodeAsFile('appsScriptModal', 'Code.gs'));
+
         // ==========================================
         // APP INITIALIZATION
         // ==========================================
-        window.onload = function() {
-            createDecorativeBubbles();
+        window.onload = function () {
+            try { createDecorativeBubbles(); } catch (e) { }
             renderSchedules();
+            syncFromGas();
             updateUI();
+            setInterval(syncFromGas, 10000);
         };
     </script>
 </body>
+
 </html>

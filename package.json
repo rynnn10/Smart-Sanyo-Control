@@ -1,0 +1,22 @@
+{
+  "name": "smart-sanyo-control-gas",
+  "version": "1.0.0",
+  "description": "Google Apps Script backend untuk Smart Sanyo Control - sinkronisasi otomatis via clasp",
+  "private": true,
+  "scripts": {
+    "gas:login": "npx clasp login",
+    "gas:logout": "npx clasp logout",
+    "gas:push": "npx clasp push",
+    "gas:pull": "npx clasp pull",
+    "gas:watch": "npx clasp push --watch",
+    "gas:open": "npx clasp open",
+    "gas:deploy": "node -e \"var d=require('dotenv').config(),e=d.parsed&&d.parsed.CLASP_DEPLOYMENT_ID,i=e?'-i '+e:'';require('child_process').execSync('npx clasp deploy '+i,{stdio:'inherit'})\"",
+    "gas:deploy-id": "node -e \"var d=require('dotenv').config();if(!d.parsed||!d.parsed.CLASP_DEPLOYMENT_ID){console.error('❌ CLASP_DEPLOYMENT_ID belum diisi di .env');process.exit(1)}console.log('✅ Deployment ID: '+d.parsed.CLASP_DEPLOYMENT_ID)\"",
+    "gas:watch-deploy": "node gas-watch-deploy.js"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "dotenv": "^16.4.7",
+    "chokidar": "^4.0.3"
+  }
+}
