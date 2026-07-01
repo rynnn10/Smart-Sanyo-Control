@@ -268,6 +268,24 @@ class MainActivity : ComponentActivity() {
                 .getString(SanyoService.NOTIF_HISTORY_KEY, "[]") ?: "[]"
         } catch (_: Exception) { "[]" }
 
+        // v3.4.0→v3.5.0: hapus notif terpilih (by field "time") dari SharedPrefs riwayat.
+        @JavascriptInterface
+        fun deleteNotifications(timesJson: String) {
+            try {
+                val del = HashSet<Long>()
+                val t = org.json.JSONArray(timesJson)
+                for (i in 0 until t.length()) del.add(t.getLong(i))
+                val prefs = getSharedPreferences(SanyoService.PREF_NOTIF_HISTORY, MODE_PRIVATE)
+                val cur = org.json.JSONArray(prefs.getString(SanyoService.NOTIF_HISTORY_KEY, "[]"))
+                val kept = org.json.JSONArray()
+                for (i in 0 until cur.length()) {
+                    val o = cur.getJSONObject(i)
+                    if (!del.contains(o.optLong("time"))) kept.put(o)
+                }
+                prefs.edit().putString(SanyoService.NOTIF_HISTORY_KEY, kept.toString()).apply()
+            } catch (_: Exception) {}
+        }
+
         @JavascriptInterface
         fun savePrayerTimes(json: String) {
             // Simpan ke SharedPreferences agar SanyoService bisa baca waktu salat saat background

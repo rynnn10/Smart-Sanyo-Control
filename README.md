@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 — v2.8.0 (firmware) / v3.4.0 (app Android) / v1.1.0 (web)
+> Update terakhir: Rab 01/07/2026 — v2.8.0 (firmware) / v3.5.0 (app Android) / v1.2.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -289,6 +289,13 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.5.0 (app) / v1.2.0 (web) — Rab 01/07/2026
+- **UI (Auto Mode popup)**: toggle master "Auto Mode" **dihapus** (redundan). Tiap batas jadi **kartu mandiri** — "Batas Hidup" & "Batas Mati", masing-masing punya sakelar aktif/nonaktif sendiri + slider persen sendiri. Tombol "Pengaturan Auto Mode" dihapus dari popup Pengaturan (sudah ada kartu Auto Mode di halaman utama). Pompa manual kini selalu bisa ditekan (batas otomatis tetap dijalankan ESP).
+- **UI (Info & Panduan)**: tombol "Cara Wiring Modul" → **"Info & Panduan Aplikasi"** — berisi ringkasan aplikasi, cara pakai (kontrol pompa, auto mode, jadwal, azan, notifikasi, tombol fisik), + tabel wiring lengkap.
+- **UI (Notifikasi)**: tiap notif kini punya **ceklis** → tombol "Hapus (N)" menghapus yang dipilih; "Hapus Semua" kini benar-benar menghapus (dulu cuma menandai terbaca). Native lewat `deleteNotifications()` (SharedPrefs), web lewat localStorage.
+- File berubah: `assets/index.html`, `MainActivity.kt` (bridge `deleteNotifications`), `app/build.gradle.kts` (v3.5.0/vc19), `web/mqtt-web.js` (v1.2.0), `README.md`. Self-check `web/test-mqtt-web.js` diperluas (hapus notif).
+- **Analisa kapasitas jadwal WeMos**: saat ini dibatasi `MAX_SCHEDULES = 5`. Bukan RAM yang jadi batas (5 jadwal ≈ 100 byte; ESP8266 punya puluhan KB heap bebas) — batas nyatanya konstanta itu + buffer parse `DynamicJsonDocument(1024)` (~8 jadwal) + `MQTT_MAX_PACKET_SIZE 2048` (~20 jadwal di kabel). Aman dinaikkan ke ~15–20 dengan menaikkan `MAX_SCHEDULES` + buffer parse ke ~2048 bila perlu.
 
 ### v3.4.0 (app) / v2.8.0 (firmware) — Rab 01/07/2026
 - **Baru (Firmware v2.8.0)**: tombol fisik **dwifungsi** — saat WiFi **tak terhubung** = ON/OFF pompa manual (mode darurat); saat **terhubung** = ganti layar LCD (tombol ON=maju, OFF=mundur), mengabaikan sisa waktu dwell **dan** meng-override layar prioritas azan. (Tombol di pin **D4** & **D7**; kontrol pompa saat online tetap via app/MQTT.)

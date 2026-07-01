@@ -20,8 +20,9 @@ android {
     // v3.2.1: kirim jadwal solat ke ESP (PRAYER_) untuk tampilan LCD multi-layar (firmware v2.6.0)
     // v3.3.0: sinkron jadwal solat + riwayat notifikasi lintas device via ESP (firmware v2.7.0)
     // v3.4.0: azan tahan app ditutup (AlarmManager exact + boot) + volume azan via tombol; firmware v2.8.0 tombol LCD
-    versionCode = 18
-    versionName = "3.4.0"
+    // v3.5.0: popup Auto Mode dirapikan (2 kartu batas, master toggle dihapus), modal Info & Panduan, hapus notif via ceklis
+    versionCode = 19
+    versionName = "3.5.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
