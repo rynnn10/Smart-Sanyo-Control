@@ -1,9 +1,11 @@
 package com.example
 
-// Update: Sel 01/07/2026 22:00 - v3.0.0 | Rab 01/07/2026 12:51 - v3.2.0
+// Update: Sel 01/07/2026 22:00 - v3.0.0 | Rab 01/07/2026 - v3.3.0
 // ForegroundService: MQTT monitoring latar belakang + notifikasi air + notifikasi + buzzer azan
 // v3.1.0: icon notif → water droplet, simpan histori notif ke SharedPrefs, deep link ke notif center
 // v3.2.0: suara azan (MediaPlayer, stream alarm) diputar saat waktu solat — jalan walau app tertutup
+// v3.3.0: sinkron lintas device via ESP (status MQTT "prayerTimes"+"notifLog") — ESP jadi
+//   sumber bersama, ganti deteksi level air lokal (debounce) yg dulu bisa beda antar device
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -43,10 +45,16 @@ class SanyoService : Service() {
     private var mqttClient: MqttClient? = null
     private var adzanPlayer: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
-    private var lastWaterLevel = -1
-    private var lastWaterNotif = 0L
     private var lastPrayerFired = ""
     private val prayerNames = listOf("Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya")
+    // Dedupe notifLog dari ESP vs notifikasi lokal (mis. checkPrayer() sendiri) —
+    // kunci "type_menit", in-memory saja (volatile kalau service restart, sama seperti lastPrayerFired).
+    private val notifSeen = LinkedHashSet<String>()
+    private fun seenKey(type: String, epochSec: Long) = "${type}_${epochSec / 60}"
+    private fun markSeen(key: String) {
+        notifSeen.add(key)
+        if (notifSeen.size > 40) notifSeen.remove(notifSeen.first())
+    }
 
     private val prayerRunnable = object : Runnable {
         override fun run() {
@@ -106,21 +114,40 @@ class SanyoService : Service() {
         }.start()
     }
 
+    // ESP adalah sumber bersama: status MQTT membawa "prayerTimes" (jadwal solat tersimpan)
+    // dan "notifLog" (event air kritis/penuh/solat terakhir) — semua device (App & Web)
+    // baca dari sini agar otomatis sinkron, tanpa server sendiri.
     private fun onStatus(payload: String) {
         try {
             val json = org.json.JSONObject(payload)
-            val level = json.optInt("waterLevel", -1).takeIf { it >= 0 } ?: return
-            val now = System.currentTimeMillis()
-            if (now - lastWaterNotif < 300_000) return // debounce 5 menit
-            if (level <= 10 && lastWaterLevel > 10) {
-                notify(NOTIF_WATER, "⚠️ Air Hampir Habis!", "Level air ${level}% — segera hidupkan pompa", "water_low")
-                lastWaterNotif = now
-            } else if (level >= 90 && (lastWaterLevel < 90 || lastWaterLevel < 0)) {
-                notify(NOTIF_WATER, "💧 Tangki Hampir Penuh", "Level air ${level}% — pompa akan mati otomatis", "water_high")
-                lastWaterNotif = now
+            json.optJSONObject("prayerTimes")?.let { pt ->
+                val prefs = getSharedPreferences(PREF_PRAYER, Context.MODE_PRIVATE).edit()
+                pt.keys().forEach { key -> prefs.putString(key, pt.getString(key)) }
+                prefs.apply()
             }
-            lastWaterLevel = level
+            json.optJSONArray("notifLog")?.let { mergeNotifLog(it) }
         } catch (_: Exception) {}
+    }
+
+    private fun mergeNotifLog(arr: org.json.JSONArray) {
+        for (i in 0 until arr.length()) {
+            val e = arr.optJSONObject(i) ?: continue
+            val epoch = e.optLong("t", 0L)
+            if (epoch <= 0L) continue // ESP belum sync NTP saat event ini terjadi — lewati
+            val type = e.optString("type")
+            val key = seenKey(type, epoch)
+            if (notifSeen.contains(key)) continue
+            markSeen(key)
+            val text = e.optString("text")
+            val title = when (type) {
+                "water_low"  -> "⚠️ Air Hampir Habis!"
+                "water_high" -> "💧 Tangki Hampir Penuh"
+                "prayer"     -> "🕌 Waktu Solat"
+                else -> "Notifikasi"
+            }
+            val id = if (type == "prayer") NOTIF_PRAYER else NOTIF_WATER
+            notify(id, title, text, type)
+        }
     }
 
     private fun publish(payload: String) = Thread {
@@ -143,6 +170,7 @@ class SanyoService : Service() {
             if (t == now && lastPrayerFired != "${name}_$now") {
                 lastPrayerFired = "${name}_$now"
                 notify(NOTIF_PRAYER, "🕌 Waktu $name", "Waktu $name telah tiba — $now WIB", "prayer")
+                markSeen(seenKey("prayer", System.currentTimeMillis() / 1000)) // cegah dobel saat notifLog ESP tiba
                 publish("BUZZER_5")
                 playAdzan()
                 Log.d(TAG, "Prayer: $name at $now — buzzer + azan")

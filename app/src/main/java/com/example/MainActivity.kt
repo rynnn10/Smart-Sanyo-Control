@@ -178,8 +178,9 @@ class MainActivity : ComponentActivity() {
 
     // ============================================================
     // MQTT Bridge — native Java (Paho library), all comm via MQTT
-    // Update: Sel 01/07/2026 14:00 - v2.3.0 | Sel 01/07/2026 [UPDATE] - v3.1.2
+    // Update: Sel 01/07/2026 14:00 - v2.3.0 | Rab 01/07/2026 - v3.3.0
     // v3.1.2: tambah shareApp() — salin APK ke cache & launch Android share chooser
+    // v3.3.0: jadwal solat dari status ESP (prayerTimes) ikut update UI WebView yg terbuka
     // ============================================================
     inner class MQTTBridge {
         @JavascriptInterface
@@ -199,6 +200,7 @@ class MainActivity : ComponentActivity() {
                         "if(d.ssid!==undefined) espSSIDValue=d.ssid;" +
                         "if(d.rssi!==undefined){espRssiValue=d.rssi;espQualValue=rssiToQuality(d.rssi);}" +
                         "if(d.hasSchedule!==undefined) espHasSchedule=d.hasSchedule;" +
+                        "if(d.prayerTimes!==undefined){prayerTimes=d.prayerTimes;try{localStorage.setItem('prayerTimes',JSON.stringify(d.prayerTimes));}catch(e){}if(typeof renderPrayerTimes==='function')renderPrayerTimes();}" +
                         "if(typeof markOnline==='function'){markOnline();}else{isOnline=true;}" +
                         "updateUI();" +
                         "}catch(e){console.error('MQTT:',e)} })()",

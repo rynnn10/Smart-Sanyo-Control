@@ -12,14 +12,15 @@ android {
     applicationId = "com.aistudio.smartsanyocontrol.jhfxqa"
     minSdk = 24
     targetSdk = 36
-    // Update: Sel 01/07/2026 22:30 - v3.0.0 | Rab 01/07/2026 12:51 - v3.2.0
+    // Update: Sel 01/07/2026 22:30 - v3.0.0 | Rab 01/07/2026 - v3.3.0
     // v3.1.0: hapus auto mode, notif center, deep link, icon air
     // v3.1.1: kembalikan fitur auto mode batas hidup/mati + slider ketinggian air
     // v3.1.2: tombol share APK di settings — FileProvider + Android native share chooser
     // v3.2.0: suara azan (MediaPlayer) saat waktu solat + versi website standalone (folder web/)
     // v3.2.1: kirim jadwal solat ke ESP (PRAYER_) untuk tampilan LCD multi-layar (firmware v2.6.0)
-    versionCode = 16
-    versionName = "3.2.1"
+    // v3.3.0: sinkron jadwal solat + riwayat notifikasi lintas device via ESP (firmware v2.7.0)
+    versionCode = 17
+    versionName = "3.3.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

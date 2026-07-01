@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 12:51 — v2.6.0 (firmware) / v3.2.1 (app Android) / v1.0.1 (web)
+> Update terakhir: Rab 01/07/2026 — v2.7.0 (firmware) / v3.3.0 (app Android) / v1.1.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -289,6 +289,14 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.3.0 (app) / v2.7.0 (firmware) / v1.1.0 (web) — Rab 01/07/2026
+- **Sinkron lintas device**: jadwal solat & riwayat notifikasi kini otomatis sama di App, Web, dan device manapun — tanpa server sendiri. ESP (satu-satunya yang sudah terhubung ke semua device via broker MQTT publik) jadi sumber bersama: status MQTT (`publishMqttStatus()`) sekarang membawa `prayerTimes` (jadwal tersimpan) + `notifLog` (~8 event terakhir: air kritis/penuh, waktu solat), disiarkan tiap 3 detik.
+- **Fix (Firmware)**: `MQTT_MAX_PACKET_SIZE` PubSubClient default 256 byte akan diam-diam memotong/gagal publish status yang lebih besar — dinaikkan ke 2048 (`platformio.ini`).
+- **Fix (Firmware)**: bug ArduinoJson — nilai `prayerTimes` sempat ditulis sebagai pointer mentah ke buffer stack lokal (dangling), dibungkus `String()` supaya benar-benar disalin sebelum serialize.
+- **Refactor (App)**: `SanyoService.kt` — deteksi notifikasi air kritis/penuh berbasis debounce lokal (bisa beda antar device) dihapus, diganti konsumsi `notifLog` dari ESP (dedupe via `type_menit`). Notifikasi waktu solat lokal (untuk timing audio azan) tetap jalan, ditandai "sudah dilihat" agar tidak dobel saat echo ESP tiba.
+- **Baru (Web)**: `mqtt-web.js` — web kini benar-benar punya riwayat notifikasi (sebelumnya selalu kosong, tak ada mekanisme penyimpanan sama sekali) + ikut memutar `adzan.mp3` saat entri `prayer` masuk.
+- File berubah: `src/main.cpp`, `platformio.ini` (firmware, folder PlatformIO terpisah), `SanyoService.kt`, `MainActivity.kt`, `app/build.gradle.kts` (v3.3.0/vc17), `web/mqtt-web.js`, `README.md`. Self-check baru: `notif_log_ring_check.js` (firmware), `test-mqtt-web.js` diperluas (web).
 
 ### v3.2.1 (app) / v2.6.0 (firmware) / v1.0.1 (web) — Rab 01/07/2026 12:51
 - **Baru (Firmware v2.6.0)**: LCD 16x2 **multi-layar bergilir** — (0) air+pompa rata tengah, (1) SSID+dBm+kualitas sinyal, (2) hari/tanggal + jam:menit:detik, (3) jadwal solat tersimpan (bergilir per solat). Baris >16 kolom **berjalan otomatis** (scroll wrap).
