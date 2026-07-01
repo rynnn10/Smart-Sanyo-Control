@@ -67,7 +67,7 @@ class SanyoService : Service() {
 
     // ─── MQTT ────────────────────────────────────────────────────────────────
 
-    private fun connectMqtt() = Thread {
+    private fun connectMqtt(): Unit = Thread {
         try {
             val id = "SanyoSvc_" + (100000..999999).random()
             mqttClient = MqttClient(BROKER, id, MemoryPersistence()).apply {
