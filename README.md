@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 — v2.7.0 (firmware) / v3.3.0 (app Android) / v1.1.0 (web)
+> Update terakhir: Rab 01/07/2026 — v2.7.1 (firmware) / v3.3.0 (app Android) / v1.1.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -289,6 +289,12 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v2.7.1 (firmware) — Rab 01/07/2026
+- **Baru**: durasi tampil tiap layar LCD kini per-layar (`LCD_DWELL_TICKS[]` array, `src/main.cpp` — cari komentar `>>> ATUR DI SINI`), bukan satu angka untuk semua layar.
+- **Baru**: layar jadwal solat memutar Subuh→Isya berurutan (tiap nama solat dapat jatah tampil sendiri) baru pindah ke layar lain — sebelumnya hanya 1 solat per rotasi penuh.
+- Nama solat tetap di baris atas LCD, waktu di baris bawah (sudah begitu sejak v2.6.0, dipertahankan).
+- File berubah: `src/main.cpp`. Self-check baru: `lcd_screen_advance_check.js`.
 
 ### v3.3.0 (app) / v2.7.0 (firmware) / v1.1.0 (web) — Rab 01/07/2026
 - **Sinkron lintas device**: jadwal solat & riwayat notifikasi kini otomatis sama di App, Web, dan device manapun — tanpa server sendiri. ESP (satu-satunya yang sudah terhubung ke semua device via broker MQTT publik) jadi sumber bersama: status MQTT (`publishMqttStatus()`) sekarang membawa `prayerTimes` (jadwal tersimpan) + `notifLog` (~8 event terakhir: air kritis/penuh, waktu solat), disiarkan tiap 3 detik.
