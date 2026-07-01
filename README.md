@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 — v2.8.0 (firmware) / v3.5.0 (app Android) / v1.2.0 (web)
+> Update terakhir: Rab 01/07/2026 — v2.8.1 (firmware) / v3.5.0 (app Android) / v1.2.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -56,6 +56,106 @@ Tidak ada server cloud buatan sendiri. Semua komunikasi real-time via MQTT publi
 | | (−) | GND |
 
 > Tombol menggunakan `INPUT_PULLUP` internal — tidak perlu resistor eksternal.
+
+---
+
+## Kebutuhan Daya & Rakit UPS Sendiri (Panduan Belajar)
+
+> Analisa konsumsi daya seluruh modul + kipas mini + modem WiFi, lalu rekomendasi rakit UPS DIY. Angka arus adalah tipikal pasaran — ukur sendiri untuk hasil presisi (*hardware bukan spek ideal di atas kertas*).
+
+### 1. Konsumsi Arus (rail 5V)
+
+| Modul | Arus tipikal | Arus puncak |
+|-------|-------------|-------------|
+| WeMos D1 Mini (ESP8266, WiFi ON) | 80 mA | 170 mA (burst TX) |
+| JSN-SR04T ultrasonik | 15 mA | 30 mA |
+| Relay 1ch 5V (coil aktif) | 70 mA | 75 mA |
+| LCD 1602 I2C + backlight | 30 mA | 40 mA |
+| Buzzer aktif (saat berbunyi) | ~0 | 30 mA |
+| Kipas mini 5V (5015/blower) | 150 mA | 250 mA |
+| Tombol ×2 | ~0 | ~0 |
+| **Subtotal sistem (5V)** | **~345 mA** | **~595 mA** |
+
+→ Sistem Smart Sanyo saja: **~0,35 A tipikal / ~0,6 A puncak @ 5V** (≈ 1,8–3 W).
+
+### 2. Modem WiFi — 2 skenario
+
+| Skenario | Modem | Konsumsi | Total sistem + modem |
+|----------|-------|----------|----------------------|
+| **A** | MiFi / modem USB **5V** | ~1 A (5 W) | 5V ~1,4 A (≈ **7–8 W**) — semua 1 rail 5V |
+| **B** | Router / ONT rumah **12V** | ~1 A (12 W) | 5V (1,75 W) + 12V (12 W) ≈ **14–15 W** — dua rail |
+
+### 3. Rekomendasi Adaptor (tanpa UPS)
+
+- **Skenario A:** satu adaptor **5V 3A (15W)** cukup untuk semua (margin >2×, aman lonjakan + charging).
+- **Skenario B:** adaptor **5V 2A** untuk sistem + adaptor asli modem **12V 1A**; atau satu **12V 3A** + **buck 12→5V 3A**.
+
+### 4. Rakit UPS DIY
+
+Prinsip UPS: **baterai + charger + auto-switchover** — saat PLN mati, beban lanjut dari baterai tanpa putus.
+
+#### Skenario A — UPS 5V (termudah & termurah, semua beban 5V)
+
+Pakai **modul UPS 18650** jadi (TP4056 + boost 5V + proteksi + pass-through) — tidak perlu solder rumit.
+
+| Alat/Bahan | Jumlah | Estimasi (Rp) |
+|-----------|--------|---------------|
+| Modul UPS 5V 18650 (charge+boost 5V/2A, pass-through) | 1 | 25.000–50.000 |
+| Baterai 18650 2500–3000 mAh | 2 (paralel) | 60.000–120.000 |
+| Holder 18650 | 2 | 10.000 |
+| Adaptor input 5V 3A (charger) | 1 | 35.000–50.000 |
+| Fuse 3A + holder, kabel, box | — | 25.000 |
+| **Total** | | **±150.000–255.000** |
+
+**Estimasi backup:** 2×2500 mAh @3,7V ≈ 18,5 Wh, terpakai ~80% × efisiensi boost ~85% ≈ **12,6 Wh**.
+- Beban 7 W (sistem + modem 5V + kipas) → **±1,8 jam**
+- Sistem Sanyo saja ~2,5 W → **±5 jam**
+- Mau lebih lama? Tambah sel paralel (tiap 18650 ≈ +2,5 jam untuk beban 2,5 W).
+
+**Wiring (skenario A):**
+```
+[Adaptor 5V 3A] ── IN+/IN−  ┐
+[Pack 18650]    ── B+/B−     ├── Modul UPS 5V
+                             └── OUT 5V ──► rail 5V bersama:
+   +5V → WeMos 5V(VIN), Relay VCC, LCD VCC, JSN VCC, Kipas +, Buzzer +
+   GND → GND semua modul (common ground)
+```
+PLN nyala: adaptor suplai beban + cas baterai. PLN mati: modul auto-switch ke baterai, beban tak putus.
+
+#### Skenario B — UPS 12V + 5V (modem router 12V)
+
+| Alat/Bahan | Jumlah | Estimasi (Rp) |
+|-----------|--------|---------------|
+| Baterai 18650 2500–3000 mAh | 6 (3S2P) / 9 (3S3P) | 180.000–540.000 |
+| BMS 3S 20–40A (proteksi + balance) | 1 | 15.000–30.000 |
+| Charger 12,6V (TP5100 mode 3S / adaptor 12,6V) | 1 | 25.000–60.000 |
+| Buck 12→5V 3A (MP1584 / LM2596) | 1 | 10.000–20.000 |
+| Modul auto-switchover DC (mini-UPS / relay+diode) | 1 | 30.000–80.000 |
+| Holder/spot-weld, fuse 5A, box, kabel | — | 50.000 |
+| **Total** | | **±350.000–800.000** |
+
+**Estimasi backup:** 3S2P (6 sel) ≈ 55 Wh (usable ~40 Wh); beban ~14 W → **±2,8 jam**. 3S3P (9 sel) ≈ 83 Wh (usable ~60 Wh) → **±4 jam**.
+
+**Wiring (skenario B):**
+```
+[Adaptor 12,6V] ──► Charger/BMS (charge in)
+[Pack 3S]  ── B−,B1,B2,B+ ──► BMS ──► P+/P− (output terproteksi)
+P+ (≈11–12,6V) ──► Modul auto-switchover ──► OUT 12V:
+     ├──► Modem router (12V)
+     └──► Buck 12→5V ──► rail 5V sistem (WeMos, Relay, LCD, JSN, Kipas, Buzzer)
+GND semua disatukan (common ground)
+```
+
+### 5. Keselamatan (WAJIB, jangan dilewati)
+
+- **BMS wajib** untuk pack Li-ion — cegah over-charge / over-discharge / short. Jangan pakai 18650 tanpa proteksi.
+- Pasang **fuse** di jalur baterai (5V: 3A; 12V: 5A).
+- **Jangan campur** sel beda kapasitas/merk/umur dalam satu pack.
+- Arus charge ≤ **0,5C** dari kapasitas pack (mis. pack 5000 mAh → charge ≤ 2,5A).
+- 18650 bisa terbakar bila short/tertusuk → beri **box tahan panas**, jauhkan dari air (penting di proyek pompa).
+- Samakan **ground** (common GND) antara adaptor, UPS, dan semua modul.
+
+> ⚠️ Estimasi budget = harga pasar Indonesia (Tokopedia/Shopee, 2026) dan bisa berubah. Runtime nyata lebih pendek dari teori (efisiensi konverter, umur sel, suhu).
 
 ---
 
@@ -289,6 +389,10 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v2.8.1 (firmware) — Rab 01/07/2026
+- **Kapasitas jadwal 5 → 20** (`MAX_SCHEDULES`). Buffer parse JSON `1024 → 8192` (20 jadwal ≈ 5 KB di ArduinoJson) + `MQTT_MAX_PACKET_SIZE 2048 → 3072` (payload 20 jadwal ≈ 1,55 KB). RAM aman — 20 jadwal ≈ 400 byte, heap ESP8266 ~40 KB bebas.
+- **Baru di README**: analisa kebutuhan daya seluruh modul + kipas mini + modem WiFi, rekomendasi voltase/adaptor, dan panduan rakit **UPS DIY** (BOM budget + wiring + keselamatan).
 
 ### v3.5.0 (app) / v1.2.0 (web) — Rab 01/07/2026
 - **UI (Auto Mode popup)**: toggle master "Auto Mode" **dihapus** (redundan). Tiap batas jadi **kartu mandiri** — "Batas Hidup" & "Batas Mati", masing-masing punya sakelar aktif/nonaktif sendiri + slider persen sendiri. Tombol "Pengaturan Auto Mode" dihapus dari popup Pengaturan (sudah ada kartu Auto Mode di halaman utama). Pompa manual kini selalu bisa ditekan (batas otomatis tetap dijalankan ESP).
