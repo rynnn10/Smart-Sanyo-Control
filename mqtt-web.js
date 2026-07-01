@@ -1,8 +1,10 @@
 // ============================================================
 //  Smart Sanyo Control — Web MQTT shim (versi website)
-//  Update: Rab 01/07/2026 12:51 - web v1.0.3
+//  Update: Rab 01/07/2026 - web v1.1.0
 //  Meniru kontrak native `MqttAndroid` (MainActivity.kt) pakai mqtt.js over WSS,
 //  supaya index.html yang sama jalan di browser tanpa diubah.
+//  v1.1.0: sinkron jadwal solat + riwayat notifikasi lintas device — ESP jadi sumber
+//    bersama via status MQTT ("prayerTimes"+"notifLog"), sama seperti SanyoService.kt.
 // ============================================================
 (function () {
   var BROKER        = 'wss://broker.emqx.io:8084/mqtt'; // ponytail: WSS publik EMQX; ganti kalau pindah broker
@@ -12,6 +14,42 @@
 
   function pub(payload) {
     try { if (client && client.connected) client.publish(TOPIC_CONTROL, payload); } catch (e) {}
+  }
+
+  // ESP siarkan notifLog (~8 event terakhir) & prayerTimes di status yg sama — dedupe
+  // via (type, menit) sama persis pola SanyoService.kt, tulis ke webNotifHistory yg
+  // sudah dibaca renderNotifList()/updateNotifBadge() (index.html) tanpa perlu ubah UI.
+  function seenKey(type, epochSec) { return type + '_' + Math.floor(epochSec / 60); }
+  function getSeenSet() {
+    try { return new Set(JSON.parse(localStorage.getItem('webNotifSeenKeys') || '[]')); } catch (e) { return new Set(); }
+  }
+  function saveSeenSet(s) {
+    var a = Array.from(s);
+    if (a.length > 40) a = a.slice(a.length - 40);
+    try { localStorage.setItem('webNotifSeenKeys', JSON.stringify(a)); } catch (e) {}
+  }
+  function mergeNotifLog(arr) {
+    if (!Array.isArray(arr) || !arr.length) return;
+    var seen = getSeenSet();
+    var hist; try { hist = JSON.parse(localStorage.getItem('webNotifHistory') || '[]'); } catch (e) { hist = []; }
+    var changed = false;
+    arr.forEach(function (e) {
+      if (!e || !e.t) return; // t=0 -> ESP belum sync NTP saat event ini, lewati
+      var key = seenKey(e.type, e.t);
+      if (seen.has(key)) return;
+      seen.add(key);
+      var title = e.type === 'water_low' ? '⚠️ Air Hampir Habis!' :
+                  e.type === 'water_high' ? '💧 Tangki Hampir Penuh' :
+                  e.type === 'prayer' ? '🕌 Waktu Solat' : 'Notifikasi';
+      hist.push({ title: title, text: e.text, type: e.type, time: e.t * 1000 });
+      changed = true;
+      if (e.type === 'prayer' && typeof playAdzanWeb === 'function') playAdzanWeb();
+    });
+    if (!changed) return;
+    if (hist.length > 30) hist = hist.slice(hist.length - 30);
+    try { localStorage.setItem('webNotifHistory', JSON.stringify(hist)); } catch (e) {}
+    saveSeenSet(seen);
+    if (typeof updateNotifBadge === 'function') updateNotifBadge();
   }
 
   // index.html mendeklarasikan currentWaterLevel dkk pakai `let` di top-level <script> —
@@ -31,6 +69,12 @@
       if (d.ssid           !== undefined) espSSIDValue = d.ssid;
       if (d.rssi           !== undefined) { espRssiValue = d.rssi; if (typeof rssiToQuality === 'function') espQualValue = rssiToQuality(d.rssi); }
       if (d.hasSchedule    !== undefined) espHasSchedule = d.hasSchedule;
+      if (d.prayerTimes    !== undefined) {
+        prayerTimes = d.prayerTimes;
+        try { localStorage.setItem('prayerTimes', JSON.stringify(d.prayerTimes)); } catch (e) {}
+        if (typeof renderPrayerTimes === 'function') renderPrayerTimes();
+      }
+      if (d.notifLog !== undefined) mergeNotifLog(d.notifLog);
       if (typeof markOnline === 'function') markOnline(); else isOnline = true;
       if (typeof updateUI === 'function') updateUI();
     } catch (e) { console.error('MQTT web:', e); }
@@ -70,6 +114,6 @@
   // App inject versi/timestamp via onPageFinished; di web set sendiri.
   document.addEventListener('DOMContentLoaded', function () {
     var vn = document.getElementById('appVersion');    if (vn) vn.innerHTML  = 'web 1.0.1';
-    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 12:51 - web v1.0.3';
+    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 12:51 - web v1.1.0';
   });
 })();

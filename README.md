@@ -2,7 +2,14 @@
 
 Versi web dari aplikasi Android, **UI sama persis** (dibangkitkan dari `app/src/main/assets/index.html`), tapi MQTT lewat **WebSocket (WSS)** langsung dari browser — bukan native bridge.
 
-> Update terakhir: Rab 01/07/2026 — web v1.0.3
+> Update terakhir: Rab 01/07/2026 — web v1.1.0
+
+## Sinkron lintas device
+Jadwal solat & riwayat notifikasi sinkron otomatis di App + Web + device manapun — bukan lewat
+server sendiri, tapi lewat ESP (satu-satunya yang sudah terhubung ke semua device via broker MQTT
+publik). ESP menyiarkan `prayerTimes` (jadwal tersimpan) + `notifLog` (~8 event terakhir: air
+kritis/penuh, waktu solat) di status MQTT tiap 3 detik; App & Web tinggal baca & dedupe via
+(type, menit). Lihat `mqtt-web.js` (`mergeNotifLog`) dan `SanyoService.kt` (`mergeNotifLog`) untuk detail.
 
 ## Isi
 | File | Fungsi |
