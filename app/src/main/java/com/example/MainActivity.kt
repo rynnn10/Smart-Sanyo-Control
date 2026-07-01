@@ -1,12 +1,15 @@
 package com.example
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup
+import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -38,8 +41,8 @@ import androidx.core.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.Manifest
 
-// Update: Sel 01/07/2026 14:00 - v2.3.0
-// Tambah sendAutoOnEnabled (sebelumnya hilang dari bridge), handle hasSchedule dari ESP
+// Update: Sel 01/07/2026 22:00 - v3.0.0
+// Tambah: SanyoService (background notif), sendBuzzer, savePrayerTimes, geolocation WebView
 class MainActivity : ComponentActivity() {
 
     private var mqttBridge: MqttBridge? = null
@@ -57,6 +60,17 @@ class MainActivity : ComponentActivity() {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
             }
         }
+        // Izin lokasi (untuk jadwal salat GPS)
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ), 1002)
+        }
+        // Mulai SanyoService (background MQTT + notifikasi)
+        val svcIntent = Intent(this, SanyoService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(svcIntent)
+        else startService(svcIntent)
 
 
         setContent {
@@ -107,7 +121,12 @@ class MainActivity : ComponentActivity() {
                                 layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                                 setBackgroundColor(android.graphics.Color.parseColor("#05070f"))
 
-                                webViewClient = object : WebViewClient() {
+                                webChromeClient = object : WebChromeClient() {
+                    override fun onGeolocationPermissionsShowPrompt(
+                        origin: String?, callback: GeolocationPermissions.Callback?
+                    ) { callback?.invoke(origin, true, false) }
+                }
+                webViewClient = object : WebViewClient() {
                                     override fun onPageFinished(view: WebView, url: String) {
                                         super.onPageFinished(view, url)
                                         val versionName = BuildConfig.VERSION_NAME
@@ -134,6 +153,7 @@ class MainActivity : ComponentActivity() {
                                     domStorageEnabled = true
                                     allowFileAccess = true
                                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                                    setGeolocationEnabled(true)
                                 }
 
                                  webViewRef = this
@@ -198,6 +218,20 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun sendAutoOnEnabled(enabled: Boolean) { mqttBridge?.sendAutoOnEnabled(enabled) }
+
+        @JavascriptInterface
+        fun sendBuzzer(count: Int) { mqttBridge?.sendBuzzer(count) }
+
+        @JavascriptInterface
+        fun savePrayerTimes(json: String) {
+            // Simpan ke SharedPreferences agar SanyoService bisa baca waktu salat saat background
+            try {
+                val prefs = getSharedPreferences(SanyoService.PREF_PRAYER, MODE_PRIVATE).edit()
+                val obj = org.json.JSONObject(json)
+                obj.keys().forEach { key -> prefs.putString(key, obj.getString(key)) }
+                prefs.apply()
+            } catch (_: Exception) {}
+        }
 
         @JavascriptInterface
         fun disconnect() { mqttBridge?.disconnect() }

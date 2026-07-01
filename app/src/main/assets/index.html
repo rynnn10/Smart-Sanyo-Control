@@ -31,6 +31,45 @@
             --danger-color: #ef4444;
             --off-color: #64748b;
         }
+        /* ─── TEMA SUNSET ───────────────────────── */
+        [data-theme="sunset"] {
+            --accent-cyan: #f97316; --accent-blue: #fb923c; --accent-purple: #ef4444;
+            --success-color: #f97316; --glass-border-focused: rgba(249,115,22,0.35);
+            --primary-glow: radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(251,146,60,0) 70%);
+        }
+        /* ─── TEMA FOREST ───────────────────────── */
+        [data-theme="forest"] {
+            --accent-cyan: #10b981; --accent-blue: #34d399; --accent-purple: #059669;
+            --success-color: #34d399; --glass-border-focused: rgba(16,185,129,0.35);
+            --primary-glow: radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(52,211,153,0) 70%);
+        }
+        /* ─── TEMA PURPLE NIGHT ─────────────────── */
+        [data-theme="purple"] {
+            --accent-cyan: #a855f7; --accent-blue: #8b5cf6; --accent-purple: #7c3aed;
+            --success-color: #c084fc; --glass-border-focused: rgba(168,85,247,0.35);
+            --primary-glow: radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(139,92,246,0) 70%);
+        }
+        /* ─── SPLASH EFEK AIR TUMPAH ────────────── */
+        @keyframes splashDrop {
+            0%   { transform: translateY(-20px) scale(0.5); opacity: 0.9; }
+            60%  { opacity: 0.6; }
+            100% { transform: translateY(110vh) scale(1.8); opacity: 0; }
+        }
+        #splashOverlay { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9998; overflow:hidden; display:none; }
+        .splash-drop { position:absolute; border-radius:50%; background:rgba(0,242,254,0.65); animation: splashDrop 1.4s ease-in forwards; }
+        /* ─── JAM REAL-TIME ─────────────────────── */
+        #realtimeClock { text-align:center; padding:8px 0 2px; font-size:0.82rem; color:var(--text-secondary); border-top: 1px solid rgba(255,255,255,0.06); margin-top:8px; }
+        #clockTime { font-weight:800; font-size:1.05rem; color:var(--text-primary); letter-spacing:1px; }
+        #clockDate { color:var(--accent-cyan); font-weight:600; }
+        /* ─── PRAYER TIME CARD ──────────────────── */
+        .prayer-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); gap:8px; }
+        .prayer-row:last-child { border-bottom:none; }
+        .prayer-name { font-size:0.9rem; font-weight:600; min-width:60px; }
+        .prayer-time-input { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:white; border-radius:8px; padding:6px 10px; font-size:0.88rem; width:100px; }
+        .prayer-next-badge { font-size:0.65rem; color:var(--accent-cyan); background:rgba(0,242,254,0.12); padding:2px 8px; border-radius:10px; white-space:nowrap; }
+        /* ─── THEME BUTTONS ─────────────────────── */
+        .theme-btn { padding:10px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.3s; text-align:center; }
+        .theme-btn.active { border-color:var(--accent-cyan); background:rgba(0,242,254,0.1); color:var(--accent-cyan); }
 
         * {
             box-sizing: border-box;
@@ -889,6 +928,9 @@
                     </div>
                 </div>
             </div>
+            <div id="realtimeClock">
+                <span id="clockTime">00:00:00</span>&nbsp;|&nbsp;<span id="clockDate">Selasa, 1 Juli 2026</span>
+            </div>
         </div>
 
         <!-- Water Level Circle -->
@@ -900,28 +942,30 @@
             </div>
         </div>
 
-        <!-- Status Card -->
-        <div class="glass-card status-card">
-            <div class="status-info">
-                <div class="status-icon-wrapper" id="pumpIconWrapper"><i class="fa-solid fa-soap"></i></div>
-                <div class="status-text-container"><span class="status-text-label">Sanyo Status</span><span
-                        class="status-value" id="pumpLabelText">OFFLINE MODE</span></div>
+        <!-- Status Card (with pump toggle merged) -->
+        <div class="glass-card status-card" style="flex-direction:column; gap:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <div class="status-info">
+                    <div class="status-icon-wrapper" id="pumpIconWrapper"><i class="fa-solid fa-soap"></i></div>
+                    <div class="status-text-container"><span class="status-text-label">Sanyo Status</span><span
+                            class="status-value" id="pumpLabelText">OFFLINE MODE</span></div>
+                </div>
+                <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
             </div>
-            <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
+            <button class="manual-btn" id="manualPumpBtn" style="margin:0; width:100%;"><i class="fa-solid fa-power-off"></i><span
+                    id="manualPumpBtnLabel">Nyalakan Saklar</span></button>
         </div>
 
-        <!-- Controls -->
-        <div class="glass-card control-section">
-            <div class="control-row">
+        <!-- Auto Mode Button (opens modal) -->
+        <div class="glass-card control-section" style="cursor:pointer;" id="openAutoModeBtn">
+            <div class="control-row" style="pointer-events:none;">
                 <div class="control-label">
                     <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
                     <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span
-                            class="control-desc">Pompa otomatis menyala saat air kritis</span></div>
+                            class="control-desc" id="autoModeStatusDesc">Ketuk untuk buka pengaturan otomatis</span></div>
                 </div>
-                <label class="switch"><input type="checkbox" id="autoModeToggle"><span class="slider"></span></label>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-secondary); font-size:0.85rem;"></i>
             </div>
-            <button class="manual-btn" id="manualPumpBtn"><i class="fa-solid fa-power-off"></i><span
-                    id="manualPumpBtnLabel">Nyalakan Saklar</span></button>
         </div>
 
         <!-- Scheduling -->
@@ -936,6 +980,15 @@
             <div class="scheduler-list disabled" id="schedulerList"></div>
             <button class="add-schedule-btn disabled" id="addScheduleBtn"><i class="fa-solid fa-plus"></i> Tambah Jadwal
                 Baru</button>
+        </div>
+
+        <!-- Jadwal Solat -->
+        <div class="glass-card scheduler-card">
+            <div class="scheduler-header">
+                <div class="scheduler-title"><i class="fa-solid fa-mosque"></i> Jadwal Shalat</div>
+                <button id="fetchPrayerBtn" style="background:rgba(0,242,254,0.1); border:1px solid rgba(0,242,254,0.3); color:var(--accent-cyan); border-radius:10px; padding:6px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> Auto Lokasi</button>
+            </div>
+            <div id="prayerList"></div>
         </div>
 
         <!-- Dev Panel -->
@@ -954,6 +1007,9 @@
                     class="fa-regular fa-calendar-check"></i> Update: <span id="buildTimestamp">memuat...</span></span>
         </div>
     </div>
+
+    <!-- Splash overlay -->
+    <div id="splashOverlay"></div>
 
     <!-- Settings Modal -->
     <div class="code-modal" id="settingsModal">
@@ -982,64 +1038,72 @@
                         <option value="threejs2" style="background: #0f172a; color: white;">Sihir Partikel v2</option>
                     </select>
                 </div>
-                <!-- Batas Mati Otomatis -->
-                <div class="control-row"
-                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet"
-                                style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis (Auto
-                            ON)</span><span class="control-desc">Sanyo hidup otomatis saat air mencapai level ini
-                            (kritis)</span></div>
-                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
-                        <input type="range" id="autoOnLevelInput" min="5" max="50" value="20"
-                            style="flex: 1; accent-color: var(--accent-cyan); height: 4px; cursor: pointer;">
-                        <span id="autoOnLevelDisplay"
-                            style="color: var(--accent-cyan); font-weight: 700; min-width: 42px; text-align: right; font-size: 1rem;">20%</span>
+                <!-- Tema Aplikasi -->
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-palette" style="color:var(--accent-cyan);margin-right:6px;"></i>Tema Aplikasi</span><span class="control-desc">Pilih warna tampilan</span></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
+                        <button class="theme-btn active" data-theme="ocean" id="themeOcean">🌊 Ocean</button>
+                        <button class="theme-btn" data-theme="sunset" id="themeSunset">🌅 Sunset</button>
+                        <button class="theme-btn" data-theme="forest" id="themeForest">🌿 Forest</button>
+                        <button class="theme-btn" data-theme="purple" id="themePurple">🔮 Purple Night</button>
                     </div>
                 </div>
-                <div class="control-row"
-                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet"
-                                style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis (Auto
-                            OFF)</span><span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
-                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95"
-                            style="flex: 1; accent-color: var(--accent-cyan); height: 4px; cursor: pointer;">
-                        <span id="autoOffLevelDisplay"
-                            style="color: var(--accent-cyan); font-weight: 700; min-width: 42px; text-align: right; font-size: 1rem;">95%</span>
-                    </div>
-                </div>
-                <div class="control-row"
-                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on"
-                                style="color:var(--danger-color);margin-right:6px;"></i>Aktifkan Batas Hidup
-                            Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan hidup otomatis
-                            meski air kritis</span></div>
-                    <div
-                        style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><span
-                                id="autoOnStateLabel">Aktif</span></span>
-                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span
-                                class="slider"></span></label>
-                    </div>
-                </div>
-                <div class="control-row"
-                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on"
-                                style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati
-                            Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis
-                            meski air penuh</span></div>
-                    <div
-                        style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><span
-                                id="autoOffStateLabel">Aktif</span></span>
-                        <label class="switch"><input type="checkbox" id="autoOffEnabledToggle" checked><span
-                                class="slider"></span></label>
-                    </div>
-                </div>
+                <!-- Tombol buka Auto Mode -->
+                <button id="openAutoModeFromSettings"
+                    style="width:100%; margin-top:16px; padding:14px; border-radius:12px; background:rgba(79,147,254,0.1); border:1px solid rgba(79,147,254,0.3); color:var(--accent-blue); font-size:0.9rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
+                    <span><i class="fa-solid fa-robot" style="margin-right:8px;"></i>Pengaturan Auto Mode</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
                 <button id="wiringGuideBtn"
                     style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;"><i
                         class="fa-solid fa-diagram-project"></i> Cara Wiring Modul</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Mode Modal -->
+    <div class="code-modal" id="autoModeModal">
+        <div class="code-container" style="max-width:400px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-robot"></i> Pengaturan Auto Mode</h3>
+                <button class="close-btn" id="closeAutoModeBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:20px; overflow-y:auto; max-height:calc(80vh - 60px);">
+                <div class="control-row">
+                    <div class="control-label">
+                        <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+                        <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span class="control-desc">Pompa otomatis menyala saat air kritis</span></div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="autoModeToggle"><span class="slider"></span></label>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis (Auto ON)</span><span class="control-desc">Sanyo hidup otomatis saat air mencapai level ini (kritis)</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                        <input type="range" id="autoOnLevelInput" min="5" max="50" value="20" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
+                        <span id="autoOnLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">20%</span>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis (Auto OFF)</span><span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
+                        <span id="autoOffLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">95%</span>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--danger-color);margin-right:6px;"></i>Aktifkan Batas Hidup Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan hidup otomatis meski air kritis</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
+                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOnStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis meski air penuh</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
+                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOffStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOffEnabledToggle" checked><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2143,6 +2207,8 @@
 
             waterLevelSlider.value = currentWaterLevel;
             devPanel.style.display = isDemoMode ? 'block' : 'none';
+            const amd = document.getElementById('autoModeStatusDesc');
+            if (amd) amd.innerText = autoMode ? 'Auto Mode AKTIF — pompa terkontrol otomatis' : 'Ketuk untuk buka pengaturan otomatis';
             // Update ESP schedule badge
             const espSchedBadge = document.getElementById('espSchedBadge');
             if (espSchedBadge) {
@@ -2421,6 +2487,137 @@
         showCodeBtn.addEventListener('click', () => codeModal.classList.add('show'));
         closeCodeBtn.addEventListener('click', () => codeModal.classList.remove('show'));
 
+        // ─── AUTO MODE MODAL ──────────────────────────────────────
+        const autoModeModal = document.getElementById('autoModeModal');
+        document.getElementById('openAutoModeBtn').addEventListener('click', () => autoModeModal.classList.add('show'));
+        document.getElementById('openAutoModeFromSettings').addEventListener('click', () => { settingsModal.classList.remove('show'); autoModeModal.classList.add('show'); });
+        document.getElementById('closeAutoModeBtn').addEventListener('click', () => autoModeModal.classList.remove('show'));
+
+        // ─── THEME SWITCHER ───────────────────────────────────────
+        function applyTheme(t) {
+            document.body.setAttribute('data-theme', t === 'ocean' ? '' : t);
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+            localStorage.setItem('appTheme', t);
+        }
+        document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+        applyTheme(localStorage.getItem('appTheme') || 'ocean');
+
+        // ─── REAL-TIME CLOCK ──────────────────────────────────────
+        var DAYS_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        function updateClock() {
+            var d = new Date();
+            var h = String(d.getHours()).padStart(2,'0');
+            var m = String(d.getMinutes()).padStart(2,'0');
+            var s = String(d.getSeconds()).padStart(2,'0');
+            document.getElementById('clockTime').innerText = h+':'+m+':'+s;
+            document.getElementById('clockDate').innerText = DAYS_ID[d.getDay()]+', '+d.getDate()+' '+MONTHS_ID[d.getMonth()]+' '+d.getFullYear();
+            checkPrayerTime(h+':'+m);
+        }
+        setInterval(updateClock, 1000);
+
+        // ─── JADWAL SHALAT ────────────────────────────────────────
+        var PRAYER_NAMES = ['Subuh','Dzuhur','Ashar','Maghrib','Isya'];
+        var prayerTimes = JSON.parse(localStorage.getItem('prayerTimes') || '{}');
+        var lastPrayerFiredJS = '';
+
+        function renderPrayerTimes() {
+            var list = document.getElementById('prayerList');
+            if (!list) return;
+            var now = new Date(); var hh = String(now.getHours()).padStart(2,'0'); var mm = String(now.getMinutes()).padStart(2,'0'); var nowStr = hh+':'+mm;
+            // find next prayer
+            var nextPrayer = '';
+            for (var i = 0; i < PRAYER_NAMES.length; i++) {
+                var t = prayerTimes[PRAYER_NAMES[i]] || '';
+                if (t && t > nowStr) { nextPrayer = PRAYER_NAMES[i]; break; }
+            }
+            list.innerHTML = PRAYER_NAMES.map(function(n) {
+                var val = prayerTimes[n] || '--:--';
+                var badge = n === nextPrayer ? '<span class="prayer-next-badge">Berikutnya</span>' : '';
+                return '<div class="prayer-row">'+
+                    '<span class="prayer-name">'+n+'</span>'+
+                    '<input type="time" class="prayer-time-input" value="'+val+'" data-prayer="'+n+'" onchange="updatePrayerTime(this.dataset.prayer, this.value)">'+
+                    badge+
+                '</div>';
+            }).join('');
+        }
+
+        function updatePrayerTime(name, val) {
+            prayerTimes[name] = val;
+            localStorage.setItem('prayerTimes', JSON.stringify(prayerTimes));
+            renderPrayerTimes();
+            try { MqttAndroid.savePrayerTimes(JSON.stringify(prayerTimes)); } catch(e) {}
+        }
+
+        function fetchPrayerTimes() {
+            if (!navigator.geolocation) { showNotification('GPS tidak tersedia', 'fa-location-dot'); return; }
+            showNotification('Mendapatkan lokasi...', 'fa-location-dot');
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude.toFixed(4);
+                var lon = pos.coords.longitude.toFixed(4);
+                var today = new Date();
+                var url = 'https://api.aladhan.com/v1/timings/'+
+                    today.getDate()+'-'+(today.getMonth()+1)+'-'+today.getFullYear()+
+                    '?latitude='+lat+'&longitude='+lon+'&method=11';
+                fetch(url).then(function(r){ return r.json(); }).then(function(d){
+                    var t = d.data.timings;
+                    prayerTimes = { Subuh: t.Fajr.substring(0,5), Dzuhur: t.Dhuhr.substring(0,5), Ashar: t.Asr.substring(0,5), Maghrib: t.Maghrib.substring(0,5), Isya: t.Isha.substring(0,5) };
+                    localStorage.setItem('prayerTimes', JSON.stringify(prayerTimes));
+                    renderPrayerTimes();
+                    try { MqttAndroid.savePrayerTimes(JSON.stringify(prayerTimes)); } catch(e) {}
+                    showNotification('Jadwal shalat diperbarui!', 'fa-mosque');
+                }).catch(function(){ showNotification('Gagal ambil jadwal shalat', 'fa-triangle-exclamation'); });
+            }, function(){ showNotification('Izin GPS ditolak', 'fa-location-dot'); });
+        }
+
+        function checkPrayerTime(nowStr) {
+            PRAYER_NAMES.forEach(function(n) {
+                var t = prayerTimes[n];
+                if (t && t === nowStr && lastPrayerFiredJS !== n+'_'+nowStr) {
+                    lastPrayerFiredJS = n+'_'+nowStr;
+                    showNotification('Waktu '+n+' — '+nowStr+' WIB', 'fa-mosque');
+                    try { MqttAndroid.sendBuzzer(5); } catch(e) {}
+                }
+            });
+        }
+
+        document.getElementById('fetchPrayerBtn').addEventListener('click', fetchPrayerTimes);
+
+        // ─── SPLASH EFEK AIR TUMPAH ───────────────────────────────
+        var splashOverlay = document.getElementById('splashOverlay');
+        var splashTimeout;
+        function triggerSplash() {
+            splashOverlay.style.display = 'block';
+            splashOverlay.innerHTML = '';
+            for (var i = 0; i < 30; i++) {
+                (function(i){ setTimeout(function(){
+                    var drop = document.createElement('div');
+                    drop.className = 'splash-drop';
+                    var size = 8 + Math.random()*18;
+                    drop.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(Math.random()*100)+'%;top:-20px;animation-delay:'+(Math.random()*0.5)+'s;animation-duration:'+(0.8+Math.random()*0.8)+'s;';
+                    splashOverlay.appendChild(drop);
+                }, i*30); })(i);
+            }
+            clearTimeout(splashTimeout);
+            splashTimeout = setTimeout(function(){ splashOverlay.style.display='none'; splashOverlay.innerHTML=''; }, 3000);
+        }
+
+        // Shake detection
+        var shakeThreshold = 25, lastX, lastY, lastZ, lastShakeTime = 0;
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', function(e) {
+                var a = e.acceleration;
+                if (!a) return;
+                var now = Date.now();
+                if (now - lastShakeTime < 1500) return;
+                if (lastX !== undefined) {
+                    var dx = Math.abs(a.x - lastX), dy = Math.abs(a.y - lastY), dz = Math.abs(a.z - lastZ);
+                    if (dx+dy+dz > shakeThreshold) { lastShakeTime = now; triggerSplash(); showNotification('Splash!', 'fa-water'); }
+                }
+                lastX = a.x; lastY = a.y; lastZ = a.z;
+            });
+        }
+
         function downloadCodeAsFile(elementId, fileName) {
             const codeContent = document.querySelector(`#${elementId} .code-content`).innerText;
             const blob = new Blob([codeContent], { type: 'text/plain' });
@@ -2434,14 +2631,25 @@
         // ==========================================
         // INIT
         // ==========================================
+        // Trigger splash when water reaches 100%
+        var prevWaterLevel = 0;
+        var _origUpdateUI = updateUI;
+        updateUI = function() {
+            _origUpdateUI();
+            if (currentWaterLevel >= 100 && prevWaterLevel < 100) triggerSplash();
+            prevWaterLevel = currentWaterLevel;
+        };
+
         window.onload = function () {
             try { createDecorativeBubbles(); } catch (e) { }
             renderSchedules();
+            renderPrayerTimes();
+            updateClock();
             updateUI();
             // ponytail: panggil native Android MQTT — JS WebSocket dihapus, semua via MqttAndroid bridge
             try { if (typeof MqttAndroid !== 'undefined') MqttAndroid.connect(); } catch (e) { console.error('MqttAndroid not ready', e); }
-            // Update: Sel 01/07/2026 20:00 - v2.4.0
-            document.getElementById('buildTimestamp').innerText = '01/07/2026 20:00 - v2.4.0';
+            // Update: Sel 01/07/2026 22:30 - v3.0.0
+            document.getElementById('buildTimestamp').innerText = '01/07/2026 22:30 - v3.0.0';
         };
     </script>
 </body>

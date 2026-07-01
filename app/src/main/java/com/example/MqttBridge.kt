@@ -9,8 +9,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.json.JSONObject
 
-// Update: 07/01/2026 05:29 - v2.2.0
-// Tambah sendAutoOnEnabled untuk toggle auto-on terpisah (ONENABLED_ / OFFENABLED_)
+// Update: Sel 01/07/2026 22:00 - v3.0.0
+// Tambah sendBuzzer(count) untuk trigger buzzer ESP via MQTT BUZZER_N
 class MqttBridge(private val onMessageCallback: (String) -> Unit) {
     companion object {
         private const val TAG = "MqttBridge"
@@ -127,6 +127,16 @@ class MqttBridge(private val onMessageCallback: (String) -> Unit) {
             Log.d(TAG, "MQTT sent schedule")
         } catch (e: Exception) {
             Log.e(TAG, "MQTT schedule send error: ${e.message}")
+        }
+    }
+
+    fun sendBuzzer(count: Int) {
+        try {
+            val msg = MqttMessage("BUZZER_$count".toByteArray()).apply { qos = 0 }
+            client?.publish(TOPIC_CONTROL, msg)
+            Log.d(TAG, "MQTT sent buzzer: BUZZER_$count")
+        } catch (e: Exception) {
+            Log.e(TAG, "MQTT buzzer error: ${e.message}")
         }
     }
 

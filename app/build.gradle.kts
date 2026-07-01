@@ -12,10 +12,10 @@ android {
     applicationId = "com.aistudio.smartsanyocontrol.jhfxqa"
     minSdk = 24
     targetSdk = 36
-    // Update: Sel 01/07/2026 20:00 - v2.4.0
-    // Fix JSN-SR04T phantom echo + kalibrasi DIST_FULL_CM=25; canvas wave air 3D gravitasi
-    versionCode = 10
-    versionName = "2.4.0"
+    // Update: Sel 01/07/2026 22:30 - v3.0.0
+    // Major: splash efek, 4 tema, jam real-time, jadwal shalat GPS, notif background, auto mode popup
+    versionCode = 11
+    versionName = "3.0.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
