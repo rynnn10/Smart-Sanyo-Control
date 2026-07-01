@@ -67,12 +67,15 @@ class SanyoService : Service() {
 
     // ─── MQTT ────────────────────────────────────────────────────────────────
 
-    private fun connectMqtt(): Unit = Thread {
-        try {
-            val id = "SanyoSvc_" + (100000..999999).random()
-            mqttClient = MqttClient(BROKER, id, MemoryPersistence()).apply {
-                setCallback(object : MqttCallback {
-                    override fun connectionLost(c: Throwable?) {
+    private fun connectMqtt() {
+        Thread {
+            try {
+                val id = "SanyoSvc_" + (100000..999999).random()
+                val opts = MqttConnectOptions().apply {
+                    isCleanSession = true; connectionTimeout = 10; keepAliveInterval = 30
+                }
+                val cb = object : MqttCallback {
+                    override fun connectionLost(c: Throwable) {
                         Log.w(TAG, "MQTT lost, retry in 10s")
                         Thread.sleep(10_000)
                         connectMqtt()
@@ -81,17 +84,18 @@ class SanyoService : Service() {
                         onStatus(m?.toString() ?: return)
                     }
                     override fun deliveryComplete(t: IMqttDeliveryToken?) {}
-                })
-                connect(MqttConnectOptions().apply {
-                    isCleanSession = true; connectionTimeout = 10; keepAliveInterval = 30
-                })
-                subscribe(TOPIC_STATUS, 0)
-                Log.d(TAG, "MQTT connected")
+                }
+                mqttClient = MqttClient(BROKER, id, MemoryPersistence()).also {
+                    it.setCallback(cb)
+                    it.connect(opts)
+                    it.subscribe(TOPIC_STATUS, 0)
+                    Log.d(TAG, "MQTT connected")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "MQTT connect error: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "MQTT connect error: ${e.message}")
-        }
-    }.start()
+        }.start()
+    }
 
     private fun onStatus(payload: String) {
         try {
