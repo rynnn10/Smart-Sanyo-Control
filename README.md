@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Sel 01/07/2026 22:30 — v2.5.0 (firmware) / v3.0.0 (app Android)
+> Update terakhir: Sel 01/07/2026 23:30 — v2.5.1 (firmware) / v3.0.0 (app Android)
 
 ---
 
@@ -279,6 +279,12 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v2.5.1 — Firmware — Sel 01/07/2026
+- **Fix krusial**: blind zone tidak lagi menyebabkan relay ON saat tangki penuh setelah reboot
+- Root cause: `waterPercent` inisialisasi ke 0; saat blind zone nilai tidak diperbarui → auto ON terpicu (`0% ≤ 20%`)
+- Fix: blind zone branch (setup + loop) sekarang set `waterPercent = 100` → auto ON tidak terpicu, auto OFF berjalan normal
+- MQTT publish juga mengirim `waterLevel: 100` saat blind zone → aplikasi tampil benar
 
 ### v3.0.0 — App Android — Sel 01/07/2026
 - **Baru**: Efek air tumpah (splash) — otomatis saat level 100%, atau HP digoyangkan (DeviceMotion)
