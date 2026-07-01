@@ -1,0 +1,2794 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Update: Sel 01/07/2026 [UPDATE] - v3.1.2: tambah tombol share APK di settings -->
+    <title>Smart Sanyo Control</title>
+    <!-- Google Fonts: Plus Jakarta Sans for a premium visual aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for high-quality symbols -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+    <script src="config.js"></script>
+
+    <style>
+        :root {
+            --primary-glow: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(79, 172, 254, 0) 70%);
+            --secondary-glow: radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, rgba(224, 170, 255, 0) 70%);
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-bg-hover: rgba(15, 23, 42, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-focused: rgba(0, 242, 254, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4f93fe;
+            --accent-purple: #9d4ede;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --off-color: #64748b;
+        }
+        /* ─── TEMA SUNSET ───────────────────────── */
+        [data-theme="sunset"] {
+            --accent-cyan: #f97316; --accent-blue: #fb923c; --accent-purple: #ef4444;
+            --success-color: #f97316; --glass-border-focused: rgba(249,115,22,0.35);
+            --primary-glow: radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(251,146,60,0) 70%);
+        }
+        /* ─── TEMA FOREST ───────────────────────── */
+        [data-theme="forest"] {
+            --accent-cyan: #10b981; --accent-blue: #34d399; --accent-purple: #059669;
+            --success-color: #34d399; --glass-border-focused: rgba(16,185,129,0.35);
+            --primary-glow: radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(52,211,153,0) 70%);
+        }
+        /* ─── TEMA PURPLE NIGHT ─────────────────── */
+        [data-theme="purple"] {
+            --accent-cyan: #a855f7; --accent-blue: #8b5cf6; --accent-purple: #7c3aed;
+            --success-color: #c084fc; --glass-border-focused: rgba(168,85,247,0.35);
+            --primary-glow: radial-gradient(circle, rgba(168,85,247,0.15) 0%, rgba(139,92,246,0) 70%);
+        }
+        /* ─── SPLASH EFEK AIR TUMPAH ────────────── */
+        @keyframes splashDrop {
+            0%   { transform: translateY(-20px) scale(0.5); opacity: 0.9; }
+            60%  { opacity: 0.6; }
+            100% { transform: translateY(110vh) scale(1.8); opacity: 0; }
+        }
+        #splashOverlay { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9998; overflow:hidden; display:none; }
+        .splash-drop { position:absolute; border-radius:50%; background:rgba(0,242,254,0.65); animation: splashDrop 1.4s ease-in forwards; }
+        /* ─── JAM REAL-TIME ─────────────────────── */
+        #realtimeClock { text-align:center; padding:8px 0 2px; font-size:0.82rem; color:var(--text-secondary); border-top: 1px solid rgba(255,255,255,0.06); margin-top:8px; }
+        #clockTime { font-weight:800; font-size:1.05rem; color:var(--text-primary); letter-spacing:1px; }
+        #clockDate { color:var(--accent-cyan); font-weight:600; }
+        /* ─── PRAYER TIME CARD ──────────────────── */
+        .prayer-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); gap:8px; }
+        .prayer-row:last-child { border-bottom:none; }
+        .prayer-name { font-size:0.9rem; font-weight:600; min-width:60px; }
+        .prayer-time-input { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:white; border-radius:8px; padding:6px 10px; font-size:0.88rem; width:100px; }
+        .prayer-next-badge { font-size:0.65rem; color:var(--accent-cyan); background:rgba(0,242,254,0.12); padding:2px 8px; border-radius:10px; white-space:nowrap; }
+        /* ─── THEME BUTTONS ─────────────────────── */
+        .theme-btn { padding:10px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary); font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.3s; text-align:center; }
+        .theme-btn.active { border-color:var(--accent-cyan); background:rgba(0,242,254,0.1); color:var(--accent-cyan); }
+        /* ─── NOTIFICATION CENTER ───────────────── */
+        .notif-item { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:flex-start; gap:12px; cursor:pointer; transition:background 0.2s; }
+        .notif-item.unread { background:rgba(0,242,254,0.04); }
+        .notif-item.selected { background:rgba(0,242,254,0.12); border-left:3px solid var(--accent-cyan); padding-left:13px; }
+        .notif-item:active { background:rgba(255,255,255,0.06); }
+        .notif-badge { position:absolute; top:-6px; right:-6px; background:var(--danger-color); color:white; font-size:0.6rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #05070f;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 2;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 22px;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header h1 i {
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+        }
+
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .connection-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+            transition: all 0.3s;
+        }
+
+        .connection-badge.offline .connection-indicator {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 10px var(--danger-color);
+        }
+
+        .visualizer-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .visualizer-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .water-container {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.6);
+            background: rgba(15, 23, 42, 0.8);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+
+        .water-level-text {
+            position: relative;
+            z-index: 10;
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .water-level-text span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 2px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .status-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+            transition: all 0.3s;
+        }
+
+        .status-text-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-text-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .badge-on {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        .badge-off {
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--off-color);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .control-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-label-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .control-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 3px;
+            background-color: #ffffff;
+            transition: .4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        input:checked+.slider {
+            background-color: rgba(0, 242, 254, 0.2);
+            border-color: rgba(0, 242, 254, 0.4);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 6px var(--accent-cyan);
+        }
+
+        .manual-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            width: 100%;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 6px;
+        }
+
+        .manual-btn.active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.35) 0%, rgba(79, 172, 254, 0.2) 100%);
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+        }
+
+        .manual-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .manual-btn:active {
+            transform: translateY(1px);
+        }
+
+        .manual-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .scheduler-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .scheduler-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scheduler-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+
+        .scheduler-title i {
+            color: var(--accent-purple);
+        }
+
+        .scheduler-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .scheduler-form.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .time-input-group label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .time-picker {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .time-picker:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
+        }
+
+        .custom-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .custom-select option {
+            background: #0f172a;
+            color: var(--text-primary);
+        }
+
+        .day-selector {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        .day-chip {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .day-chip.active {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .dev-panel {
+            background: rgba(10, 11, 20, 0.7);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            padding: 16px;
+            border-radius: 20px;
+        }
+
+        .dev-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dev-row {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .dev-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .dev-slider {
+            width: 100%;
+            margin-top: 4px;
+            accent-color: var(--accent-cyan);
+            height: 24px;
+        }
+
+        .dev-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: 0.20s;
+            text-align: center;
+        }
+
+        .dev-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .scheduler-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .scheduler-list.disabled,
+        .add-schedule-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .schedule-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .schedule-delete-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .add-schedule-btn {
+            background: rgba(157, 78, 221, 0.1);
+            border: 1px dashed var(--accent-purple);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .code-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .code-modal.show {
+            display: flex;
+        }
+
+        .code-container {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 242, 254, 0.2);
+        }
+
+        .code-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-header h3 {
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .code-content {
+            padding: 16px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            color: #a5d6ff;
+            background: #0d1117;
+            white-space: pre-wrap;
+            user-select: all;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            padding: 10px;
+            font-weight: 500;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150px);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: normal;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .toast-container.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast-container i {
+            color: var(--accent-cyan);
+        }
+
+        .decorations {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bubble {
+            display: none;
+        }
+
+        .bg-anim-container {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .bg-mesh {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bg-mesh::before,
+        .bg-mesh::after {
+            content: '';
+            position: absolute;
+            width: 60vw;
+            height: 60vh;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: meshFloat 15s infinite alternate ease-in-out;
+            will-change: transform;
+        }
+
+        .bg-mesh::before {
+            background: var(--accent-cyan);
+            top: -10%;
+            left: -10%;
+        }
+
+        .bg-mesh::after {
+            background: var(--accent-blue);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -7s;
+        }
+
+        @keyframes meshFloat {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            50% {
+                transform: scale(1.2) translate(10%, 10%);
+            }
+
+            100% {
+                transform: scale(0.9) translate(-10%, -10%);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -50px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.4) 0%, rgba(0, 242, 254, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: rise linear infinite;
+            will-change: transform, opacity;
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) scale(1.5);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-110vh) scale(0.5);
+                opacity: 0;
+            }
+        }
+    </style>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="mqtt-web.js"></script>
+</head>
+
+<body>
+
+    <div id="loading-screen"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div
+            style="border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;">
+        </div>
+        <h3 style="margin-top: 15px; font-family: sans-serif; color: #3b82f6;">Memuat Sanyo...</h3>
+        <style>
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
+    <div class="bg-anim-container" id="bgMeshContainer">
+        <div class="bg-mesh"></div>
+    </div>
+    <div class="bg-anim-container" id="bgParticlesContainer"></div>
+    <div class="bg-anim-container" id="bgThreeContainer" style="z-index: -1;"></div>
+    <div class="bg-anim-container" id="bgThree2Container" style="z-index: -1;"></div>
+    <div class="decorations" id="decorations"></div>
+
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="glass-card header"
+            style="flex-direction: column; align-items: stretch; gap: 14px; padding: 18px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1
+                    style="margin: 0; line-height: 1.1; display: flex; align-items: center; gap: 10px; font-size: 1.3rem;">
+                    <i class="fa-solid fa-droplet" style="-webkit-text-fill-color: var(--accent-cyan);"></i> Smart Sanyo
+                    Control
+                </h1>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="notifBtn" style="background:transparent;border:none;color:var(--text-secondary);font-size:1.3rem;cursor:pointer;outline:none;transition:color 0.3s;padding:0;margin-top:2px;position:relative;">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+                    </button>
+                    <button id="settingsBtn"
+                        style="background:transparent; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; outline:none; transition: color 0.3s; padding: 0; margin-top: 2px;"><i
+                            class="fa-solid fa-gear"></i></button>
+                </div>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div class="connection-badge" id="connBadge" style="margin: 0;">
+                    <div class="connection-indicator"></div><span id="connLabel">ONLINE</span>
+                </div>
+                <div id="espInfo"
+                    style="font-size: 0.75rem; color: var(--text-secondary); text-align: right; line-height: 1.3;">
+                    <div id="espSSID" style="color: var(--text-primary); font-weight: 600;"><i class="fa-solid fa-wifi"
+                            style="color: var(--accent-cyan); margin-right: 4px;"></i> Menunggu...</div>
+                    <div style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px;"><i class="fa-solid fa-signal"
+                            style="font-size:0.6rem; margin-right: 2px;"></i> <span id="espdB">-</span> dBm &bull; Qual:
+                        <span id="espQual">-</span>%
+                    </div>
+                </div>
+            </div>
+            <div id="realtimeClock">
+                <span id="clockTime">00:00:00</span>&nbsp;|&nbsp;<span id="clockDate">Selasa, 1 Juli 2026</span>
+            </div>
+        </div>
+
+        <!-- Water Level Circle -->
+        <div class="glass-card visualizer-card">
+            <div class="visualizer-title"><i class="fa-solid fa-water"></i> Ketinggian Air</div>
+            <div class="water-container">
+                <canvas id="waterCanvas" width="170" height="170" style="position:absolute;top:0;left:0;"></canvas>
+                <div class="water-level-text" id="waterLevelVal">75%<span>Isi Tangki</span></div>
+            </div>
+        </div>
+
+        <!-- Status Card (with pump toggle merged) -->
+        <div class="glass-card status-card" style="flex-direction:column; gap:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <div class="status-info">
+                    <div class="status-icon-wrapper" id="pumpIconWrapper"><i class="fa-solid fa-soap"></i></div>
+                    <div class="status-text-container"><span class="status-text-label">Sanyo Status</span><span
+                            class="status-value" id="pumpLabelText">OFFLINE MODE</span></div>
+                </div>
+                <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
+            </div>
+            <button class="manual-btn" id="manualPumpBtn" style="margin:0; width:100%;"><i class="fa-solid fa-power-off"></i><span
+                    id="manualPumpBtnLabel">Nyalakan Saklar</span></button>
+        </div>
+
+        <!-- Auto Mode Button (opens modal) -->
+        <div class="glass-card control-section" style="cursor:pointer;" id="openAutoModeBtn">
+            <div class="control-row" style="pointer-events:none;">
+                <div class="control-label">
+                    <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+                    <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span
+                            class="control-desc" id="autoModeStatusDesc">Ketuk untuk buka pengaturan otomatis</span></div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-secondary); font-size:0.85rem;"></i>
+            </div>
+        </div>
+
+        <!-- Scheduling -->
+        <div class="glass-card scheduler-card">
+            <div class="scheduler-header">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="scheduler-title"><i class="fa-regular fa-clock"></i> Penjadwalan Sanyo</div>
+                    <span id="espSchedBadge" style="font-size:0.62rem; padding:2px 8px; border-radius:10px; background:rgba(100,116,139,0.15); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1);">ESP: -</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="schedToggle"><span class="slider"></span></label>
+            </div>
+            <div class="scheduler-list disabled" id="schedulerList"></div>
+            <button class="add-schedule-btn disabled" id="addScheduleBtn"><i class="fa-solid fa-plus"></i> Tambah Jadwal
+                Baru</button>
+        </div>
+
+        <!-- Jadwal Solat -->
+        <div class="glass-card scheduler-card">
+            <div class="scheduler-header">
+                <div class="scheduler-title"><i class="fa-solid fa-mosque"></i> Jadwal Shalat</div>
+                <button id="fetchPrayerBtn" style="background:rgba(0,242,254,0.1); border:1px solid rgba(0,242,254,0.3); color:var(--accent-cyan); border-radius:10px; padding:6px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> Auto Lokasi</button>
+            </div>
+            <div id="prayerList"></div>
+        </div>
+
+        <!-- Dev Panel -->
+        <div class="dev-panel" id="devPanel">
+            <div class="dev-title"><i class="fa-solid fa-sliders"></i> Panel Pengujian Integrasi</div>
+            <div class="dev-row"><span>Konektivitas ESP8266:</span><button class="dev-btn" id="toggleConnBtn">Toggle
+                    Online/Offline</button></div>
+            <div class="dev-row"><span>Kode IDE ESP8266:</span><button class="dev-btn" id="showCodeBtn"><i
+                        class="fa-solid fa-microchip"></i> Lihat</button></div>
+            <div class="dev-row"><span>Ketinggian Air (API):</span><input type="range" class="dev-slider"
+                    id="waterLevelSlider" min="0" max="100" value="75"></div>
+        </div>
+
+        <div class="footer">Dibuat oleh Riyan &copy; 2026<br><span
+                style="font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 4px;"><i
+                    class="fa-regular fa-calendar-check"></i> Update: <span id="buildTimestamp">memuat...</span></span>
+        </div>
+    </div>
+
+    <!-- Splash overlay -->
+    <div id="splashOverlay"></div>
+
+    <!-- Settings Modal -->
+    <div class="code-modal" id="settingsModal">
+        <div class="code-container" style="max-width: 400px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-sliders"></i> Pengaturan Aplikasi</h3><button class="close-btn"
+                    id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; max-height: calc(80vh - 60px);">
+                <div class="control-row">
+                    <div class="control-label-wrapper"><span class="control-title">Mode Demo</span><span
+                            class="control-desc">Tampilkan panel pengujian fitur</span></div>
+                    <label class="switch"><input type="checkbox" id="demoModeToggle"><span
+                            class="slider"></span></label>
+                </div>
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 12px;">
+                    <div class="control-label-wrapper"><span class="control-title">Animasi Latar</span><span
+                            class="control-desc">Pilih gaya visual background</span></div>
+                    <select id="bgAnimSelect"
+                        style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.9rem; outline: none; transition: 0.3s; appearance: none; cursor: pointer;">
+                        <option value="none" style="background: #0f172a; color: white;">Static Dark (Ringan)</option>
+                        <option value="mesh" style="background: #0f172a; color: white;">Aurora Mesh</option>
+                        <option value="bubbles" style="background: #0f172a; color: white;">Floating Particles</option>
+                        <option value="threejs" style="background: #0f172a; color: white;">Sihir Partikel 3D</option>
+                        <option value="threejs2" style="background: #0f172a; color: white;">Sihir Partikel v2</option>
+                    </select>
+                </div>
+                <!-- Tema Aplikasi -->
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-palette" style="color:var(--accent-cyan);margin-right:6px;"></i>Tema Aplikasi</span><span class="control-desc">Pilih warna tampilan</span></div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
+                        <button class="theme-btn active" data-theme="ocean" id="themeOcean">🌊 Ocean</button>
+                        <button class="theme-btn" data-theme="sunset" id="themeSunset">🌅 Sunset</button>
+                        <button class="theme-btn" data-theme="forest" id="themeForest">🌿 Forest</button>
+                        <button class="theme-btn" data-theme="purple" id="themePurple">🔮 Purple Night</button>
+                    </div>
+                </div>
+                <!-- Tombol buka Auto Mode -->
+                <button id="openAutoModeFromSettings"
+                    style="width:100%; margin-top:16px; padding:14px; border-radius:12px; background:rgba(79,147,254,0.1); border:1px solid rgba(79,147,254,0.3); color:var(--accent-blue); font-size:0.9rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
+                    <span><i class="fa-solid fa-robot" style="margin-right:8px;"></i>Pengaturan Auto Mode</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <button id="wiringGuideBtn"
+                    style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;"><i
+                        class="fa-solid fa-diagram-project"></i> Cara Wiring Modul</button>
+                <!-- Update: Sel 01/07/2026 [UPDATE] - v3.1.2: share APK via Android native chooser -->
+                <button id="shareAppBtn"
+                    style="width:100%; margin-top:16px; padding:14px; border-radius:12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success-color); font-size:0.9rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.3s;">
+                    <i class="fa-solid fa-share-nodes"></i> Bagikan Aplikasi Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Center Modal -->
+    <div class="code-modal" id="notifModal">
+        <div class="code-container" style="max-width:400px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-bell"></i> Notifikasi</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button id="clearNotifsBtn" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--danger-color);border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;white-space:nowrap;">Hapus Semua</button>
+                    <button class="close-btn" id="closeNotifBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div id="notifList" style="overflow-y:auto;max-height:calc(80vh - 60px);"></div>
+        </div>
+    </div>
+
+    <!-- Auto Mode Modal -->
+    <div class="code-modal" id="autoModeModal">
+        <div class="code-container" style="max-width:400px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-robot"></i> Pengaturan Auto Mode</h3>
+                <button class="close-btn" id="closeAutoModeBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding:20px; overflow-y:auto; max-height:calc(80vh - 60px);">
+                <div class="control-row">
+                    <div class="control-label">
+                        <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+                        <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span class="control-desc">Pompa otomatis menyala saat air kritis</span></div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="autoModeToggle"><span class="slider"></span></label>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis (Auto ON)</span><span class="control-desc">Sanyo hidup otomatis saat air mencapai level ini (kritis)</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                        <input type="range" id="autoOnLevelInput" min="5" max="50" value="20" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
+                        <span id="autoOnLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">20%</span>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis (Auto OFF)</span><span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
+                        <span id="autoOffLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">95%</span>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--danger-color);margin-right:6px;"></i>Aktifkan Batas Hidup Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan hidup otomatis meski air kritis</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
+                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOnStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis meski air penuh</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
+                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOffStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOffEnabledToggle" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wiring Modal -->
+    <div class="code-modal" id="wiringModal">
+        <div class="code-container" style="max-width: 480px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-diagram-project" style="color: var(--accent-cyan);"></i> Wiring Diagram Wemos
+                    D1</h3><button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto; max-height: 70vh;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px;">
+                    <thead>
+                        <tr style="background: rgba(0, 242, 254, 0.1);">
+                            <th
+                                style="padding: 10px 8px; text-align: left; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Modul</th>
+                            <th
+                                style="padding: 10px 8px; text-align: center; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Pin Modul</th>
+                            <th
+                                style="padding: 10px 8px; text-align: center; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                Hubung ke D1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Relay 1ch 5V</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                IN</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D1</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC / GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V / GND</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="3">
+                                <b>JSN-SR04T Waterproof</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                TRIG</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D2</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                ECHO</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D3</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC / GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V / GND</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="4">
+                                <b>LCD 1602 I2C</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                SDA</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D6</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                SCL</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D5</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                VCC</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                5V</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Button ON</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 1</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D4</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 2</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
+                                <b>Button OFF</b>
+                            </td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 1</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                D7</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                Kaki 2</td>
+                            <td
+                                style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                GND</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px;" rowspan="2"><b>Buzzer Aktif</b></td>
+                            <td style="padding: 10px 8px; text-align: center;">Positif (+)</td>
+                            <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: #00f2fe;">D8</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; text-align: center;">Negatif (−)</td>
+                            <td style="padding: 10px 8px; text-align: center;">GND</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem; margin-bottom: 8px;"><i
+                            class="fa-solid fa-circle-info"></i> Catatan Penting:</p>
+                    <ul style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.7; padding-left: 18px;">
+                        <li>Button menggunakan <b>INPUT_PULLUP</b> internal → tidak perlu resistor pull-up eksternal.
+                            Cukup hubungkan kaki satunya ke GND.</li>
+                        <li>LCD I2C secara default beralamat <b>0x27</b>. Jika LCD tidak menyala, coba alamat
+                            <b>0x3F</b> dengan mengganti <code>lcd(0x27,16,2)</code> menjadi
+                            <code>lcd(0x3F,16,2)</code>.
+                        </li>
+                        <li>Gunakan <b>adaptor 5V 2A</b> minimum untuk memberi daya ke semua modul secara stabil.</li>
+                        <li>Jangan sambungkan relay 5V ke pin 3.3V — dapat merusak komponen.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="code-modal" id="deleteConfirmModal">
+        <div class="code-container" style="max-width: 320px; text-align: center; padding: 30px 24px;">
+            <i class="fa-solid fa-triangle-exclamation"
+                style="font-size: 3rem; color: var(--danger-color); margin-bottom: 16px;"></i>
+            <h3 style="margin-bottom: 8px;">Hapus Jadwal?</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">Jadwal ini akan dihapus
+                secara permanen dan tidak dapat dikembalikan.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancelDeleteBtn"
+                    style="flex:1; background: rgba(255,255,255,0.1); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Batal</button>
+                <button id="confirmDeleteBtn"
+                    style="flex:1; background: var(--danger-color); border:none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor:pointer; font-size: 0.9rem;">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Schedule Modal -->
+    <div class="code-modal" id="editScheduleModal">
+        <div class="code-container" style="max-width: 360px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Edit Jadwal</h3><button class="close-btn"
+                    id="closeEditScheduleBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="padding: 20px; display:flex; flex-direction: column; gap: 20px;">
+                <div class="time-input-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Hari</label>
+                    <div class="day-selector" id="editScheduleDays">
+                        <div class="day-chip" data-day="1">Sen</div>
+                        <div class="day-chip" data-day="2">Sel</div>
+                        <div class="day-chip" data-day="3">Rab</div>
+                        <div class="day-chip" data-day="4">Kam</div>
+                        <div class="day-chip" data-day="5">Jum</div>
+                        <div class="day-chip" data-day="6">Sab</div>
+                        <div class="day-chip" data-day="0">Min</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button type="button" id="btnEveryday"
+                            style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Setiap
+                            Hari</button>
+                        <button type="button" id="btnToday"
+                            style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">Hari
+                            Ini</button>
+                    </div>
+                </div>
+                <div class="time-input-group"><label><i class="fa-solid fa-play"></i> Waktu Nyala (ON)</label><input
+                        type="time" class="time-picker" id="editOnTime"></div>
+                <div class="time-input-group"><label><i class="fa-solid fa-stop"></i> Waktu Mati (OFF)</label><input
+                        type="time" class="time-picker" id="editOffTime"></div>
+                <button id="saveScheduleBtn"
+                    style="background: var(--accent-cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor:pointer; font-size: 0.9rem;">Simpan
+                    Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Modal for ESP8266 v3 MQTT-only -->
+    <div class="code-modal" id="codeModal">
+        <div class="code-container" style="max-width: 600px;">
+            <div class="code-header">
+                <h3><i class="fa-solid fa-microchip"></i> PlatformIO ESP8266 (src/main.cpp)</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button id="downloadEspBtn" class="dev-btn" style="padding: 4px 10px; margin: 0;"><i
+                            class="fa-solid fa-download"></i> Unduh</button>
+                    <button class="close-btn" id="closeCodeBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="code-content">#include <Arduino.h>
+                    #include <ESP8266WiFi.h>
+                        #include <ArduinoJson.h>
+                            #include <Wire.h>
+                                #include <LiquidCrystal_I2C.h>
+                                    #include <PubSubClient.h>
+                                        #include "config.h"
+
+                                        LiquidCrystal_I2C lcd(0x27, 16, 2);
+                                        byte lcdAddress = 0x27;
+                                        bool lcdOk = false;
+
+                                        WiFiClient espClient;
+                                        PubSubClient mqttClient(espClient);
+                                        unsigned long lastMqttReconnect = 0;
+                                        const unsigned long mqttReconnectInterval = 5000;
+                                        unsigned long lastMqttPublish = 0;
+                                        const unsigned long mqttPublishInterval = 3000;
+
+                                        bool relayState = false;
+                                        int currentWiFiIndex = 0;
+
+                                        int autoOffLevel = 95;
+                                        bool autoOffEnabled = true;
+
+                                        unsigned long lastDebounceTimeOn = 0;
+                                        unsigned long lastDebounceTimeOff = 0;
+                                        unsigned long debounceDelay = 50;
+                                        int lastBtnOnState = HIGH;
+                                        int lastBtnOffState = HIGH;
+
+                                        unsigned long lastWiFiCheck = 0;
+                                        const unsigned long wifiCheckInterval = 10000;
+
+                                        unsigned long lastUltrasonicRead = 0;
+                                        const unsigned long ultrasonicInterval = 2000;
+                                        int waterPercent = 0;
+
+                                        unsigned long lastLCDUpdate = 0;
+                                        const unsigned long lcdUpdateInterval = 3000;
+
+                                        byte scanI2CAddress() {
+                                        Serial.println("[I2C] Scanning untuk LCD...");
+                                        for (byte addr = 1; addr < 127; addr++) { Wire.beginTransmission(addr); if
+                                            (Wire.endTransmission()==0) { Serial.printf("[I2C] Ditemukan device di
+                                            0x%02X\n", addr); return addr; } } return 0; } bool initLCD(byte addr) {
+                                            lcd=LiquidCrystal_I2C(addr, 16, 2); delay(200); lcd.init(); delay(100);
+                                            lcd.clear(); delay(50); lcd.backlight(); lcd.setCursor(0, 0); lcd.print("LCD
+                                            OK!"); delay(300); return true; } void beep(int times, int durMs=80) { for
+                                            (int i=0; i < times; i++) { digitalWrite(BUZZER_PIN, HIGH); delay(durMs);
+                                            digitalWrite(BUZZER_PIN, LOW); if (i < times - 1) delay(120); } } bool
+                                            tryConnectWiFi(const char* ssidTarget, const char* passTarget, int
+                                            maxAttempts=50) { WiFi.begin(ssidTarget, passTarget); int attempts=0; while
+                                            (WiFi.status() !=WL_CONNECTED && attempts < maxAttempts) { delay(500);
+                                            attempts++; Serial.print("."); } return (WiFi.status()==WL_CONNECTED); }
+                                            void setup_wifi() { Serial.print("\nMencoba WiFi utama: ");
+  Serial.println(WIFI_SSID);
+  currentWiFiIndex = 0;
+  if (tryConnectWiFi(WIFI_SSID, WIFI_PASSWORD)) {
+    Serial.println(" \nWiFi Utama Connected!"); return; } Serial.print("\nWiFi utama gagal. Mencoba cadangan: ");
+  Serial.println(WIFI_SSID_BACKUP);
+  currentWiFiIndex = 1;
+  if (tryConnectWiFi(WIFI_SSID_BACKUP, WIFI_PASS_BACKUP)) {
+    Serial.println(" \nWiFi Cadangan Connected!"); return; } Serial.println("\nSemua jaringan gagal - Mode Offline!");
+                                            currentWiFiIndex=-1; } void controlRelay(bool state) { if (state
+                                            !=relayState) beep(1); digitalWrite(RELAY_PIN, state ? HIGH : LOW);
+                                            relayState=state; } int readUltrasonic() { long total=0; int valid=0; for
+                                            (int i=0; i < 3; i++) { digitalWrite(TRIG_PIN, LOW); delayMicroseconds(4);
+                                            digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10); digitalWrite(TRIG_PIN,
+                                            LOW); long dur=pulseIn(ECHO_PIN, HIGH, 40000); if (dur> 500) { total += dur;
+                                            valid++; }
+                                            delay(50);
+                                            }
+                                            if (valid == 0) return -1;
+                                            int dist = (total / valid) * 0.034 / 2;
+                                            return dist;
+                                            }
+
+                                            void updateLCD(int percent, bool relayOn, bool isWiFiDown) {
+                                            if (!lcdOk) return;
+                                            lcd.clear();
+                                            lcd.setCursor(0, 0);
+                                            lcd.print("Air: "); lcd.print(percent); lcd.print("% ");
+                                            lcd.setCursor(0, 1);
+                                            lcd.print("Pompa: "); lcd.print(relayOn ? "ON " : "OFF");
+                                            if (isWiFiDown) {
+                                            lcd.setCursor(10, 1); lcd.print("(OFF)");
+                                            } else {
+                                            lcd.setCursor(10, 1); lcd.print(autoOffEnabled ? "A" : " ");
+                                            lcd.setCursor(12, 1);
+                                            if (currentWiFiIndex == 0) lcd.print("W1");
+                                            else if (currentWiFiIndex == 1) lcd.print("W2");
+                                            }
+                                            }
+
+                                            void publishMqttStatus() {
+                                            if (!mqttClient.connected()) return;
+                                            DynamicJsonDocument doc(256);
+                                            doc["waterLevel"] = waterPercent;
+                                            doc["pumpStatus"] = relayState;
+                                            doc["autoOffEnabled"] = autoOffEnabled;
+                                            doc["autoOffLevel"] = autoOffLevel;
+                                            doc["ssid"] = WiFi.SSID();
+                                            doc["rssi"] = WiFi.RSSI();
+                                            char buf[256];
+                                            serializeJson(doc, buf, sizeof(buf));
+                                            mqttClient.publish(MQTT_TOPIC_STATUS, buf);
+                                            }
+
+                                            void mqttCallback(char* topic, byte* payload, unsigned int length) {
+                                            String msg;
+                                            for (unsigned int i = 0; i < length; i++) msg +=(char)payload[i];
+                                                Serial.printf("[MQTT] Pesan masuk [%s]: %s\n", topic, msg.c_str()); if
+                                                (String(topic)==MQTT_TOPIC_CONTROL) { if
+                                                (msg.equalsIgnoreCase("AUTO_ON") || msg.equalsIgnoreCase("AUTO_OFF")) {
+                                                autoOffEnabled=msg.equalsIgnoreCase("AUTO_ON"); Serial.printf("[MQTT]
+                                                AutoOff %s (via MQTT)\n", autoOffEnabled ? "DIAKTIFKAN"
+                                                : "DINONAKTIFKAN" ); publishMqttStatus(); return; } if
+                                                (msg.startsWith("LEVEL_")) { int lvl=msg.substring(6).toInt(); if (lvl>=
+                                                50 && lvl <= 100) { autoOffLevel=lvl; Serial.printf("[MQTT] AutoOff
+                                                    level set ke %d%%\n", lvl); publishMqttStatus(); } return; } bool
+                                                    wantOn=msg.equalsIgnoreCase("ON"); controlRelay(wantOn);
+                                                    publishMqttStatus(); } } bool reconnectMqtt() { String
+                                                    clientId="ESP8266_SmartSanyo-" + String(ESP.getChipId(), HEX); if
+                                                    (mqttClient.connect(clientId.c_str())) {
+                                                    mqttClient.subscribe(MQTT_TOPIC_CONTROL); Serial.println("[MQTT]
+                                                    Terhubung ke broker, subscribe topic kontrol.");
+                                                    publishMqttStatus(); return true; } return false; } void setup() {
+                                                    Serial.begin(115200); delay(100);
+                                                    Serial.println("\n========================================");
+  Serial.println(" Smart Sanyo v3 Starting..."); Serial.println(" (MQTT-only, no GAS/cloud)");
+                                                    Serial.println("========================================\n");
+                                                    pinMode(RELAY_PIN, OUTPUT); digitalWrite(RELAY_PIN, LOW);
+                                                    relayState=false; pinMode(TRIG_PIN, OUTPUT); pinMode(ECHO_PIN,
+                                                    INPUT); pinMode(BTN_ON_PIN, INPUT_PULLUP); pinMode(BTN_OFF_PIN,
+                                                    INPUT_PULLUP); pinMode(BUZZER_PIN, OUTPUT); digitalWrite(BUZZER_PIN,
+                                                    LOW); delay(500); Wire.begin(D6, D5); Wire.setClock(100000);
+                                                    delay(200); byte foundAddr=scanI2CAddress(); if (foundAddr !=0) {
+                                                    lcdAddress=foundAddr; lcdOk=initLCD(lcdAddress); } else {
+                                                    lcdOk=initLCD(0x3F); if (lcdOk) lcdAddress=0x3F; } setup_wifi();
+                                                    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+                                                    mqttClient.setCallback(mqttCallback); if
+                                                    (WiFi.status()==WL_CONNECTED) { reconnectMqtt();
+                                                    Serial.println("[MQTT] Terhubung. ESP siap via MQTT."); } else {
+                                                    Serial.println("[OFFLINE] Tidak ada WiFi. Mode manual-only (physical
+                                                    buttons)."); } int dist=readUltrasonic(); if (dist> 0) {
+                                                    waterPercent = constrain(map(dist, 100, 10, 0, 100), 0, 100);
+                                                    }
+                                                    updateLCD(waterPercent, relayState, WiFi.status() != WL_CONNECTED);
+                                                    delay(500);
+                                                    beep(3);
+                                                    }
+
+                                                    void loop() {
+                                                    unsigned long now = millis();
+
+                                                    if (WiFi.status() == WL_CONNECTED) {
+                                                    if (!mqttClient.connected()) {
+                                                    if (now - lastMqttReconnect >= mqttReconnectInterval) {
+                                                    lastMqttReconnect = now;
+                                                    reconnectMqtt();
+                                                    }
+                                                    } else {
+                                                    mqttClient.loop();
+                                                    if (now - lastMqttPublish >= mqttPublishInterval) {
+                                                    lastMqttPublish = now;
+                                                    publishMqttStatus();
+                                                    }
+                                                    }
+                                                    }
+
+                                                    if (now - lastWiFiCheck >= wifiCheckInterval) {
+                                                    lastWiFiCheck = now;
+                                                    if (WiFi.status() != WL_CONNECTED) {
+                                                    WiFi.disconnect(true); delay(100);
+                                                    currentWiFiIndex = 0;
+                                                    if (!tryConnectWiFi(WIFI_SSID, WIFI_PASSWORD, 30)) {
+                                                    WiFi.disconnect(true); delay(100);
+                                                    currentWiFiIndex = 1;
+                                                    if (!tryConnectWiFi(WIFI_SSID_BACKUP, WIFI_PASS_BACKUP, 30)) {
+                                                    currentWiFiIndex = -1;
+                                                    }
+                                                    }
+                                                    }
+                                                    }
+
+                                                    if (now - lastUltrasonicRead >= ultrasonicInterval) {
+                                                    lastUltrasonicRead = now;
+                                                    int distance = readUltrasonic();
+                                                    if (distance > 0) {
+                                                    waterPercent = constrain(map(distance, 100, 10, 0, 100), 0, 100);
+                                                    }
+                                                    if (autoOffEnabled && waterPercent >= autoOffLevel && relayState) {
+                                                    controlRelay(false);
+                                                    Serial.printf("[AutoOff] Air %d%% >= batas %d%% -> Relay OFF\n",
+                                                    waterPercent, autoOffLevel);
+                                                    publishMqttStatus();
+                                                    }
+                                                    }
+
+                                                    int btnOn = digitalRead(BTN_ON_PIN);
+                                                    int btnOff = digitalRead(BTN_OFF_PIN);
+                                                    if (btnOn == LOW && lastBtnOnState == HIGH && (now -
+                                                    lastDebounceTimeOn) > debounceDelay) {
+                                                    lastDebounceTimeOn = now;
+                                                    controlRelay(true);
+                                                    publishMqttStatus();
+                                                    }
+                                                    lastBtnOnState = btnOn;
+
+                                                    if (btnOff == LOW && lastBtnOffState == HIGH && (now -
+                                                    lastDebounceTimeOff) > debounceDelay) {
+                                                    lastDebounceTimeOff = now;
+                                                    controlRelay(false);
+                                                    publishMqttStatus();
+                                                    }
+                                                    lastBtnOffState = btnOff;
+
+                                                    if (now - lastLCDUpdate >= lcdUpdateInterval) {
+                                                    lastLCDUpdate = now;
+                                                    updateLCD(waterPercent, relayState, WiFi.status() != WL_CONNECTED);
+                                                    }
+                                                    yield();
+                                                    }</div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toast"><i class="fa-solid fa-circle-info"></i><span id="toastMsg">State
+            updated!</span></div>
+
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var loader = document.getElementById('loading-screen');
+                if (loader && loader.style.display !== 'none') {
+                    loader.style.display = 'none';
+                    console.log("Loading screen dipaksa tutup karena timeout.");
+                }
+            }, 3000);
+        });
+
+        // ==========================================
+        // STATE
+        // ==========================================
+        let currentWaterLevel = 75;
+        let pumpStatus = false;
+        let autoMode = false;
+        let scheduleEnabled = false;
+        let isDemoMode = false;
+        let schedules = [];
+        try {
+            const saved = localStorage.getItem('schedules');
+            if (saved) { schedules = JSON.parse(saved); }
+            else { schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }]; }
+        } catch (e) {
+            schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
+        }
+        let isOnline = false;
+        let espSSIDValue = "Menunggu...";
+        let espRssiValue = 0;
+        let espQualValue = 0;
+        let autoOffLevel = 95;
+        let autoOnLevel = 20;
+        let autoOffEnabled = true;
+        let autoOnEnabled = true;
+        let scheduleToDelete = null;
+        let scheduleToEdit = null;
+        let scheduleSentToEsp = false; // track apakah jadwal sudah dikirim ke ESP
+        let espHasSchedule = false;    // track apakah ESP melaporkan ada jadwal tersimpan
+
+        // ==========================================
+        // DOM
+        // ==========================================
+        const waterLevelVal = document.getElementById('waterLevelVal');
+
+        // ==========================================
+        // CANVAS WAVE — air 3D mengikuti gravitasi HP
+        // ==========================================
+        const waterCanvas = document.getElementById('waterCanvas');
+        const wCtx = waterCanvas.getContext('2d');
+        let waveLevel = 75, waveColor = [0, 242, 254], waveGamma = 0, wavePhase = 0;
+
+        function setWaterLevel(pct) {
+            waveLevel = pct;
+            if (pct < 20)      waveColor = [239, 68, 68];
+            else if (pct < 50) waveColor = [245, 158, 11];
+            else               waveColor = [0, 242, 254];
+        }
+
+        (function drawWater() {
+            const W = waterCanvas.width, H = waterCanvas.height;
+            wCtx.clearRect(0, 0, W, H);
+            if (waveLevel > 0) {
+                const fillY = H * (1 - waveLevel / 100);
+                const A = 5; // amplitudo gelombang (px)
+                const tilt = Math.max(-30, Math.min(30, waveGamma)) * 0.6; // px shift ujung saat HP miring
+                wCtx.beginPath();
+                wCtx.moveTo(0, H);
+                for (let x = 0; x <= W; x++) {
+                    const slope = tilt * ((x / W) - 0.5) * 2;
+                    const wave  = A * Math.sin(x / W * Math.PI * 4 + wavePhase);
+                    wCtx.lineTo(x, fillY + slope + wave);
+                }
+                wCtx.lineTo(W, H);
+                wCtx.closePath();
+                const [r, g, b] = waveColor;
+                const grad = wCtx.createLinearGradient(0, fillY, 0, H);
+                grad.addColorStop(0, `rgba(${r},${g},${b},0.75)`);
+                grad.addColorStop(1, `rgba(${r*0.3|0},${g*0.5|0},${b},0.95)`);
+                wCtx.fillStyle = grad;
+                wCtx.fill();
+            }
+            wavePhase += 0.04;
+            requestAnimationFrame(drawWater);
+        })();
+
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null) waveGamma = e.gamma;
+            });
+        }
+        const pumpStatusBadge = document.getElementById('pumpStatusBadge');
+        const pumpLabelText = document.getElementById('pumpLabelText');
+        const pumpIconWrapper = document.getElementById('pumpIconWrapper');
+        const autoModeToggle = document.getElementById('autoModeToggle');
+        const manualPumpBtn = document.getElementById('manualPumpBtn');
+        const manualPumpBtnLabel = document.getElementById('manualPumpBtnLabel');
+        const schedToggle = document.getElementById('schedToggle');
+        const schedulerList = document.getElementById('schedulerList');
+        const addScheduleBtn = document.getElementById('addScheduleBtn');
+        const connBadge = document.getElementById('connBadge');
+        const connLabel = document.getElementById('connLabel');
+        const espSSIDEl = document.getElementById('espSSID');
+        const espdBEl = document.getElementById('espdB');
+        const espQualEl = document.getElementById('espQual');
+        const toastEl = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const devPanel = document.getElementById('devPanel');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const demoModeToggle = document.getElementById('demoModeToggle');
+        let threeSceneCreated = false;
+        let particlesThree = null;
+
+        function initThreeJSBg() {
+            if (threeSceneCreated) return;
+            threeSceneCreated = true;
+
+            const container = document.getElementById('bgThreeContainer');
+            if (!container || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x05070f, 0.005);
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            const PARTICLE_COUNT = 3000;
+            const TRANSITION_SPEED = 0.05;
+            const shapes = { galaxy: [], sphere: [], ring: [], tornado: [], cube: [], star: [], text: [] };
+            const initialPositions = new Float32Array(PARTICLE_COUNT * 3);
+            const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+            // 1. GALAXY
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                shapes.galaxy.push((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
+                initialPositions[i * 3] = shapes.galaxy[i * 3];
+                initialPositions[i * 3 + 1] = shapes.galaxy[i * 3 + 1];
+                initialPositions[i * 3 + 2] = shapes.galaxy[i * 3 + 2];
+                colors[i * 3] = 0.2; colors[i * 3 + 1] = 0.8; colors[i * 3 + 2] = 1.0;
+            }
+            // 2. SPHERE
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const phi = Math.acos(-1 + (2 * i) / PARTICLE_COUNT);
+                const theta = Math.sqrt(PARTICLE_COUNT * Math.PI) * phi;
+                const r = 10;
+                shapes.sphere.push(r * Math.cos(theta) * Math.sin(phi), r * Math.sin(theta) * Math.sin(phi), r * Math.cos(phi));
+            }
+            // 3. RING
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const u = Math.random() * Math.PI * 2, v = Math.random() * Math.PI * 2, tube = 2, radius = 12;
+                shapes.ring.push((radius + tube * Math.cos(v)) * Math.cos(u), (radius + tube * Math.cos(v)) * Math.sin(u), tube * Math.sin(v));
+            }
+            // 4. TORNADO
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const height = (i / PARTICLE_COUNT) * 30 - 15;
+                const t = i * 0.1;
+                const radius = 1 + Math.abs(height) * 0.6;
+                shapes.tornado.push(radius * Math.cos(t), height, radius * Math.sin(t));
+            }
+            // 5. CUBE
+            const cubeSize = 14;
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                let x, y, z;
+                const r = Math.random();
+                if (r < 0.2) { x = (Math.random() - 0.5) * cubeSize; y = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                else {
+                    const axis = Math.floor(Math.random() * 3);
+                    const val = (Math.random() > 0.5 ? 0.5 : -0.5) * cubeSize;
+                    if (axis === 0) { x = val; y = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                    else if (axis === 1) { y = val; x = (Math.random() - 0.5) * cubeSize; z = (Math.random() - 0.5) * cubeSize; }
+                    else { z = val; x = (Math.random() - 0.5) * cubeSize; y = (Math.random() - 0.5) * cubeSize; }
+                }
+                shapes.cube.push(x, y, z);
+            }
+            // 6. STAR
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const seg = (Math.PI * 2) / 5;
+                const a = (angle % seg) / seg;
+                const r = Math.abs(a - 0.5) * 2 * (14 - 5) + 5;
+                shapes.star.push(r * Math.cos(angle), r * Math.sin(angle), (Math.random() - 0.5) * 4);
+            }
+            // 7. TEXT
+            const textPoints = [];
+            function addPt(x, y) { textPoints.push(x, y, (Math.random() - 0.5) * 2); }
+            for (let y = -5; y <= 5; y += 0.6) addPt(-10, y);
+            for (let t = 0; t < 6.28; t += 0.1) {
+                let x = 12 * Math.pow(Math.sin(t), 3);
+                let y = 10 * Math.cos(t) - 4 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                addPt(x * 0.3, y * 0.3 + 1);
+            }
+            for (let y = -1; y <= 5; y += 0.6) { addPt(8, y); addPt(12, y); }
+            for (let t = 0; t <= 3.14; t += 0.2) addPt(10 + 2 * Math.cos(t + 3.14), -1 + 2 * Math.sin(t + 3.14));
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const idx = i % Math.max(1, Math.floor(textPoints.length / 3));
+                if (textPoints.length > 0) { shapes.text.push(textPoints[idx * 3], textPoints[idx * 3 + 1], textPoints[idx * 3 + 2]); }
+                else { shapes.text.push(0, 0, 0); }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(initialPositions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext("2d");
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+            gradient.addColorStop(0.4, "rgba(255, 255, 255, 0.3)");
+            gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = gradient; ctx.fillRect(0, 0, 32, 32);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.6,
+                vertexColors: true,
+                map: new THREE.CanvasTexture(canvas),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particlesThree = new THREE.Points(geometry, material);
+            scene.add(particlesThree);
+
+            let currentShapeId = 'galaxy';
+            const shapeNames = ['galaxy', 'sphere', 'ring', 'tornado', 'cube', 'star', 'text'];
+
+            setInterval(() => {
+                const colorsAttr = particlesThree.geometry.attributes.color.array;
+                let cTargetHex = 0xffffff;
+                let nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
+                currentShapeId = nextShape;
+
+                switch (currentShapeId) {
+                    case 'galaxy': cTargetHex = 0x00ffff; break;
+                    case 'sphere': cTargetHex = 0xffaa00; break;
+                    case 'ring': cTargetHex = 0x00ff00; break;
+                    case 'text': cTargetHex = 0xff0080; break;
+                    case 'tornado': cTargetHex = 0xaaaaff; break;
+                    case 'cube': cTargetHex = 0x0000ff; break;
+                    case 'star': cTargetHex = 0xffd700; break;
+                }
+                const cTarget = new THREE.Color(cTargetHex);
+                const cBase = new THREE.Color(0xffffff);
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const mixed = cTarget.clone().lerp(cBase, Math.random() * 0.4);
+                    colorsAttr[i * 3] = mixed.r; colorsAttr[i * 3 + 1] = mixed.g; colorsAttr[i * 3 + 2] = mixed.b;
+                }
+                particlesThree.geometry.attributes.color.needsUpdate = true;
+
+            }, 6000);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (bgAnimMode === 'threejs' && particlesThree) {
+                    const positions = particlesThree.geometry.attributes.position.array;
+                    const target = shapes[currentShapeId];
+
+                    for (let i = 0; i < PARTICLE_COUNT; i++) {
+                        const ix = i * 3;
+                        positions[ix] += (target[ix] - positions[ix]) * TRANSITION_SPEED;
+                        positions[ix + 1] += (target[ix + 1] - positions[ix + 1]) * TRANSITION_SPEED;
+                        positions[ix + 2] += (target[ix + 2] - positions[ix + 2]) * TRANSITION_SPEED;
+                    }
+                    particlesThree.geometry.attributes.position.needsUpdate = true;
+                    particlesThree.rotation.y += 0.002;
+                    particlesThree.rotation.x += 0.0005;
+                    renderer.render(scene, camera);
+                }
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+
+        let three2SceneCreated = false;
+        let particlesThree2 = null;
+        let positionsTarget = null;
+        const count2 = 2500;
+
+        function initThreeJSBg2() {
+            if (three2SceneCreated) return;
+            three2SceneCreated = true;
+
+            const container = document.getElementById('bgThree2Container');
+            if (!container || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.0025);
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const positionsOriginal = new Float32Array(count2 * 3);
+            positionsTarget = new Float32Array(count2 * 3);
+            const colors = new Float32Array(count2 * 3);
+
+            for (let i = 0; i < count2; i++) {
+                const i3 = i * 3;
+                positionsOriginal[i3] = (Math.random() - 0.5) * 50;
+                positionsOriginal[i3 + 1] = (Math.random() - 0.5) * 50;
+                positionsOriginal[i3 + 2] = (Math.random() - 0.5) * 50;
+                positionsTarget[i3] = positionsOriginal[i3];
+                positionsTarget[i3 + 1] = positionsOriginal[i3 + 1];
+                positionsTarget[i3 + 2] = positionsOriginal[i3 + 2];
+
+                const color = new THREE.Color();
+                color.setHSL((i / count2) * 0.8 + 0.1, 0.9, 0.6);
+                colors[i3] = color.r;
+                colors[i3 + 1] = color.g;
+                colors[i3 + 2] = color.b;
+            }
+
+            geometry.setAttribute("position", new THREE.BufferAttribute(positionsOriginal, 3));
+            geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext("2d");
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, "rgba(255,255,255,1)");
+            gradient.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
+
+            const material = new THREE.PointsMaterial({
+                size: 0.6,
+                map: new THREE.CanvasTexture(canvas),
+                color: new THREE.Color("#ffffff"),
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                sizeAttenuation: true,
+            });
+
+            particlesThree2 = new THREE.Points(geometry, material);
+            scene.add(particlesThree2);
+
+            function morphTo(targetArray) {
+                for (let i = 0; i < count2 * 3; i++) {
+                    positionsTarget[i] = targetArray[i];
+                }
+            }
+
+            function calculateGalaxy() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, angle = i * 0.002 + Math.random() * 0.5, r = 2 + Math.random() * 15;
+                    const off = (i % 3) * ((Math.PI * 2) / 3);
+                    p[i3] = Math.cos(angle + off) * r;
+                    p[i3 + 1] = (Math.random() - 0.5) * (r * 0.2);
+                    p[i3 + 2] = Math.sin(angle + off) * r;
+                }
+                morphTo(p);
+            }
+
+            function calculateHeart() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, t = Math.random() * Math.PI * 2;
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+                    p[i3] = x * 0.8 + (Math.random() - 0.5);
+                    p[i3 + 1] = y * 0.8 + (Math.random() - 0.5);
+                    p[i3 + 2] = (Math.random() - 0.5) * 6;
+                }
+                morphTo(p);
+            }
+
+            function calculateSphere() {
+                const p = new Float32Array(count2 * 3);
+                const radius = 12;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const phi = Math.acos(-1 + (2 * i) / count2);
+                    const theta = Math.sqrt(count2 * Math.PI) * phi;
+                    p[i3] = radius * Math.cos(theta) * Math.sin(phi);
+                    p[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                    p[i3 + 2] = radius * Math.cos(phi);
+                }
+                morphTo(p);
+            }
+
+            function calculateCube() {
+                const p = new Float32Array(count2 * 3), s = 16;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    p[i3] = (Math.random() - 0.5) * s;
+                    p[i3 + 1] = (Math.random() - 0.5) * s;
+                    p[i3 + 2] = (Math.random() - 0.5) * s;
+                }
+                morphTo(p);
+            }
+
+            function calculateSaturn() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    if (i < count2 * 0.7) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = 10 + Math.random() * 8;
+                        p[i3] = Math.cos(angle) * dist; p[i3 + 1] = (Math.random() - 0.5) * 0.5; p[i3 + 2] = Math.sin(angle) * dist;
+                    } else {
+                        const radius = 6;
+                        const phi = Math.acos(-1 + (2 * (i - count2 * 0.7)) / (count2 * 0.3));
+                        const theta = Math.sqrt(count2 * 0.3 * Math.PI) * phi;
+                        p[i3] = radius * Math.cos(theta) * Math.sin(phi);
+                        p[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+                        p[i3 + 2] = radius * Math.cos(phi);
+                    }
+                }
+                morphTo(p);
+            }
+
+            function calculateFlower() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3, theta = Math.random() * Math.PI * 2, k = 5, rBase = 12;
+                    const r = Math.abs(Math.cos(k * theta)) * rBase + Math.random() * 2;
+                    p[i3] = r * Math.cos(theta); p[i3 + 1] = r * Math.sin(theta); p[i3 + 2] = (rBase - r) * 0.5 + (Math.random() - 0.5);
+                }
+                morphTo(p);
+            }
+
+            function calculateDNA() {
+                const p = new Float32Array(count2 * 3);
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const strand = i % 2 === 0 ? 1 : -1;
+                    const y = (i / count2) * 30 - 15;
+                    const angle = y * 0.5;
+                    const radius = 5;
+                    p[i3] = Math.cos(angle) * radius * strand; p[i3 + 1] = y; p[i3 + 2] = Math.sin(angle) * radius * strand;
+                    if (Math.random() > 0.8) {
+                        const t = Math.random();
+                        p[i3] = Math.cos(angle) * radius * (1 - 2 * t); p[i3 + 2] = Math.sin(angle) * radius * (1 - 2 * t);
+                    }
+                }
+                morphTo(p);
+            }
+
+            function calculatePyramid() {
+                const p = new Float32Array(count2 * 3);
+                const height = 15, baseSize = 12;
+                for (let i = 0; i < count2; i++) {
+                    const i3 = i * 3;
+                    const y = Math.random() * height - height / 2;
+                    const progress = 1 - (y + height / 2) / height;
+                    const r = progress * baseSize;
+                    p[i3] = (Math.random() - 0.5) * 2 * r; p[i3 + 1] = y; p[i3 + 2] = (Math.random() - 0.5) * 2 * r;
+                }
+                morphTo(p);
+            }
+
+            let shapesMap = {
+                galaxy: calculateGalaxy,
+                heart: calculateHeart,
+                sphere: calculateSphere,
+                cube: calculateCube,
+                saturn: calculateSaturn,
+                flower: calculateFlower,
+                dna: calculateDNA,
+                pyramid: calculatePyramid
+            };
+
+            calculateGalaxy();
+
+            let shapeNames = Object.keys(shapesMap);
+            setInterval(() => {
+                if (bgAnimMode === 'threejs2') {
+                    let nextShape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
+                    shapesMap[nextShape]();
+                }
+            }, 6000);
+
+            let clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (bgAnimMode === 'threejs2' && particlesThree2 && positionsTarget) {
+                    const positions = particlesThree2.geometry.attributes.position.array;
+                    for (let i = 0; i < count2 * 3; i++) {
+                        positions[i] += (positionsTarget[i] - positions[i]) * 0.05;
+                    }
+                    particlesThree2.geometry.attributes.position.needsUpdate = true;
+
+                    let targetExpansion = 1.0 + Math.sin(clock.getElapsedTime()) * 0.1;
+                    particlesThree2.scale.setScalar(targetExpansion);
+
+                    particlesThree2.rotation.y += 0.002;
+                    particlesThree2.rotation.x += 0.000;
+
+                    renderer.render(scene, camera);
+                }
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+
+
+
+        // ==========================================
+        // THREE.JS backgrounds (unchanged - omitted for brevity in diff)
+        // ==========================================
+        // [initThreeJSBg, initThreeJSBg2, setBgAnimMode functions omitted in this write - they are preserved from original]
+
+        const bgAnimSelect = document.getElementById('bgAnimSelect');
+        const bgMeshContainer = document.getElementById('bgMeshContainer');
+        const bgParticlesContainer = document.getElementById('bgParticlesContainer');
+        const bgThreeContainer = document.getElementById('bgThreeContainer');
+        const bgThree2Container = document.getElementById('bgThree2Container');
+        let bgAnimMode = localStorage.getItem('bgAnimMode') || 'none';
+
+        function setBgAnimMode(mode) {
+            bgAnimMode = mode;
+            if (bgAnimSelect) bgAnimSelect.value = mode;
+            localStorage.setItem('bgAnimMode', mode);
+            if (bgMeshContainer) bgMeshContainer.style.opacity = mode === 'mesh' ? '1' : '0';
+            if (bgThreeContainer) {
+                bgThreeContainer.style.opacity = mode === 'threejs' ? '1' : '0';
+                if (mode === 'threejs') initThreeJSBg();
+            }
+            if (bgThree2Container) {
+                bgThree2Container.style.opacity = mode === 'threejs2' ? '1' : '0';
+                if (mode === 'threejs2') initThreeJSBg2();
+            }
+            if (bgParticlesContainer) {
+                bgParticlesContainer.style.opacity = mode === 'bubbles' ? '1' : '0';
+                if (mode === 'bubbles' && bgParticlesContainer.children.length === 0) {
+                    for (let i = 0; i < 12; i++) {
+                        const p = document.createElement('div');
+                        p.className = 'particle';
+                        const size = Math.random() * 40 + 20;
+                        p.style.width = `${size}px`; p.style.height = `${size}px`;
+                        p.style.left = `${Math.random() * 100}vw`;
+                        p.style.animationDuration = `${Math.random() * 8 + 6}s`;
+                        p.style.animationDelay = `${Math.random() * 5}s`;
+                        bgParticlesContainer.appendChild(p);
+                    }
+                } else if (mode !== 'bubbles') { bgParticlesContainer.innerHTML = ''; }
+            }
+        }
+        setBgAnimMode(bgAnimMode);
+        if (bgAnimSelect) bgAnimSelect.addEventListener('change', (e) => setBgAnimMode(e.target.value));
+
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const editScheduleModal = document.getElementById('editScheduleModal');
+        const closeEditScheduleBtn = document.getElementById('closeEditScheduleBtn');
+        const editOnTime = document.getElementById('editOnTime');
+        const editOffTime = document.getElementById('editOffTime');
+        const editScheduleDays = document.getElementById('editScheduleDays');
+        const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+        const toggleConnBtn = document.getElementById('toggleConnBtn');
+        const waterLevelSlider = document.getElementById('waterLevelSlider');
+        const codeModal = document.getElementById('codeModal');
+        const showCodeBtn = document.getElementById('showCodeBtn');
+        const closeCodeBtn = document.getElementById('closeCodeBtn');
+
+        function updateUI() {
+            var loader = document.getElementById('loading-screen');
+            if (loader) loader.style.display = 'none';
+            setWaterLevel(currentWaterLevel);
+            waterLevelVal.innerHTML = `${currentWaterLevel}% <span>Isi Tangki</span>`;
+
+            if (pumpStatus) {
+                pumpStatusBadge.innerText = 'ON'; pumpStatusBadge.className = 'badge badge-on';
+                pumpLabelText.innerText = 'Pompa Air Menyala';
+                pumpIconWrapper.style.color = 'var(--success-color)';
+                manualPumpBtn.className = 'manual-btn active'; manualPumpBtnLabel.innerText = 'Matikan Saklar';
+            } else {
+                pumpStatusBadge.innerText = 'OFF'; pumpStatusBadge.className = 'badge badge-off';
+                pumpLabelText.innerText = 'Pompa Air Mati';
+                pumpIconWrapper.style.color = 'var(--text-secondary)';
+                manualPumpBtn.className = 'manual-btn'; manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
+            }
+
+            autoModeToggle.checked = autoMode;
+            if (autoMode) { manualPumpBtn.classList.add('disabled'); manualPumpBtn.style.opacity = '0.4'; manualPumpBtn.style.pointerEvents = 'none'; }
+            else { manualPumpBtn.classList.remove('disabled'); manualPumpBtn.style.opacity = '1'; manualPumpBtn.style.pointerEvents = 'auto'; }
+
+            if (isOnline) {
+                connBadge.classList.remove('offline'); connLabel.innerText = 'ONLINE';
+                if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${espSSIDValue}`;
+                if (espdBEl) espdBEl.innerText = espRssiValue;
+                if (espQualEl) espQualEl.innerText = espQualValue;
+            } else {
+                connBadge.classList.add('offline'); connLabel.innerText = 'OFFLINE';
+                if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--text-secondary); margin-right: 4px;"></i> Terputus`;
+                if (espdBEl) espdBEl.innerText = '-';
+                if (espQualEl) espQualEl.innerText = '-';
+            }
+
+            schedToggle.checked = scheduleEnabled;
+            if (scheduleEnabled) { schedulerList.classList.remove('disabled'); addScheduleBtn.classList.remove('disabled'); }
+            else { schedulerList.classList.add('disabled'); addScheduleBtn.classList.add('disabled'); }
+
+            waterLevelSlider.value = currentWaterLevel;
+            devPanel.style.display = isDemoMode ? 'block' : 'none';
+            const amd = document.getElementById('autoModeStatusDesc');
+            if (amd) amd.innerText = autoMode ? 'Auto Mode AKTIF — pompa terkontrol otomatis' : 'Ketuk untuk buka pengaturan otomatis';
+            // Update ESP schedule badge
+            const espSchedBadge = document.getElementById('espSchedBadge');
+            if (espSchedBadge) {
+                if (!isOnline) {
+                    espSchedBadge.innerText = 'ESP: -';
+                    espSchedBadge.style.color = 'var(--text-secondary)';
+                    espSchedBadge.style.borderColor = 'rgba(255,255,255,0.1)';
+                } else if (espHasSchedule) {
+                    espSchedBadge.innerText = 'ESP: Ada jadwal ✓';
+                    espSchedBadge.style.color = 'var(--success-color)';
+                    espSchedBadge.style.borderColor = 'rgba(16,185,129,0.3)';
+                } else {
+                    espSchedBadge.innerText = 'ESP: Belum ada jadwal';
+                    espSchedBadge.style.color = '#f59e0b';
+                    espSchedBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+                }
+            }
+        }
+
+        let toastTimeout;
+        function showNotification(message, iconClass = 'fa-info-circle') {
+            toastMsg.innerText = message;
+            const icon = toastEl.querySelector('i');
+            icon.className = `fa-solid ${iconClass}`;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
+        }
+
+        // ==========================================
+        // EVENTS
+        // ==========================================
+        autoModeToggle.addEventListener('change', (e) => {
+            autoMode = e.target.checked;
+            if (autoMode) {
+                showNotification('Auto Mode Aktif. Pompa dikontrol sisa tangki!', 'fa-robot');
+                if (currentWaterLevel <= autoOnLevel) pumpStatus = true;
+                else if (currentWaterLevel >= autoOffLevel) pumpStatus = false;
+            } else showNotification('Auto Mode Mati. Anda dapat menghidupkan manual.', 'fa-user-gear');
+            updateUI();
+        });
+
+        schedToggle.addEventListener('change', (e) => {
+            scheduleEnabled = e.target.checked;
+            showNotification(scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!', 'fa-calendar-check');
+            if (scheduleEnabled) sendScheduleToEsp();
+            updateUI();
+        });
+
+        function saveSchedules() {
+            localStorage.setItem('schedules', JSON.stringify(schedules));
+        }
+
+        function sendScheduleToEsp() {
+            if (!isOnline) { scheduleSentToEsp = false; renderSchedules(); return; }
+            try {
+                MqttAndroid.sendSchedule(JSON.stringify(schedules));
+                scheduleSentToEsp = true;
+            } catch(e) { scheduleSentToEsp = false; }
+            renderSchedules();
+        }
+
+        addScheduleBtn.addEventListener('click', () => {
+            if (!scheduleEnabled) return;
+            const newId = schedules.length > 0 ? Math.max(...schedules.map(s => s.id)) + 1 : 1;
+            schedules.push({ id: newId, onTime: '12:00', offTime: '13:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] });
+            saveSchedules(); renderSchedules();
+            sendScheduleToEsp();
+            showNotification('Jadwal baru ditambahkan & dikirim ke ESP', 'fa-plus');
+        });
+
+        function formatDays(daysArray) {
+            if (!daysArray || daysArray.length === 0) return 'Tidak ada hari';
+            if (daysArray.length === 7) return 'Setiap Hari';
+            const daysMap = { 1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 0: 'Min' };
+            const sorted = [...daysArray].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
+            return sorted.map(d => daysMap[d]).join(', ');
+        }
+
+        function renderSchedules() {
+            schedulerList.innerHTML = '';
+            schedules.forEach(sched => {
+                const item = document.createElement('div');
+                item.className = 'schedule-item';
+                item.style.flexDirection = 'column'; item.style.alignItems = 'stretch';
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 1.1rem; font-weight: 700; display:flex; align-items:center; gap:8px;">
+                                ${sched.onTime} <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem; color:var(--text-secondary);"></i> ${sched.offTime}
+                            </div>
+            <div style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 4px;">
+                                <i class="fa-solid fa-rotate-right"></i> ${formatDays(sched.repeat)}
+                            </div>
+                            <div style="font-size: 0.7rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                                ${scheduleSentToEsp && isOnline
+                                    ? '<i class="fa-solid fa-circle-check" style="font-size:0.5rem;color:var(--success-color);"></i> <span style="color:var(--success-color);">Terkirim ke ESP</span>'
+                                    : (isOnline ? '<i class="fa-solid fa-clock" style="font-size:0.5rem;color:#f59e0b;"></i> <span style="color:#f59e0b;">Belum dikirim ke ESP</span>'
+                                               : '<i class="fa-solid fa-wifi-slash" style="font-size:0.5rem;color:var(--text-secondary);"></i> <span style="color:var(--text-secondary);">Offline</span>')}
+                            </div>
+                        </div>
+                        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+                            <input type="checkbox" class="schedule-toggle" data-id="${sched.id}" ${sched.enabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="openEditSchedule(${sched.id})" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; font-weight: 600; flex-grow: 1; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition: 0.2s;">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="promptDeleteSchedule(${sched.id})" style="background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; font-weight: 600; flex-grow: 1; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition: 0.2s;">
+                            <i class="fa-solid fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                `;
+                if (!sched.enabled) item.style.opacity = '0.5';
+                schedulerList.appendChild(item);
+            });
+            document.querySelectorAll('.schedule-toggle').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    const sched = schedules.find(s => s.id === id);
+                    if (sched) { sched.enabled = e.target.checked; saveSchedules(); }
+                    renderSchedules();
+                    showNotification(e.target.checked ? 'Jadwal diaktifkan' : 'Jadwal dinonaktifkan', 'fa-clock');
+                });
+            });
+        }
+        window.promptDeleteSchedule = function (id) { scheduleToDelete = id; deleteConfirmModal.classList.add('show'); };
+
+        let isDraggingSlider = false;
+        waterLevelSlider.addEventListener('mousedown', () => isDraggingSlider = true);
+        waterLevelSlider.addEventListener('touchstart', () => isDraggingSlider = true, { passive: true });
+        waterLevelSlider.addEventListener('change', (e) => {
+            isDraggingSlider = false; currentWaterLevel = parseInt(e.target.value);
+            if (autoMode) {
+                if (currentWaterLevel <= autoOnLevel && !pumpStatus) { pumpStatus = true; showNotification('Air Kritis! Sanyo Otomatis DIHIDUPKAN.', 'fa-triangle-exclamation'); }
+                else if (currentWaterLevel >= autoOffLevel && pumpStatus) { pumpStatus = false; showNotification('Tangki Penuh! Sanyo Otomatis DIMATIKAN.', 'fa-circle-check'); }
+            }
+            updateUI();
+        });
+        waterLevelSlider.addEventListener('input', (e) => { currentWaterLevel = parseInt(e.target.value); updateUI(); });
+
+        toggleConnBtn.addEventListener('click', () => {
+            isOnline = !isOnline;
+            showNotification(isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266', isOnline ? 'fa-wifi' : 'fa-triangle-exclamation');
+            updateUI();
+        });
+
+        function rssiToQuality(rssi) {
+            if (rssi >= -50) return 100;
+            if (rssi <= -100) return 0;
+            return Math.round(2 * (rssi + 100));
+        }
+
+        // ponytail: MQTT via native Android Paho (MqttBridge.kt), bukan WebSocket JS.
+        // Semua subscribe/publish handle oleh native Java interface MqttAndroid.
+        manualPumpBtn.addEventListener('click', () => {
+            if (autoMode) return;
+            pumpStatus = !pumpStatus;
+            try { MqttAndroid.send(pumpStatus); } catch (e) { /* native not ready */ }
+            showNotification(pumpStatus ? 'Sanyo dinyalakan!' : 'Sanyo dimatikan!', pumpStatus ? 'fa-bolt' : 'fa-power-off');
+            updateUI();
+        });
+
+        // Modal Handlers
+        cancelDeleteBtn.addEventListener('click', () => { scheduleToDelete = null; deleteConfirmModal.classList.remove('show'); });
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (scheduleToDelete !== null) {
+                schedules = schedules.filter(s => s.id !== scheduleToDelete);
+                saveSchedules(); renderSchedules();
+                sendScheduleToEsp();
+                showNotification('Jadwal dihapus', 'fa-trash');
+                scheduleToDelete = null; deleteConfirmModal.classList.remove('show');
+            }
+        });
+
+        window.openEditSchedule = function (id) {
+            scheduleToEdit = schedules.find(s => s.id === id);
+            if (scheduleToEdit) {
+                editOnTime.value = scheduleToEdit.onTime; editOffTime.value = scheduleToEdit.offTime;
+                const chips = document.querySelectorAll('#editScheduleDays .day-chip');
+                chips.forEach(chip => {
+                    const dayVal = parseInt(chip.getAttribute('data-day'));
+                    if (scheduleToEdit.repeat && scheduleToEdit.repeat.includes(dayVal)) chip.classList.add('active');
+                    else chip.classList.remove('active');
+                });
+                const btnEv = document.getElementById('btnEveryday');
+                const btnTd = document.getElementById('btnToday');
+                btnEv.style.borderColor = 'rgba(255,255,255,0.2)'; btnEv.style.color = 'var(--text-secondary)'; btnEv.style.background = 'rgba(255,255,255,0.05)';
+                btnTd.style.borderColor = 'rgba(255,255,255,0.2)'; btnTd.style.color = 'var(--text-secondary)'; btnTd.style.background = 'rgba(255,255,255,0.05)';
+                editScheduleModal.classList.add('show');
+            }
+        };
+        document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => chip.addEventListener('click', () => chip.classList.toggle('active')));
+
+        const btnEveryday = document.getElementById('btnEveryday');
+        const btnToday = document.getElementById('btnToday');
+        btnEveryday.addEventListener('click', () => {
+            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => chip.classList.add('active'));
+            btnEveryday.style.borderColor = 'var(--accent-cyan)'; btnEveryday.style.color = 'var(--accent-cyan)'; btnEveryday.style.background = 'rgba(0, 242, 254, 0.1)';
+            btnToday.style.borderColor = 'rgba(255,255,255,0.2)'; btnToday.style.color = 'var(--text-secondary)'; btnToday.style.background = 'rgba(255,255,255,0.05)';
+        });
+        btnToday.addEventListener('click', () => {
+            const today = new Date().getDay();
+            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
+                const dayVal = parseInt(chip.getAttribute('data-day'));
+                chip.classList.toggle('active', dayVal === today);
+            });
+            btnToday.style.borderColor = 'var(--accent-cyan)'; btnToday.style.color = 'var(--accent-cyan)'; btnToday.style.background = 'rgba(0, 242, 254, 0.1)';
+            btnEveryday.style.borderColor = 'rgba(255,255,255,0.2)'; btnEveryday.style.color = 'var(--text-secondary)'; btnEveryday.style.background = 'rgba(255,255,255,0.05)';
+        });
+        closeEditScheduleBtn.addEventListener('click', () => { editScheduleModal.classList.remove('show'); scheduleToEdit = null; });
+        saveScheduleBtn.addEventListener('click', () => {
+            if (scheduleToEdit) {
+                scheduleToEdit.onTime = editOnTime.value; scheduleToEdit.offTime = editOffTime.value;
+                const selectedDays = [];
+                document.querySelectorAll('#editScheduleDays .day-chip.active').forEach(chip => selectedDays.push(parseInt(chip.getAttribute('data-day'))));
+                scheduleToEdit.repeat = selectedDays;
+                saveSchedules(); renderSchedules();
+                sendScheduleToEsp();
+                showNotification('Jadwal disimpan & dikirim ke ESP', 'fa-floppy-disk');
+                editScheduleModal.classList.remove('show'); scheduleToEdit = null;
+            }
+        });
+
+        // Auto ON/OFF Levels
+        const autoOnLevelInput = document.getElementById('autoOnLevelInput');
+        const autoOnLevelDisplay = document.getElementById('autoOnLevelDisplay');
+        const autoOffLevelInput = document.getElementById('autoOffLevelInput');
+        const autoOffLevelDisplay = document.getElementById('autoOffLevelDisplay');
+        const autoOnEnabledToggle = document.getElementById('autoOnEnabledToggle');
+        const autoOnStateLabel = document.getElementById('autoOnStateLabel');
+        const autoOffEnabledToggle = document.getElementById('autoOffEnabledToggle');
+        const autoOffStateLabel = document.getElementById('autoOffStateLabel');
+        if (autoOnLevelInput) {
+            autoOnLevelInput.addEventListener('input', () => { autoOnLevel = parseInt(autoOnLevelInput.value); autoOnLevelDisplay.innerText = autoOnLevel + '%'; });
+            autoOnLevelInput.addEventListener('change', () => {
+                showNotification('Batas hidup otomatis: ' + autoOnLevel + '%', 'fa-droplet');
+                try { MqttAndroid.sendAutoOnLevel(autoOnLevel); } catch (e) { }
+            });
+        }
+        if (autoOffLevelInput) {
+            autoOffLevelInput.addEventListener('input', () => { autoOffLevel = parseInt(autoOffLevelInput.value); autoOffLevelDisplay.innerText = autoOffLevel + '%'; });
+            autoOffLevelInput.addEventListener('change', () => {
+                showNotification('Batas mati otomatis: ' + autoOffLevel + '%', 'fa-droplet');
+                try { MqttAndroid.sendAutoOffLevel(autoOffLevel); } catch (e) { }
+            });
+        }
+        if (autoOnEnabledToggle) {
+            autoOnEnabledToggle.addEventListener('change', (e) => {
+                autoOnEnabled = e.target.checked;
+                if (autoOnStateLabel) autoOnStateLabel.innerText = autoOnEnabled ? 'Aktif' : 'Nonaktif';
+                showNotification(autoOnEnabled ? 'Batas hidup otomatis DIAKTIFKAN' : 'Batas hidup otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOnEnabled ? 'on' : 'off'));
+                try { MqttAndroid.sendAutoOnEnabled(autoOnEnabled); } catch (e) { }
+            });
+        }
+        if (autoOffEnabledToggle) {
+            autoOffEnabledToggle.addEventListener('change', (e) => {
+                autoOffEnabled = e.target.checked;
+                if (autoOffStateLabel) autoOffStateLabel.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
+                showNotification(autoOffEnabled ? 'Batas mati otomatis DIAKTIFKAN' : 'Batas mati otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOffEnabled ? 'on' : 'off'));
+                try { MqttAndroid.sendAutoOff(autoOffEnabled); } catch (e) { }
+            });
+        }
+
+        // Wiring & Settings
+        const wiringModal = document.getElementById('wiringModal');
+        const wiringGuideBtn = document.getElementById('wiringGuideBtn');
+        const closeWiringBtn = document.getElementById('closeWiringBtn');
+        wiringGuideBtn.addEventListener('click', () => { settingsModal.classList.remove('show'); wiringModal.classList.add('show'); });
+        closeWiringBtn.addEventListener('click', () => wiringModal.classList.remove('show'));
+        document.getElementById('shareAppBtn').addEventListener('click', () => {
+            settingsModal.classList.remove('show');
+            showNotification('Menyiapkan file APK...', 'fa-share-nodes');
+            try { MqttAndroid.shareApp(); } catch(e) { showNotification('Share tidak tersedia di browser', 'fa-triangle-exclamation'); }
+        });
+        settingsBtn.addEventListener('click', () => { demoModeToggle.checked = isDemoMode; settingsModal.classList.add('show'); });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('show'));
+        demoModeToggle.addEventListener('change', (e) => { isDemoMode = e.target.checked; updateUI(); showNotification(isDemoMode ? 'Mode Demo diaktifkan' : 'Mode Asli aktif. Panel pengujian disembunyikan.', 'fa-sliders'); });
+        showCodeBtn.addEventListener('click', () => codeModal.classList.add('show'));
+        closeCodeBtn.addEventListener('click', () => codeModal.classList.remove('show'));
+
+        // ─── AUTO MODE MODAL ──────────────────────────────────────
+        const autoModeModal = document.getElementById('autoModeModal');
+        document.getElementById('openAutoModeBtn').addEventListener('click', () => autoModeModal.classList.add('show'));
+        document.getElementById('openAutoModeFromSettings').addEventListener('click', () => { settingsModal.classList.remove('show'); autoModeModal.classList.add('show'); });
+        document.getElementById('closeAutoModeBtn').addEventListener('click', () => autoModeModal.classList.remove('show'));
+
+        // ─── THEME SWITCHER ───────────────────────────────────────
+        function applyTheme(t) {
+            document.body.setAttribute('data-theme', t === 'ocean' ? '' : t);
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+            localStorage.setItem('appTheme', t);
+        }
+        document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+        applyTheme(localStorage.getItem('appTheme') || 'ocean');
+
+        // ─── NOTIFICATION CENTER ─────────────────────────────────
+        // Update: Sel 01/07/2026 [UPDATE] - v3.1.0
+        var notifSelectedType = null;
+
+        function loadNotifFromNative() {
+            try { return JSON.parse(MqttAndroid.getStoredNotifications()); } catch(e) { return []; }
+        }
+
+        function getReadSet() {
+            try { return new Set(JSON.parse(localStorage.getItem('notifReadTimes') || '[]')); } catch(e) { return new Set(); }
+        }
+
+        function markNotifRead(time) {
+            var s = getReadSet(); s.add(time);
+            localStorage.setItem('notifReadTimes', JSON.stringify([...s]));
+        }
+
+        function updateNotifBadge() {
+            var notifs = loadNotifFromNative();
+            var readSet = getReadSet();
+            var unread = notifs.filter(function(n){ return !readSet.has(n.time); }).length;
+            var badge = document.getElementById('notifBadge');
+            if (badge) { badge.innerText = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
+        }
+
+        function formatNotifTime(ts) {
+            var diff = Date.now() - ts;
+            if (diff < 60000) return 'Baru saja';
+            if (diff < 3600000) return Math.floor(diff/60000) + ' mnt lalu';
+            if (diff < 86400000) return Math.floor(diff/3600000) + ' jam lalu';
+            var d = new Date(ts);
+            return DAYS_ID[d.getDay()]+', '+d.getDate()+' '+MONTHS_ID[d.getMonth()]+' '+d.getFullYear();
+        }
+
+        function renderNotifList() {
+            var notifs = loadNotifFromNative().slice().reverse(); // newest first
+            var list = document.getElementById('notifList');
+            if (!list) return;
+            if (notifs.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);"><i class="fa-solid fa-bell-slash" style="font-size:2rem;opacity:0.4;display:block;margin-bottom:12px;"></i>Belum ada notifikasi</div>';
+                return;
+            }
+            var readSet = getReadSet();
+            list.innerHTML = notifs.map(function(n, i) {
+                var isRead = readSet.has(n.time);
+                var isSelected = notifSelectedType && n.type === notifSelectedType && !isRead;
+                if (isSelected) { markNotifRead(n.time); readSet.add(n.time); }
+                var icon = n.type === 'water_low' ? 'fa-triangle-exclamation' :
+                           n.type === 'water_high' ? 'fa-droplet' :
+                           n.type === 'prayer' ? 'fa-mosque' : 'fa-bell';
+                var iconColor = n.type === 'water_low' ? 'var(--danger-color)' :
+                                n.type === 'water_high' ? 'var(--accent-cyan)' :
+                                n.type === 'prayer' ? 'var(--accent-purple)' : 'var(--text-secondary)';
+                return '<div class="notif-item'+(isRead?'':' unread')+(isSelected?' selected':'')+'" onclick="markNotifRead('+n.time+');updateNotifBadge();this.classList.remove(\'unread\',\'selected\');">'+
+                    '<i class="fa-solid '+icon+'" style="color:'+iconColor+';margin-top:2px;font-size:1.1rem;min-width:20px;flex-shrink:0;"></i>'+
+                    '<div style="flex:1;min-width:0;">'+
+                        '<div style="font-weight:'+(isRead?'500':'700')+';font-size:0.88rem;margin-bottom:2px;">'+n.title+'</div>'+
+                        '<div style="font-size:0.78rem;color:var(--text-secondary);word-break:break-word;">'+n.text+'</div>'+
+                        '<div style="font-size:0.68rem;color:var(--text-secondary);opacity:0.6;margin-top:4px;">'+formatNotifTime(n.time)+'</div>'+
+                    '</div>'+
+                    (isRead?'':'<div style="width:8px;height:8px;border-radius:50%;background:var(--accent-cyan);margin-top:4px;flex-shrink:0;"></div>')+
+                '</div>';
+            }).join('');
+            updateNotifBadge();
+            if (notifSelectedType) {
+                setTimeout(function(){
+                    var el = list.querySelector('.selected');
+                    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+                }, 100);
+                notifSelectedType = null;
+            }
+        }
+
+        window.openNotifPanel = function(type) {
+            notifSelectedType = type || null;
+            renderNotifList();
+            document.getElementById('notifModal').classList.add('show');
+        };
+
+        document.getElementById('notifBtn').addEventListener('click', function() {
+            notifSelectedType = null;
+            renderNotifList();
+            document.getElementById('notifModal').classList.add('show');
+        });
+        document.getElementById('closeNotifBtn').addEventListener('click', function() {
+            document.getElementById('notifModal').classList.remove('show');
+        });
+        document.getElementById('clearNotifsBtn').addEventListener('click', function() {
+            // Mark all as read (we can't delete from SharedPrefs via JS, so mark all read)
+            var notifs = loadNotifFromNative();
+            var s = getReadSet();
+            notifs.forEach(function(n){ s.add(n.time); });
+            localStorage.setItem('notifReadTimes', JSON.stringify([...s]));
+            renderNotifList();
+            showNotification('Semua notifikasi ditandai terbaca', 'fa-check');
+        });
+
+        // ─── REAL-TIME CLOCK ──────────────────────────────────────
+        var DAYS_ID  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        function updateClock() {
+            var d = new Date();
+            var h = String(d.getHours()).padStart(2,'0');
+            var m = String(d.getMinutes()).padStart(2,'0');
+            var s = String(d.getSeconds()).padStart(2,'0');
+            document.getElementById('clockTime').innerText = h+':'+m+':'+s;
+            document.getElementById('clockDate').innerText = DAYS_ID[d.getDay()]+', '+d.getDate()+' '+MONTHS_ID[d.getMonth()]+' '+d.getFullYear();
+            checkPrayerTime(h+':'+m);
+        }
+        setInterval(updateClock, 1000);
+
+        // ─── JADWAL SHALAT ────────────────────────────────────────
+        var PRAYER_NAMES = ['Subuh','Dzuhur','Ashar','Maghrib','Isya'];
+        var prayerTimes = JSON.parse(localStorage.getItem('prayerTimes') || '{}');
+        var lastPrayerFiredJS = '';
+
+        function renderPrayerTimes() {
+            var list = document.getElementById('prayerList');
+            if (!list) return;
+            var now = new Date(); var hh = String(now.getHours()).padStart(2,'0'); var mm = String(now.getMinutes()).padStart(2,'0'); var nowStr = hh+':'+mm;
+            // find next prayer
+            var nextPrayer = '';
+            for (var i = 0; i < PRAYER_NAMES.length; i++) {
+                var t = prayerTimes[PRAYER_NAMES[i]] || '';
+                if (t && t > nowStr) { nextPrayer = PRAYER_NAMES[i]; break; }
+            }
+            list.innerHTML = PRAYER_NAMES.map(function(n) {
+                var val = prayerTimes[n] || '--:--';
+                var badge = n === nextPrayer ? '<span class="prayer-next-badge">Berikutnya</span>' : '';
+                return '<div class="prayer-row">'+
+                    '<span class="prayer-name">'+n+'</span>'+
+                    '<input type="time" class="prayer-time-input" value="'+val+'" data-prayer="'+n+'" onchange="updatePrayerTime(this.dataset.prayer, this.value)">'+
+                    badge+
+                '</div>';
+            }).join('');
+        }
+
+        function updatePrayerTime(name, val) {
+            prayerTimes[name] = val;
+            localStorage.setItem('prayerTimes', JSON.stringify(prayerTimes));
+            renderPrayerTimes();
+            try { MqttAndroid.savePrayerTimes(JSON.stringify(prayerTimes)); } catch(e) {}
+        }
+
+        function fetchPrayerTimes() {
+            if (!navigator.geolocation) { showNotification('GPS tidak tersedia', 'fa-location-dot'); return; }
+            showNotification('Mendapatkan lokasi...', 'fa-location-dot');
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude.toFixed(4);
+                var lon = pos.coords.longitude.toFixed(4);
+                var today = new Date();
+                var url = 'https://api.aladhan.com/v1/timings/'+
+                    today.getDate()+'-'+(today.getMonth()+1)+'-'+today.getFullYear()+
+                    '?latitude='+lat+'&longitude='+lon+'&method=11';
+                fetch(url).then(function(r){ return r.json(); }).then(function(d){
+                    var t = d.data.timings;
+                    prayerTimes = { Subuh: t.Fajr.substring(0,5), Dzuhur: t.Dhuhr.substring(0,5), Ashar: t.Asr.substring(0,5), Maghrib: t.Maghrib.substring(0,5), Isya: t.Isha.substring(0,5) };
+                    localStorage.setItem('prayerTimes', JSON.stringify(prayerTimes));
+                    renderPrayerTimes();
+                    try { MqttAndroid.savePrayerTimes(JSON.stringify(prayerTimes)); } catch(e) {}
+                    showNotification('Jadwal shalat diperbarui!', 'fa-mosque');
+                }).catch(function(){ showNotification('Gagal ambil jadwal shalat', 'fa-triangle-exclamation'); });
+            }, function(){ showNotification('Izin GPS ditolak', 'fa-location-dot'); });
+        }
+
+        function checkPrayerTime(nowStr) {
+            PRAYER_NAMES.forEach(function(n) {
+                var t = prayerTimes[n];
+                if (t && t === nowStr && lastPrayerFiredJS !== n+'_'+nowStr) {
+                    lastPrayerFiredJS = n+'_'+nowStr;
+                    showNotification('Waktu '+n+' — '+nowStr+' WIB', 'fa-mosque');
+                    try { MqttAndroid.sendBuzzer(5); } catch(e) {}
+                }
+            });
+        }
+
+        document.getElementById('fetchPrayerBtn').addEventListener('click', fetchPrayerTimes);
+
+        // ─── SPLASH EFEK AIR TUMPAH ───────────────────────────────
+        var splashOverlay = document.getElementById('splashOverlay');
+        var splashTimeout;
+        function triggerSplash() {
+            splashOverlay.style.display = 'block';
+            splashOverlay.innerHTML = '';
+            for (var i = 0; i < 30; i++) {
+                (function(i){ setTimeout(function(){
+                    var drop = document.createElement('div');
+                    drop.className = 'splash-drop';
+                    var size = 8 + Math.random()*18;
+                    drop.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(Math.random()*100)+'%;top:-20px;animation-delay:'+(Math.random()*0.5)+'s;animation-duration:'+(0.8+Math.random()*0.8)+'s;';
+                    splashOverlay.appendChild(drop);
+                }, i*30); })(i);
+            }
+            clearTimeout(splashTimeout);
+            splashTimeout = setTimeout(function(){ splashOverlay.style.display='none'; splashOverlay.innerHTML=''; }, 3000);
+        }
+
+        // Shake detection
+        var shakeThreshold = 25, lastX, lastY, lastZ, lastShakeTime = 0;
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', function(e) {
+                var a = e.acceleration;
+                if (!a) return;
+                var now = Date.now();
+                if (now - lastShakeTime < 1500) return;
+                if (lastX !== undefined) {
+                    var dx = Math.abs(a.x - lastX), dy = Math.abs(a.y - lastY), dz = Math.abs(a.z - lastZ);
+                    if (dx+dy+dz > shakeThreshold) { lastShakeTime = now; triggerSplash(); showNotification('Splash!', 'fa-water'); }
+                }
+                lastX = a.x; lastY = a.y; lastZ = a.z;
+            });
+        }
+
+        function downloadCodeAsFile(elementId, fileName) {
+            const codeContent = document.querySelector(`#${elementId} .code-content`).innerText;
+            const blob = new Blob([codeContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        document.getElementById('downloadEspBtn').addEventListener('click', () => downloadCodeAsFile('codeModal', 'main.cpp'));
+
+        // ==========================================
+        // INIT
+        // ==========================================
+        // Trigger splash when water reaches 100%
+        var prevWaterLevel = 0;
+        var _origUpdateUI = updateUI;
+        updateUI = function() {
+            _origUpdateUI();
+            if (currentWaterLevel >= 100 && prevWaterLevel < 100) triggerSplash();
+            prevWaterLevel = currentWaterLevel;
+        };
+
+        window.onload = function () {
+            try { createDecorativeBubbles(); } catch (e) { }
+            renderSchedules();
+            renderPrayerTimes();
+            updateClock();
+            updateUI();
+            updateNotifBadge();
+            // ponytail: panggil native Android MQTT — JS WebSocket dihapus, semua via MqttAndroid bridge
+            try { if (typeof MqttAndroid !== 'undefined') MqttAndroid.connect(); } catch (e) { console.error('MqttAndroid not ready', e); }
+            // Update: Rab 01/07/2026 12:51 - v3.2.0
+            document.getElementById('buildTimestamp').innerText = 'Rab 01/07/2026 12:51 - v3.2.0';
+        };
+    </script>
+</body>
+
+</html>
