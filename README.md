@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 — v2.7.1 (firmware) / v3.3.0 (app Android) / v1.1.0 (web)
+> Update terakhir: Rab 01/07/2026 — v2.8.0 (firmware) / v3.4.0 (app Android) / v1.1.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -289,6 +289,13 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.4.0 (app) / v2.8.0 (firmware) — Rab 01/07/2026
+- **Baru (Firmware v2.8.0)**: tombol fisik **dwifungsi** — saat WiFi **tak terhubung** = ON/OFF pompa manual (mode darurat); saat **terhubung** = ganti layar LCD (tombol ON=maju, OFF=mundur), mengabaikan sisa waktu dwell **dan** meng-override layar prioritas azan. (Tombol di pin **D4** & **D7**; kontrol pompa saat online tetap via app/MQTT.)
+- **Baru (App v3.4.0)**: azan tetap berbunyi **walau aplikasi ditutup total** — `AlarmManager` exact (`setExactAndAllowWhileIdle`) dijadwalkan per waktu solat (`AzanScheduler`) + `BootReceiver` untuk restart setelah HP nyala + minta pembebasan optimasi baterai. *Catatan: force-stop manual oleh user tetap tak bisa dilawan (batasan Android).*
+- **Fix (App)**: volume azan kini **bisa diatur tombol volume HP** — audio pakai stream MEDIA (dulu ALARM). Konsekuensi: azan tak lagi menembus mode senyap (trade-off yang diminta).
+- Izin baru: `RECEIVE_BOOT_COMPLETED`, `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
+- File berubah: `src/main.cpp` (firmware), `SanyoService.kt`, `MainActivity.kt`, `AndroidManifest.xml`, `app/build.gradle.kts` (v3.4.0/vc18), + baru `AzanReceivers.kt`. Self-check `lcd_screen_advance_check.js` diperluas (tombol switch + cancel prioritas).
 
 ### v2.7.1 (firmware) — Rab 01/07/2026
 - **Baru**: durasi tampil tiap layar LCD kini per-layar (`LCD_DWELL_TICKS[]` array, `src/main.cpp` — cari komentar `>>> ATUR DI SINI`), bukan satu angka untuk semua layar.

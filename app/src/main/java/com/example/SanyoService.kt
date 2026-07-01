@@ -1,11 +1,13 @@
 package com.example
 
-// Update: Sel 01/07/2026 22:00 - v3.0.0 | Rab 01/07/2026 - v3.3.0
+// Update: Sel 01/07/2026 22:00 - v3.0.0 | Rab 01/07/2026 - v3.4.0
 // ForegroundService: MQTT monitoring latar belakang + notifikasi air + notifikasi + buzzer azan
 // v3.1.0: icon notif → water droplet, simpan histori notif ke SharedPrefs, deep link ke notif center
-// v3.2.0: suara azan (MediaPlayer, stream alarm) diputar saat waktu solat — jalan walau app tertutup
+// v3.2.0: suara azan (MediaPlayer) diputar saat waktu solat — jalan walau app tertutup
 // v3.3.0: sinkron lintas device via ESP (status MQTT "prayerTimes"+"notifLog") — ESP jadi
 //   sumber bersama, ganti deteksi level air lokal (debounce) yg dulu bisa beda antar device
+// v3.4.0: azan tahan app ditutup total — AlarmManager exact per waktu solat (AzanScheduler)
+//   + BootReceiver restart setelah HP nyala; volume azan pakai stream MEDIA (bisa diatur tombol)
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -35,6 +37,8 @@ class SanyoService : Service() {
         const val PREF_PRAYER        = "prayer_times"
         const val PREF_NOTIF_HISTORY = "notif_history"
         const val NOTIF_HISTORY_KEY  = "notifs_json"
+        const val ACTION_PLAY_AZAN   = "com.example.PLAY_AZAN"
+        const val EXTRA_PRAYER_NAME  = "prayer_name"
         private const val TAG             = "SanyoService"
         private const val BROKER          = "tcp://broker.emqx.io:1883"
         private const val TOPIC_STATUS    = "smartsanyo/riyan123/status"
@@ -69,9 +73,18 @@ class SanyoService : Service() {
         startForeground(NOTIF_ONGOING, buildOngoing())
         connectMqtt()
         handler.post(prayerRunnable)
+        AzanScheduler.scheduleAll(this) // pasang alarm exact tiap waktu solat (tahan app ditutup)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Dipicu AlarmManager saat waktu solat tiba walau service sempat mati/di-swipe.
+        if (intent?.action == ACTION_PLAY_AZAN) {
+            val name = intent.getStringExtra(EXTRA_PRAYER_NAME) ?: "Solat"
+            firePrayer(name)
+            AzanScheduler.scheduleAll(this) // jadwalkan ulang utk besok
+        }
+        return START_STICKY
+    }
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
@@ -124,6 +137,7 @@ class SanyoService : Service() {
                 val prefs = getSharedPreferences(PREF_PRAYER, Context.MODE_PRIVATE).edit()
                 pt.keys().forEach { key -> prefs.putString(key, pt.getString(key)) }
                 prefs.apply()
+                AzanScheduler.scheduleAll(this) // jadwal solat berubah → pasang ulang alarm exact
             }
             json.optJSONArray("notifLog")?.let { mergeNotifLog(it) }
         } catch (_: Exception) {}
@@ -158,6 +172,7 @@ class SanyoService : Service() {
 
     // ─── Prayer Time ─────────────────────────────────────────────────────────
 
+    // Cek per-menit selagi service hidup (cadangan bila alarm exact tak terpasang/terlewat).
     private fun checkPrayer() {
         val prefs = getSharedPreferences(PREF_PRAYER, Context.MODE_PRIVATE)
         val cal = java.util.Calendar.getInstance()
@@ -167,18 +182,31 @@ class SanyoService : Service() {
         )
         prayerNames.forEach { name ->
             val t = prefs.getString(name, "") ?: return@forEach
-            if (t == now && lastPrayerFired != "${name}_$now") {
-                lastPrayerFired = "${name}_$now"
-                notify(NOTIF_PRAYER, "🕌 Waktu $name", "Waktu $name telah tiba — $now WIB", "prayer")
-                markSeen(seenKey("prayer", System.currentTimeMillis() / 1000)) // cegah dobel saat notifLog ESP tiba
-                publish("BUZZER_5")
-                playAdzan()
-                Log.d(TAG, "Prayer: $name at $now — buzzer + azan")
-            }
+            if (t == now) firePrayer(name)
         }
     }
 
-    /** Putar suara azan dari res/raw/adzan.mp3 via stream ALARM (tembus mode senyap).
+    // Satu pintu bunyi azan — dipakai checkPrayer() (handler) & alarm exact (onStartCommand).
+    // Guard lastPrayerFired per (nama, menit) cegah dobel walau kedua jalur menembak barengan.
+    private fun firePrayer(name: String) {
+        val cal = java.util.Calendar.getInstance()
+        val now = "%02d:%02d".format(
+            cal.get(java.util.Calendar.HOUR_OF_DAY),
+            cal.get(java.util.Calendar.MINUTE)
+        )
+        if (lastPrayerFired == "${name}_$now") return
+        lastPrayerFired = "${name}_$now"
+        notify(NOTIF_PRAYER, "🕌 Waktu $name", "Waktu $name telah tiba — $now WIB", "prayer")
+        markSeen(seenKey("prayer", System.currentTimeMillis() / 1000)) // cegah dobel saat notifLog ESP tiba
+        publish("BUZZER_5")
+        playAdzan()
+        Log.d(TAG, "Prayer: $name at $now — buzzer + azan")
+    }
+
+    /** Putar suara azan dari res/raw/adzan.mp3 via stream MEDIA (musik).
+     *  v3.4.0: USAGE_MEDIA (bukan ALARM) supaya volume azan bisa diatur tombol volume HP.
+     *  ponytail: konsekuensi — azan tidak lagi menembus mode senyap; itu trade-off yang
+     *  diminta user (kontrol volume > tembus senyap). Balikkan ke USAGE_ALARM bila mau sebaliknya.
      *  User menaruh file di app/src/main/res/raw/adzan.mp3 — jika belum ada, dilewati
      *  (getIdentifier → 0), buzzer ESP tetap jalan. */
     private fun playAdzan() {
@@ -190,7 +218,7 @@ class SanyoService : Service() {
             adzanPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )

@@ -70,6 +70,10 @@ class MainActivity : ComponentActivity() {
         }
         pendingNotifType = intent.getStringExtra("notif_type")
 
+        // v3.4.0: minta pembebasan optimasi baterai sekali — biar service & alarm azan tak
+        // dibunuh OEM saat app ditutup. Diam-diam gagal kalau ditolak (azan tetap coba jalan).
+        requestBatteryOptExemption()
+
         // Mulai SanyoService (background MQTT + notifikasi)
         val svcIntent = Intent(this, SanyoService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(svcIntent)
@@ -290,6 +294,19 @@ class MainActivity : ComponentActivity() {
         mainHandler.post {
             webViewRef?.evaluateJavascript("if(window.openNotifPanel)window.openNotifPanel('$safe')", null)
         }
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun requestBatteryOptExemption() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        try {
+            val pm = getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+            if (pm.isIgnoringBatteryOptimizations(packageName)) return
+            startActivity(Intent(
+                android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                android.net.Uri.parse("package:$packageName")
+            ))
+        } catch (_: Exception) { /* OEM tanpa dialog ini — abaikan, azan tetap coba jalan */ }
     }
 
     override fun onDestroy() {

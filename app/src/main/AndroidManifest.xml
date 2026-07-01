@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- v3.4.0: azan exact-alarm tahan app ditutup + restart setelah boot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +27,14 @@
             android:name=".SanyoService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
+
+        <!-- v3.4.0: alarm exact waktu solat + restart setelah boot (azan tahan app ditutup) -->
+        <receiver android:name=".AzanAlarmReceiver" android:exported="false" />
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Update: Sel 01/07/2026 [UPDATE] - v3.1.2: FileProvider untuk share APK -->
         <provider

@@ -19,8 +19,9 @@ android {
     // v3.2.0: suara azan (MediaPlayer) saat waktu solat + versi website standalone (folder web/)
     // v3.2.1: kirim jadwal solat ke ESP (PRAYER_) untuk tampilan LCD multi-layar (firmware v2.6.0)
     // v3.3.0: sinkron jadwal solat + riwayat notifikasi lintas device via ESP (firmware v2.7.0)
-    versionCode = 17
-    versionName = "3.3.0"
+    // v3.4.0: azan tahan app ditutup (AlarmManager exact + boot) + volume azan via tombol; firmware v2.8.0 tombol LCD
+    versionCode = 18
+    versionName = "3.4.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
