@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Sel 01/07/2026 20:00 — v2.4.1 (firmware) / v2.4.0 (app Android)
+> Update terakhir: Sel 01/07/2026 22:30 — v2.5.0 (firmware) / v3.0.0 (app Android)
 
 ---
 
@@ -273,12 +273,22 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 | App status "Offline" terus | Periksa WiFi ESP, pastikan terhubung. Cek Serial Monitor untuk error MQTT |
 | Jadwal tidak jalan | Pastikan ESP sudah sync NTP — Serial Monitor harus tampil `[NTP] Sync OK`. Perlu koneksi internet saat boot |
 | App tidak bisa build | Pastikan JDK 17+ terinstall. Jalankan `.\gradlew.bat --stop` lalu coba lagi |
-| HP tidak terdeteksi ADB via WiFi | PC & HP harus di WiFi yang sama. Restart: `adb kill-server && adb start-server` |
+| HP tidak terdeteksi ADB via WiFi | PC & HP harus di WiFi yang sama. Restart ADB: `adb kill-server` lalu `adb start-server` |
 | Serial monitor karakter acak | Normal di awal boot ESP8266 (74880 baud). Tunggu `Smart Sanyo v2 Starting...` |
 
 ---
 
 ## Changelog
+
+### v3.0.0 — App Android — Sel 01/07/2026
+- **Baru**: Efek air tumpah (splash) — otomatis saat level 100%, atau HP digoyangkan (DeviceMotion)
+- **Baru**: 4 tema warna — Ocean (default), Sunset, Forest, Purple Night — pilih di Pengaturan
+- **Baru**: Jam & tanggal real-time di header (HH:MM:SS + Hari/Tanggal)
+- **Baru**: Jadwal Shalat — ambil otomatis via GPS + aladhan.com, atau edit manual; tiap waktu shalat → buzzer ESP 5×
+- **Baru**: `SanyoService` — ForegroundService notifikasi background saat app mati (air hampir habis/penuh, waktu shalat)
+- **Baru**: Auto Mode dipindah ke popup tersendiri (buka dari card utama atau Pengaturan)
+- **Baru**: Tombol Nyalakan Saklar menyatu dalam kartu Sanyo Status
+- **Firmware v2.5.0**: hostname `sanyo-kontrol` (terlihat di daftar perangkat hotspot), perintah `BUZZER_N` via MQTT, `WiFi.setOutputPower(17)` cegah brownout
 
 ### v2.4.1 — Firmware — Sel 01/07/2026
 - **Baru**: LCD I2C tampil `Air: PENUH!` saat sensor blind zone (jarak <25cm dari sensor)
