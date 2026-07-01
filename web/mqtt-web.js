@@ -1,6 +1,6 @@
 // ============================================================
 //  Smart Sanyo Control — Web MQTT shim (versi website)
-//  Update: Rab 01/07/2026 12:51 - web v1.0.2
+//  Update: Rab 01/07/2026 12:51 - web v1.0.3
 //  Meniru kontrak native `MqttAndroid` (MainActivity.kt) pakai mqtt.js over WSS,
 //  supaya index.html yang sama jalan di browser tanpa diubah.
 // ============================================================
@@ -14,20 +14,25 @@
     try { if (client && client.connected) client.publish(TOPIC_CONTROL, payload); } catch (e) {}
   }
 
-  // Sama persis dgn handler evaluateJavascript di MainActivity.kt (MQTT status → global UI).
+  // index.html mendeklarasikan currentWaterLevel dkk pakai `let` di top-level <script> —
+  // `let` TIDAK jadi properti window, jadi assignment harus bare identifier (bukan window.X)
+  // supaya nyambung ke scope skrip halaman yang sama. Ini yang bikin web "keliatan" tidak
+  // terhubung walau pesan MQTT sudah diterima: window.currentWaterLevel dulu nulis ke
+  // properti hantu yang tak pernah dibaca UI. Pola ini sama persis dgn evaluateJavascript
+  // di MainActivity.kt (juga pakai bare identifier, bukan window.X).
   function applyStatus(str) {
     try {
       var d = JSON.parse(str);
-      if (d.waterLevel   !== undefined) window.currentWaterLevel = parseInt(d.waterLevel);
-      if (d.pumpStatus   !== undefined) window.pumpStatus     = d.pumpStatus;
-      if (d.autoOffEnabled !== undefined) window.autoOffEnabled = d.autoOffEnabled;
-      if (d.autoOffLevel !== undefined) window.autoOffLevel   = d.autoOffLevel;
-      if (d.autoOnLevel  !== undefined) window.autoOnLevel    = d.autoOnLevel;
-      if (d.ssid         !== undefined) window.espSSIDValue    = d.ssid;
-      if (d.rssi         !== undefined) { window.espRssiValue = d.rssi; if (window.rssiToQuality) window.espQualValue = window.rssiToQuality(d.rssi); }
-      if (d.hasSchedule  !== undefined) window.espHasSchedule  = d.hasSchedule;
-      if (typeof window.markOnline === 'function') window.markOnline(); else window.isOnline = true;
-      if (typeof window.updateUI === 'function') window.updateUI();
+      if (d.waterLevel     !== undefined) currentWaterLevel = parseInt(d.waterLevel);
+      if (d.pumpStatus     !== undefined) pumpStatus = d.pumpStatus;
+      if (d.autoOffEnabled !== undefined) autoOffEnabled = d.autoOffEnabled;
+      if (d.autoOffLevel   !== undefined) autoOffLevel = d.autoOffLevel;
+      if (d.autoOnLevel    !== undefined) autoOnLevel = d.autoOnLevel;
+      if (d.ssid           !== undefined) espSSIDValue = d.ssid;
+      if (d.rssi           !== undefined) { espRssiValue = d.rssi; if (typeof rssiToQuality === 'function') espQualValue = rssiToQuality(d.rssi); }
+      if (d.hasSchedule    !== undefined) espHasSchedule = d.hasSchedule;
+      if (typeof markOnline === 'function') markOnline(); else isOnline = true;
+      if (typeof updateUI === 'function') updateUI();
     } catch (e) { console.error('MQTT web:', e); }
   }
 
@@ -65,6 +70,6 @@
   // App inject versi/timestamp via onPageFinished; di web set sendiri.
   document.addEventListener('DOMContentLoaded', function () {
     var vn = document.getElementById('appVersion');    if (vn) vn.innerHTML  = 'web 1.0.1';
-    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 12:51 - web v1.0.2';
+    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 12:51 - web v1.0.3';
   });
 })();
