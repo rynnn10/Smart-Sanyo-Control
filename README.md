@@ -2,7 +2,7 @@
 
 Versi web dari aplikasi Android, **UI sama persis** (dibangkitkan dari `app/src/main/assets/index.html`), tapi MQTT lewat **WebSocket (WSS)** langsung dari browser — bukan native bridge.
 
-> Update terakhir: Rab 01/07/2026 12:51 — web v1.0.0
+> Update terakhir: Rab 01/07/2026 — web v1.0.3
 
 ## Isi
 | File | Fungsi |
@@ -10,8 +10,9 @@ Versi web dari aplikasi Android, **UI sama persis** (dibangkitkan dari `app/src/
 | `index.html` | Hasil generate — **jangan edit langsung**, edit sumbernya di `app/.../assets/index.html` lalu build ulang |
 | `mqtt-web.js` | Shim `MqttAndroid` (WSS ke `broker.emqx.io:8084`) — satu-satunya file khusus web |
 | `config.js` | Disalin dari app |
-| `build-web.ps1` | Regenerate `index.html` + `config.js` dari sumber app |
-| `test-mqtt-web.js` | `node test-mqtt-web.js` → cek payload MQTT cocok dgn firmware |
+| `favicon.png` | Disalin dari `app/src/main/res/drawable/ic_icon_sanyo.png` — icon sama dengan APK |
+| `build-web.ps1` | Regenerate `index.html` + `config.js` + `favicon.png` dari sumber app |
+| `test-mqtt-web.js` | `node test-mqtt-web.js` → cek payload MQTT cocok dgn firmware + regresi bug `window.X` |
 | `adzan.mp3` | *(opsional)* taruh di sini agar azan bunyi di web saat waktu solat |
 
 ## Regenerate setelah UI app berubah
