@@ -1,24 +1,23 @@
 # Smart Sanyo Control
 
-Sistem IoT untuk monitoring dan kontrol otomatis pompa air (Sanyo) menggunakan **Wemos D1 Mini (ESP8266)**, **Aplikasi Android**, dan **Google Apps Script** sebagai backend cloud.
+Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
+
+> Update terakhir: Sel 01/07/2026 20:00 — v2.4.1 (firmware) / v2.4.0 (app Android)
 
 ---
 
 ## Arsitektur Sistem
 
 ```
-[Sensor Ultrasonik] ──► [Wemos D1 Mini]  ──► [Google Apps Script]
-[Relay Pompa]       ◄──  (ESP8266)       ◄──   (Cloud Database)
-[LCD I2C 16x2]              │                        ▲
-[Tombol ON/OFF]              │                        │
-                             └── WiFi ────────────────┘
-                                                       │
-                                               [Aplikasi Android]
-                                               (WebView + HTTP)
-                                                       │
-                                               [Firebase FCM]
-                                             (Push Notification)
+[JSN-SR04T]  ──►  [WeMos D1 Mini]  ──►  MQTT Broker  ◄──  [Aplikasi Android]
+[Relay]       ◄──   (ESP8266)       ◄──  broker.emqx.io     (WebView + Paho)
+[LCD I2C]              │
+[Buzzer]               │ WiFi
+[Tombol]               │
+              [NTP: pool.ntp.org WIB]
 ```
+
+Tidak ada server cloud buatan sendiri. Semua komunikasi real-time via MQTT public broker.
 
 ---
 
@@ -26,231 +25,151 @@ Sistem IoT untuk monitoring dan kontrol otomatis pompa air (Sanyo) menggunakan *
 
 | Komponen | Spesifikasi |
 |----------|-------------|
-| Mikrokontroler | Wemos D1 Mini (ESP8266) |
-| Sensor Air | JSN-SR04T (waterproof) atau HC-SR04 |
+| Mikrokontroler | WeMos D1 Mini (ESP8266) |
+| Sensor Air | JSN-SR04T Waterproof Ultrasonic |
 | Relay | Module Relay 5V 1-channel |
 | Display | LCD 1602 I2C (alamat 0x27 atau 0x3F) |
-| Tombol | Push Button × 2 |
-| Power Supply | Adaptor 5V min. 2A |
+| Buzzer | Buzzer aktif 5V |
+| Tombol | Push Button × 2 (ON / OFF manual) |
 
 ---
 
 ## Wiring Diagram
 
-| Modul | Pin Modul | Wemos D1 Mini |
+| Modul | Pin Modul | WeMos D1 Mini |
 |-------|-----------|---------------|
-| **Relay 5V** | IN | D1 |
+| **Relay** | IN | D1 |
 | | VCC / GND | 5V / GND |
 | **JSN-SR04T** | TRIG | D2 |
 | | ECHO | D3 |
 | | VCC / GND | 5V / GND |
 | **LCD I2C** | SDA | D6 |
 | | SCL | D5 |
-| | VCC / GND | 5V / GND |
+| | VCC / GND | 3.3V / GND |
 | **Tombol ON** | Kaki 1 | D4 |
 | | Kaki 2 | GND |
 | **Tombol OFF** | Kaki 1 | D7 |
 | | Kaki 2 | GND |
+| **Buzzer** | (+) | D8 |
+| | (−) | GND |
 
-> **Catatan:** Tombol menggunakan `INPUT_PULLUP` internal — tidak perlu resistor eksternal.
+> Tombol menggunakan `INPUT_PULLUP` internal — tidak perlu resistor eksternal.
 
 ---
 
 ## Fitur
 
-- Monitoring ketinggian air real-time via sensor ultrasonik
-- Kontrol relay otomatis (**Auto Mode**) berdasarkan level air
-- Kontrol relay manual via **Aplikasi Android** dan **tombol fisik**
-- **Dual WiFi failover**: Otomatis berpindah ke jaringan cadangan
-- **Mode offline**: Pompa tetap bisa dioperasikan via tombol fisik
-- **Penjadwalan otomatis** (atur jadwal ON/OFF dari app)
-- **Push Notification Firebase** saat air kritis (< 10%) atau penuh (> 90%)
-- LCD menampilkan status air, relay, dan jaringan WiFi aktif
-- Sync data ke Google Spreadsheet sebagai log aktivitas
+### Firmware (WeMos D1 Mini)
+- Baca level air setiap 2 detik via JSN-SR04T (median filter 5 sampel)
+- **Blind zone detection**: saat air terlalu dekat sensor (<25cm), LCD tampil `Air: PENUH!`
+- **Outlier rejection**: lonjakan bacaan >25cm butuh 3 siklus berturut dikonfirmasi — mencegah echo palsu ~60cm dari sensor hangat
+- Auto OFF saat air ≥ batas penuh, Auto ON saat air ≤ batas kritis (threshold atur dari app)
+- Sinkronisasi waktu **NTP** otomatis (WIB UTC+7) — tanpa library tambahan
+- **Penjadwalan** ON/OFF mingguan — terima jadwal JSON dari app via MQTT, eksekusi sesuai waktu
+- Dual WiFi failover: otomatis pindah ke jaringan cadangan
+- Mode offline: tombol fisik tetap berfungsi tanpa WiFi
+- LCD 16x2: level air, status relay, status WiFi, kode blind zone
+- Buzzer: 1 beep = relay berubah, 3 beep = startup
+
+### Aplikasi Android
+- Dashboard real-time: level air dengan **canvas wave 3D** (permukaan bergelombang dan miring mengikuti gravitasi HP)
+- Warna level air: merah <20%, kuning <50%, biru/cyan ≥50%
+- Kontrol manual pompa ON/OFF via MQTT
+- Atur jadwal ON/OFF mingguan, kirim ke ESP via MQTT
+- Atur threshold Auto OFF/ON dari aplikasi
+- Indikator koneksi ESP: online/offline, SSID, RSSI
+- Badge konfirmasi jadwal: "Terkirim ke ESP" / "Belum dikirim"
+- Dark UI dengan animasi 3D background (Three.js)
 
 ---
 
-## Setup Awal
+## Cara Kerja MQTT
 
-### 1. Clone Project
+### Topic
 
-```bash
-git clone https://github.com/rynnn10/Smart-Sanyo-Control.git
-cd Smart-Sanyo-Control
+| Topic | Arah | Isi |
+|-------|------|-----|
+| `smartsanyo/riyan123/status` | ESP → App | JSON status: `waterLevel`, `pumpStatus`, `autoOffEnabled`, `ssid`, `rssi`, `hasSchedule`, `scheduleCount` |
+| `smartsanyo/riyan123/control` | App → ESP | Perintah kontrol (lihat di bawah) |
+
+### Format Perintah (App → ESP)
+
+```json
+// Kontrol relay manual
+{"command":"ON"}
+{"command":"OFF"}
+
+// Auto OFF: pompa mati saat air ≥ level (95%)
+{"command":"AUTO_OFF","enabled":true,"level":95}
+
+// Auto ON: pompa hidup saat air ≤ level (20%)
+{"command":"AUTO_ON","enabled":true,"level":20}
+
+// Kirim jadwal mingguan
+{"command":"SCHEDULE_SET"}
+[
+  {"onTime":"06:00","offTime":"07:00","days":["Senin","Selasa","Rabu","Kamis","Jumat"]},
+  {"onTime":"18:00","offTime":"19:00","days":["Sabtu","Minggu"]}
+]
 ```
 
-### 2. Google Apps Script (Backend Cloud)
+### Alur Penjadwalan
 
-1. Buka [Google Spreadsheet](https://sheets.google.com) baru
-2. Klik **Ekstensi → Apps Script**
-3. Hapus semua kode lama, lalu salin isi file `kode.gs` ke editor
-4. Klik **Terapkan → Deployment Baru**:
-   - Jenis: **Web App**
-   - Jalankan sebagai: **Saya**
-   - Akses: **Semua Orang**
-5. Salin **URL Web App** yang dihasilkan
-
-> 💡 **Setelah langkah 5 selesai**, lanjutkan ke **[🔄 Sinkronisasi Otomatis via clasp](#-sinkronisasi-otomatis-via-clasp)** untuk mengotomatiskan upload `kode.gs` — tidak perlu copy-paste manual lagi.
-
-### 🔄 Sinkronisasi Otomatis via clasp
-
-Agar setiap perubahan pada `kode.gs` lokal langsung tersinkron ke Apps Script tanpa copy-paste manual ke editor:
-
-#### Setup Sekali
-
-**1.** Aktifkan Apps Script API:  
-Buka https://script.google.com/home/usersettings → **ON**
-
-**2.** Install dependensi (dijalankan dari root project):
-```bash
-npm install
-```
-(clasp sudah terdaftar sebagai devDependency)
-
-**3.** Login clasp:
-```bash
-npm run gas:login
-```
-Perintah ini akan membuka browser untuk login dengan akun Google yang sama dengan Apps Script Anda.
-
-**4.** Salin Script ID ke `.clasp.json`:
-- Buka Apps Script Editor → ⚙️ **Project Settings** → salin **Script ID**
-- Copy template lalu isi Script ID:
-```bash
-copy .clasp.json.example .clasp.json
-```
-Edit `.clasp.json` dan isi `scriptId` dengan ID yang sudah disalin.
-
-**5.** Salin Deployment ID ke `.env`:
-- Buka Apps Script Editor → **Deploy** → **Manage deployments** → salin **Deployment ID**
-- Atau lihat token pada URL Web App: `.../macros/s/<INI>/exec`
-- Copy template lalu isi Deployment ID:
-```bash
-copy .env.example .env
-```
-Edit `.env` dan isi:
-```
-CLASP_DEPLOYMENT_ID=AKfycb...
-```
-
-**6.** Push pertama `kode.gs` ke editor Apps Script:
-```bash
-npm run gas:push
-```
-
-**7.** Deploy pertama agar Web App langsung live (URL tetap):
-```bash
-npm run gas:deploy
-```
-
-> ⚠️ **Push pertama menimpa** kode online dengan `kode.gs` lokal — pastikan lokal sudah versi terbaru.
-
-#### Cara Pemakaian Harian
-
-| Perintah | Fungsi |
-|----------|--------|
-| `npm run gas:push` | Upload `kode.gs` ke editor Apps Script (tidak live) |
-| `npm run gas:watch` | Auto-upload ke editor tiap kali `kode.gs` disimpan |
-| `npm run gas:deploy` | Push + update deployment Web App (URL **TETAP** sama) |
-| `npm run gas:watch-deploy` | Auto push + **deploy LIVE** tiap `kode.gs`/`appsscript.json` berubah |
-| `npm run gas:open` | Buka Apps Script editor di browser |
-| `npm run gas:pull` | Tarik kode terbaru dari editor Apps Script ke lokal |
-| `npm run gas:login` | Login ulang ke clasp (ganti akun) |
-| `npm run gas:logout` | Logout dari clasp |
-| `npm run gas:deploy-id` | Cek Deployment ID yang terkonfigurasi |
-
-#### ⚙️ gas:watch-deploy
-- Memantau file `kode.gs` & `appsscript.json`
-- Begitu ada perubahan → otomatis **clasp push** lalu **clasp deploy** ke deployment yang sama
-- Ada **debounce 1 detik** + **antrian anti-tumpang-tindih**
-- ⚠️ **Tiap simpan = kode langsung LIVE + 1 versi baru** di Apps Script
-- Cocok dipakai saat **aktif ngoprek**; matikan (**Ctrl+C**) jika tidak dipakai agar tidak deploy kode setengah jadi atau boros versi
-
-> ⚠️ `gas:push` hanya update **editor** Apps Script. Web App yang live baru berubah setelah `gas:deploy` (atau redeploy manual).  
-> ⚠️ Deploy ke **deployment ID yang ada** (`-i`) menjaga URL tetap sama; tanpa itu tiap deploy akan membuat URL baru.
+1. Buat jadwal di app → tekan **Simpan Jadwal**
+2. App kirim JSON jadwal via MQTT ke ESP (`SCHEDULE_SET`)
+3. ESP simpan di memori, sinkronisasi waktu via NTP (`pool.ntp.org`)
+4. Setiap **30 detik** ESP cek apakah waktu sekarang cocok dengan jadwal → eksekusi relay
 
 ---
 
-### 3. Konfigurasi GAS URL (Satu File, Dua Platform)
-
-Edit **satu file ini**:
-
-```
-app/src/main/assets/config.js
-```
-
-Ganti nilai `gasUrl` dengan URL dari langkah 2:
-
-```javascript
-const APP_CONFIG = {
-  gasUrl: 'https://script.google.com/macros/s/GANTI_DENGAN_URL_ANDA/exec'
-};
-```
-
-Lalu jalankan script sinkronisasi (PowerShell):
-
-```powershell
-.\sync-config.ps1
-```
-
-Script ini akan otomatis memperbarui `GAS_URL` di semua file `config.h` ESP8266.
-
----
-
-## Flash Firmware ESP8266 (PlatformIO)
+## Setup Firmware ESP8266 (PlatformIO)
 
 ### Prasyarat
 - [VS Code](https://code.visualstudio.com/) + ekstensi **PlatformIO IDE**
+- Firmware ada di project PlatformIO terpisah (`Smart-Sanyo/`)
 
-### Langkah-Langkah
+### 1. Konfigurasi WiFi
 
-**1. Buka Project PlatformIO**
-
-Buka folder `SmartSanyo_ESP8266/` di VS Code:
-```
-File → Open Folder → pilih SmartSanyo_ESP8266/
-```
-
-**2. Edit Kredensial WiFi**
-
-Edit file `SmartSanyo_ESP8266/include/config.h`:
+Edit `include/config.h`:
 
 ```cpp
 #define WIFI_SSID         "NamaWiFiAnda"
 #define WIFI_PASSWORD     "PasswordWiFiAnda"
-#define WIFI_SSID_BACKUP  "NamaWiFiCadangan"     // opsional
-#define WIFI_PASS_BACKUP  "PasswordCadangan"      // opsional
+#define WIFI_SSID_BACKUP  "WiFiCadangan"      // opsional
+#define WIFI_PASS_BACKUP  "PasswordCadangan"  // opsional
 ```
 
-Opsional — isi juga untuk notifikasi Telegram:
+### 2. Kalibrasi Sensor
+
+Edit konstanta di bagian atas `src/main.cpp`:
+
 ```cpp
-#define BOT_TOKEN  "12345678:ABC..."
-#define CHAT_ID    "987654321"
+const int DIST_EMPTY_CM = 100; // jarak sensor → permukaan air saat tangki KOSONG → 0%
+const int DIST_FULL_CM  = 25;  // jarak sensor → permukaan air saat tangki PENUH  → 100%
 ```
 
-**3. Hubungkan Wemos D1 Mini via kabel USB.**
+> **Penting:** `DIST_FULL_CM` minimal 25cm karena JSN-SR04T tidak bisa mengukur jarak <25cm (blind zone hardware). Jika air menyentuh/mendekati batas ini, LCD akan tampil `Air: PENUH!`.
 
-**4. Upload Firmware**
+Cara ukur:
+- Isi tangki sampai **penuh** → ukur jarak dari sensor ke permukaan air → isi `DIST_FULL_CM`
+- Kosongkan tangki sampai **batas mati pompa** → ukur jarak → isi `DIST_EMPTY_CM`
 
-Klik tombol **Upload** (ikon →) di status bar bawah PlatformIO,  
-atau tekan `Ctrl+Alt+U`, atau jalankan:
+### 3. Upload Firmware
 
 ```bash
 pio run -t upload
 ```
 
-**5. Verifikasi via Serial Monitor**
-
-Klik **Serial Monitor** atau tekan `Ctrl+Alt+S`:
+### 4. Verifikasi Serial Monitor (baud 115200)
 
 ```
 Smart Sanyo v2 Starting...
-Mencoba WiFi utama: NamaWiFiAnda
-....
-WiFi Utama Connected!
+[WiFi] Terhubung ke: NamaWiFiAnda (IP: 192.168.1.x)
+[NTP] Sync OK: 07:30:00 01/07/2026 WIB
+[MQTT] Terhubung. ESP siap via MQTT.
+[Ultrasonic] Setup: jarak=55 cm, level=50%
+[Schedule] Belum ada jadwal — kirim jadwal dari aplikasi Android
 ```
-
-> **Catatan:** Beberapa baris karakter acak di awal adalah **normal** — itu pesan boot ROM ESP8266 yang berjalan di 74880 baud.
 
 ---
 
@@ -258,94 +177,88 @@ WiFi Utama Connected!
 
 ### Prasyarat
 - JDK 17+ terinstall
-- ADB terinstall
-- HP Android dengan **Wireless Debugging** atau **USB Debugging** aktif
+- HP Android dengan **USB Debugging** atau **Wireless Debugging** aktif (Android 11+)
 
 ### Cara 1: Script Otomatis (Direkomendasikan)
-
-Script `run.ps1` akan otomatis mendeteksi HP di jaringan, build, install, dan buka app:
 
 ```powershell
 # Auto-scan HP di jaringan yang sama
 .\run.ps1
 
-# Manual dengan IP HP yang sudah diketahui
+# Manual dengan IP HP yang diketahui
 .\run.ps1 -DeviceId 192.168.1.7:5555
 ```
 
-**Aktifkan Wireless Debugging di HP (Android 11+):**
+**Aktifkan Wireless Debugging:**
 > Setelan → Opsi Pengembang → Wireless Debugging → Aktifkan
 
-### Cara 2: Via Kabel USB
+### Cara 2: Kabel USB
 
 ```powershell
-# Pastikan HP terdeteksi
 adb devices
-
-# Build dan install sekaligus
 .\gradlew.bat :app:installDebug
 ```
 
-### Cara 3: Build APK Manual
+### Cara 3: Build APK saja
 
 ```powershell
 .\gradlew.bat assembleRelease
+# APK: app/build/outputs/apk/release/
 ```
-APK ada di: `app/build/outputs/apk/release/`
 
 ---
 
-## Cara Mengubah GAS URL
+## Cara Menggunakan Aplikasi
 
-Jika URL Google Apps Script berubah (misal setelah deployment baru):
+### Pertama Kali
 
-**1.** Edit `app/src/main/assets/config.js`:
-```javascript
-const APP_CONFIG = {
-  gasUrl: 'https://script.google.com/macros/s/URL_BARU/exec'
-};
-```
+1. Buka aplikasi → tunggu status berubah ke **Online** (beberapa detik)
+2. Pastikan WeMos sudah nyala dan terhubung WiFi yang sama dengan MQTT broker
+3. Level air akan otomatis tampil di dashboard
 
-**2.** Jalankan sinkronisasi:
-```powershell
-.\sync-config.ps1
-```
+### Kontrol Manual Pompa
 
-**3.** Upload ulang firmware ke ESP8266 (`pio run -t upload`)
+- Tekan **ON** / **OFF** di dashboard → perintah langsung dikirim via MQTT ke ESP
 
-**4.** Build ulang Android app (`.\run.ps1`)
+### Penjadwalan Otomatis
 
----
+1. Buka tab **Jadwal**
+2. Aktifkan toggle **Jadwal Otomatis**
+3. Tekan **+ Tambah Jadwal** → atur waktu ON, waktu OFF, dan hari
+4. Tekan **Simpan Jadwal** → jadwal dikirim ke ESP via MQTT
+5. Badge akan berubah ke **"Terkirim ke ESP ✓"** setelah ESP menerima
 
-## Cara Kerja Sistem
+### Auto ON/OFF Berdasarkan Level
 
-```
-Setiap 2 detik  : Sensor baca jarak → hitung % air
-Setiap 10 detik : ESP kirim ke GAS (waterLevel + SSID + RSSI)
-                  GAS simpan, cek jadwal, kirim balik pumpStatus
-                  App baca dari GAS → update dashboard
-Saat air ≤ 10%  : ESP kirim Telegram + GAS kirim FCM notification
-Saat air ≥ 90%  : GAS kirim FCM notification (tangki penuh)
-Saat WiFi putus : Mode manual aktif (tombol fisik tetap berfungsi)
-```
+- Buka tab **Pengaturan**
+- Atur **Batas Mati (Auto OFF)**: pompa mati otomatis saat air mencapai level ini (default 95%)
+- Atur **Batas Hidup (Auto ON)**: pompa hidup otomatis saat air di bawah level ini (default 20%)
+
+### Tampilan Air 3D
+
+Miringkan HP ke kiri/kanan → permukaan air di dashboard akan ikut miring mengikuti gravitasi. Efek ini menggunakan sensor accelerometer HP via `DeviceOrientationEvent`.
+
+> Di beberapa HP Android, izin `DeviceOrientationEvent` mungkin perlu diaktifkan manual atau tidak tersedia.
 
 ---
 
 ## Struktur Project
 
 ```
-Smart-Sanyo-Control/
-├── app/src/main/assets/
-│   ├── config.js             ← SUMBER TUNGGAL GAS URL (edit ini)
-│   └── index.html            # Dashboard WebView Android
-├── SmartSanyo_ESP8266/       # Firmware ESP8266 (PlatformIO)
-│   ├── include/config.h      # Kredensial WiFi + GAS URL (auto-sync)
-│   ├── src/main.cpp          # Firmware Smart Sanyo v2
-│   └── platformio.ini        # Board: d1_mini
-├── kode.gs                   # Google Apps Script (backend)
-├── sync-config.ps1           # Sinkronisasi GAS URL ke config.h
-├── run.ps1                   # Build & install Android app
+Smart-Sanyo-Control/           ← Repo ini (Android app)
+├── app/src/main/
+│   ├── assets/index.html      # Dashboard WebView (UI + MQTT JS)
+│   ├── java/com/example/
+│   │   ├── MainActivity.kt    # WebView wrapper + Java-JS bridge
+│   │   └── MqttBridge.kt      # Paho MQTT client (Android)
+│   └── AndroidManifest.xml
+├── run.ps1                    # Script build + install ADB
 └── README.md
+
+Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
+├── src/main.cpp               # Firmware utama v2.4.1
+├── include/config.h           # Kredensial WiFi + pin + MQTT config
+└── platformio.ini             # Board: d1_mini
 ```
 
 ---
@@ -354,13 +267,47 @@ Smart-Sanyo-Control/
 
 | Masalah | Solusi |
 |---------|--------|
-| Serial monitor karakter acak | Normal di awal boot. Tunggu `Smart Sanyo v2 Starting...` |
-| WiFi tidak tersambung | Periksa SSID/password di `config.h`. Pastikan `board = d1_mini` |
+| LCD tampil `Air: PENUH!` tapi tangki belum penuh | Sensor dalam blind zone (<25cm). Naikkan sensor lebih jauh dari permukaan air, atau isi tangki tidak sampai terlalu dekat sensor |
+| Level air loncat-loncat (misal tiba-tiba 60%) | Sensor hangat → echo palsu. Sudah ditangani outlier rejection 3-cycle. Jika masih terjadi, naikkan `DIST_FULL_CM` ke 30+ |
 | LCD tidak menyala | Coba alamat I2C `0x3F` (ganti dari `0x27`) di `main.cpp` |
+| App status "Offline" terus | Periksa WiFi ESP, pastikan terhubung. Cek Serial Monitor untuk error MQTT |
+| Jadwal tidak jalan | Pastikan ESP sudah sync NTP — Serial Monitor harus tampil `[NTP] Sync OK`. Perlu koneksi internet saat boot |
 | App tidak bisa build | Pastikan JDK 17+ terinstall. Jalankan `.\gradlew.bat --stop` lalu coba lagi |
-| HP tidak terdeteksi ADB | Aktifkan Wireless Debugging. Pastikan PC & HP di WiFi yang sama |
-| GAS URL error | Buat **New Deployment** (bukan edit deployment lama) di Apps Script |
-| Status WiFi app "Menunggu..." | Tunggu ESP8266 sinkronisasi pertama ke GAS (maks. 10 detik setelah boot) |
+| HP tidak terdeteksi ADB via WiFi | PC & HP harus di WiFi yang sama. Restart: `adb kill-server && adb start-server` |
+| Serial monitor karakter acak | Normal di awal boot ESP8266 (74880 baud). Tunggu `Smart Sanyo v2 Starting...` |
+
+---
+
+## Changelog
+
+### v2.4.1 — Firmware — Sel 01/07/2026
+- **Baru**: LCD I2C tampil `Air: PENUH!` saat sensor blind zone (jarak <25cm dari sensor)
+- Flag `sensorBlindZone` di-set/clear saat setiap pembacaan sensor
+
+### v2.4.0 — App Android — Sel 01/07/2026
+- **Baru**: Tampilan air canvas wave 3D — permukaan air bergelombang dan miring mengikuti gravitasi HP (`DeviceOrientationEvent.gamma`)
+- Warna adaptif per level: merah <20%, kuning <50%, cyan ≥50%
+- Hapus CSS lama `.water-liquid` / `.water-wave` (diganti canvas)
+
+### v2.3.1 — Firmware — Sel 01/07/2026
+- **Fix**: Threshold blind zone JSN-SR04T naik 20 → 25cm
+- **Fix bug "lupa blind zone"**: tambah outlier rejection — lonjakan bacaan >25cm butuh 3 siklus berturut dikonfirmasi
+- **Kalibrasi**: konstanta `DIST_EMPTY_CM` / `DIST_FULL_CM` kini di atas file sebagai knob kalibrasi
+
+### v2.3.0 — Sel 01/07/2026
+- Sinkronisasi waktu NTP (WIB UTC+7) ke WeMos — tanpa library tambahan
+- Penjadwalan ON/OFF mingguan dari app Android via MQTT, eksekusi otomatis sesuai waktu
+- Fix: jadwal tidak pernah dikirim dari app ke ESP (tambah `sendScheduleToEsp()`)
+- Fix: method `sendAutoOnEnabled` hilang dari Kotlin bridge
+- Serial monitor: log status jadwal aktif/diterima/tidak ada
+- App: badge konfirmasi jadwal "Terkirim ke ESP ✓"
+- ESP publish `hasSchedule` + `scheduleCount` di MQTT status
+
+### v2.0.0 — Sebelumnya
+- Migrasi arsitektur: GAS/cloud → MQTT-only (`broker.emqx.io`)
+- Android app berbasis WebView + Paho MQTT client (mengganti HTTP polling)
+- Dual WiFi failover, Auto ON/OFF threshold, tombol fisik
+- LCD 16x2 I2C, buzzer notifikasi relay
 
 ---
 

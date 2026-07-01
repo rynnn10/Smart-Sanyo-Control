@@ -1,0 +1,34 @@
+{
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.import.gradle.wrapper.enabled": true,
+
+  // ─── PlatformIO ────────────────────────────────────────────────────────────
+  "platformio-ide.activateOnlyOnPlatformIOProject": false,
+
+  // ─── File explorer — sembunyikan artefak build ────────────────────────────
+  "files.exclude": {
+    "**/.gradle": true,
+    "**/build": true,
+    "**/.build-outputs": true,
+    "SmartSanyo_ESP8266/.pio": true
+  },
+
+  // ─── C/C++ include paths untuk IntelliSense main.cpp ─────────────────────
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/SmartSanyo_ESP8266/include",
+    "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif8266/cores/esp8266",
+    "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif8266/libraries",
+    "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa/xtensa-lx106-elf/include"
+  ],
+  "C_Cpp.default.defines": [
+    "ARDUINO=10816",
+    "ESP8266"
+  ],
+
+  // ─── Editor QoL ────────────────────────────────────────────────────────────
+  "editor.formatOnSave": false,
+  "files.associations": {
+    "*.ino": "cpp",
+    "*.h": "cpp"
+  }
+}

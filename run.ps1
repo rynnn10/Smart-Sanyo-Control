@@ -341,25 +341,30 @@ $finalDeviceId = $DeviceId
 Write-Host "   Memeriksa perangkat yang sudah terhubung via ADB..." -ForegroundColor Cyan
 $existingDevices = & adb devices
 $existingDeviceLines = $existingDevices | Select-String "device$" | ForEach-Object { $_ -replace '\s+device', '' } | Where-Object { $_ -ne "List of devices attached" -and $_ -ne "" }
-if ($existingDeviceLines.Count -gt 0) {
-    Write-Host ("   Ditemukan perangkat yang sudah terhubung: " + ($existingDeviceLines -join ", ")) -ForegroundColor Green
-    if ([string]::IsNullOrWhiteSpace($finalDeviceId)) {
-        Write-Host "   Menggunakan perangkat yang sudah terhubung." -ForegroundColor Cyan
-        if ($existingDeviceLines.Count -eq 1) {
-            $finalDeviceId = $existingDeviceLines[0]
-        } else {
-            Write-Host "   Pilih perangkat:" -ForegroundColor Yellow
-            for ($i = 0; $i -lt $existingDeviceLines.Count; $i++) {
-                Write-Host ('       [' + ($i+1) + '] ' + $existingDeviceLines[$i]) -ForegroundColor White
-            }
-            $selection = Read-Host ">> Pilih nomor (1-$($existingDeviceLines.Count))"
-            $idx = [int]$selection - 1
-            if ($idx -ge 0 -and $idx -lt $existingDeviceLines.Count) {
-                $finalDeviceId = $existingDeviceLines[$idx]
+        if ($existingDeviceLines.Count -gt 0) {
+            Write-Host ("   Ditemukan perangkat yang sudah terhubung: " + ($existingDeviceLines -join ", ")) -ForegroundColor Green
+            if ([string]::IsNullOrWhiteSpace($finalDeviceId)) {
+                Write-Host "   Menggunakan perangkat yang sudah terhubung." -ForegroundColor Cyan
+                if ($existingDeviceLines.Count -eq 1) {
+                    $finalDeviceId = $existingDeviceLines[0]
+                } else {
+                    while ($true) {
+                        Write-Host "   Pilih perangkat:" -ForegroundColor Yellow
+                        for ($i = 0; $i -lt $existingDeviceLines.Count; $i++) {
+                            Write-Host ('       [' + ($i+1) + '] ' + $existingDeviceLines[$i]) -ForegroundColor White
+                        }
+                        $Host.UI.RawUI.FlushInputBuffer()
+                        $selection = Read-Host ">> Pilih nomor (1-$($existingDeviceLines.Count))"
+                        $idx = ($selection -as [int]) - 1
+                        if ($idx -ge 0 -and $idx -lt $existingDeviceLines.Count) {
+                            $finalDeviceId = $existingDeviceLines[$idx]
+                            break
+                        }
+                        Write-Host "   Pilihan tidak valid, coba lagi." -ForegroundColor Yellow
+                    }
+                }
             }
         }
-    }
-}
 
 # Kalau belum ada device dan perlu scan
 if ([string]::IsNullOrWhiteSpace($finalDeviceId) -and $localIP) {
@@ -385,14 +390,16 @@ if ([string]::IsNullOrWhiteSpace($finalDeviceId) -and $localIP) {
             Write-Host ('       [' + ($i+1) + '] ' + $foundDevices[$i] + ':5555') -ForegroundColor White
         }
         Write-Host ""
-        $selection = Read-Host ">> Pilih nomor (1-$($foundDevices.Count))"
-        $idx = [int]$selection - 1
-        if ($idx -ge 0 -and $idx -lt $foundDevices.Count) {
-            $finalDeviceId = $foundDevices[$idx] + ':5555'
-        } else {
-            Write-Host "   Pilihan tidak valid." -ForegroundColor Red
-            exit 1
-        }
+            while ($true) {
+                $Host.UI.RawUI.FlushInputBuffer()
+                $selection = Read-Host ">> Pilih nomor (1-$($foundDevices.Count))"
+                $idx = ($selection -as [int]) - 1
+                if ($idx -ge 0 -and $idx -lt $foundDevices.Count) {
+                    $finalDeviceId = $foundDevices[$idx] + ':5555'
+                    break
+                }
+                Write-Host "   Pilihan tidak valid, coba lagi." -ForegroundColor Yellow
+            }
     }
     else {
         Write-Host ""

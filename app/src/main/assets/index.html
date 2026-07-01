@@ -50,7 +50,6 @@
             position: relative;
         }
 
-        /* Container & Glassmorphism Card Style */
         .dashboard {
             width: 100%;
             max-width: 480px;
@@ -77,7 +76,6 @@
             box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
         }
 
-        /* Header Style */
         .header {
             display: flex;
             justify-content: space-between;
@@ -99,7 +97,6 @@
         .header h1 i {
             font-size: 1.1rem;
             color: var(--accent-cyan);
-            /* drop-shadow removed for perf */
         }
 
         .connection-badge {
@@ -130,7 +127,6 @@
             box-shadow: 0 0 10px var(--danger-color);
         }
 
-        /* Circular Water Level Visualizer */
         .visualizer-card {
             display: flex;
             flex-direction: column;
@@ -165,44 +161,6 @@
             align-items: center;
         }
 
-        /* Animated Water Liquid & Wave */
-        .water-liquid {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 75%;
-            /* Updated dynamically by JS */
-            background: linear-gradient(180deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.9) 100%);
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
-            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .water-wave {
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 43%;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .water-wave-secondary {
-            position: absolute;
-            width: 260px;
-            height: 260px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 40%;
-            bottom: 102%;
-            left: 48%;
-            transform: translateX(-50%);
-            pointer-events: none;
-            z-index: 2;
-        }
 
         .water-level-text {
             position: relative;
@@ -226,7 +184,6 @@
             margin-top: 2px;
         }
 
-        /* Status & Dynamic Info Grid */
         .status-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -299,7 +256,6 @@
             border: 1px solid rgba(100, 116, 139, 0.3);
         }
 
-        /* Controls Style (Buttons & Custom Toggle Layout) */
         .control-section {
             display: flex;
             flex-direction: column;
@@ -335,7 +291,6 @@
             color: var(--text-secondary);
         }
 
-        /* Custom iOS Style Glass Toggle Switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -391,7 +346,6 @@
             box-shadow: 0 0 6px var(--accent-cyan);
         }
 
-        /* Large Action Button for Manual Control */
         .manual-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
@@ -433,7 +387,6 @@
             cursor: not-allowed;
         }
 
-        /* Scheduling Section */
         .scheduler-card {
             display: flex;
             flex-direction: column;
@@ -483,7 +436,6 @@
             font-weight: 500;
         }
 
-        /* Modern styled glass input */
         .time-picker {
             background: rgba(15, 23, 42, 0.5);
             border: 1px solid var(--glass-border);
@@ -547,7 +499,6 @@
             color: var(--accent-cyan);
         }
 
-        /* Custom DEV/DUMMY Control panel at the bottom to test interactivity */
         .dev-panel {
             background: rgba(10, 11, 20, 0.7);
             border: 1px dashed rgba(255, 255, 255, 0.15);
@@ -606,7 +557,6 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
-        /* Multiple Schedules & Add Button */
         .scheduler-list {
             display: flex;
             flex-direction: column;
@@ -670,7 +620,6 @@
             width: 100%;
         }
 
-        /* ESP8266 View Code Modal */
         .code-modal {
             display: none;
             position: fixed;
@@ -744,7 +693,6 @@
             font-weight: 500;
         }
 
-        /* Toast notifications inside WebView */
         .toast-container {
             position: fixed;
             top: 24px;
@@ -779,7 +727,6 @@
             color: var(--accent-cyan);
         }
 
-        /* Water splash particle decorations */
         .decorations {
             position: fixed;
             width: 100vw;
@@ -795,7 +742,6 @@
             display: none;
         }
 
-        /* Dynamic Backgrounds */
         .bg-anim-container {
             position: fixed;
             width: 100vw;
@@ -809,7 +755,6 @@
             transition: opacity 0.5s ease;
         }
 
-        /* Mesh Gradient */
         .bg-mesh {
             width: 100%;
             height: 100%;
@@ -855,7 +800,6 @@
             }
         }
 
-        /* Particles */
         .particle {
             position: absolute;
             bottom: -50px;
@@ -908,29 +852,16 @@
             }
         </style>
     </div>
-
     <div class="bg-anim-container" id="bgMeshContainer">
         <div class="bg-mesh"></div>
     </div>
-
-    <div class="bg-anim-container" id="bgParticlesContainer">
-        <!-- Particles injected by JS -->
-    </div>
-
-    <div class="bg-anim-container" id="bgThreeContainer" style="z-index: -1;">
-        <!-- Three.js injected here -->
-    </div>
-    <div class="bg-anim-container" id="bgThree2Container" style="z-index: -1;">
-        <!-- Three.js v2 injected here -->
-    </div>
-
-    <div class="decorations" id="decorations">
-        <!-- Generates bubbles randomly -->
-    </div>
+    <div class="bg-anim-container" id="bgParticlesContainer"></div>
+    <div class="bg-anim-container" id="bgThreeContainer" style="z-index: -1;"></div>
+    <div class="bg-anim-container" id="bgThree2Container" style="z-index: -1;"></div>
+    <div class="decorations" id="decorations"></div>
 
     <div class="dashboard">
-
-        <!-- Header Section -->
+        <!-- Header -->
         <div class="glass-card header"
             style="flex-direction: column; align-items: stretch; gap: 14px; padding: 18px 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -943,12 +874,10 @@
                     style="background:transparent; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; outline:none; transition: color 0.3s; padding: 0; margin-top: 2px;"><i
                         class="fa-solid fa-gear"></i></button>
             </div>
-
             <div
                 style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.2); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                 <div class="connection-badge" id="connBadge" style="margin: 0;">
-                    <div class="connection-indicator"></div>
-                    <span id="connLabel">ONLINE</span>
+                    <div class="connection-indicator"></div><span id="connLabel">ONLINE</span>
                 </div>
                 <div id="espInfo"
                     style="font-size: 0.75rem; color: var(--text-secondary); text-align: right; line-height: 1.3;">
@@ -962,139 +891,88 @@
             </div>
         </div>
 
-        <!-- Water Level Circle Visualizer Card -->
+        <!-- Water Level Circle -->
         <div class="glass-card visualizer-card">
-            <div class="visualizer-title">
-                <i class="fa-solid fa-water"></i> Ketinggian Air
-            </div>
-
+            <div class="visualizer-title"><i class="fa-solid fa-water"></i> Ketinggian Air</div>
             <div class="water-container">
-                <div class="water-liquid" id="waterLiquid">
-                    <div class="water-wave"></div>
-                    <div class="water-wave-secondary"></div>
-                </div>
-                <div class="water-level-text" id="waterLevelVal">
-                    75%
-                    <span>Isi Tangki</span>
-                </div>
+                <canvas id="waterCanvas" width="170" height="170" style="position:absolute;top:0;left:0;"></canvas>
+                <div class="water-level-text" id="waterLevelVal">75%<span>Isi Tangki</span></div>
             </div>
         </div>
 
         <!-- Status Card -->
         <div class="glass-card status-card">
             <div class="status-info">
-                <div class="status-icon-wrapper" id="pumpIconWrapper">
-                    <i class="fa-solid fa-soap"></i> <!-- Represents the pump mechanism -->
-                </div>
-                <div class="status-text-container">
-                    <span class="status-text-label">Sanyo Status</span>
-                    <span class="status-value" id="pumpLabelText">OFFLINE MODE</span>
-                </div>
+                <div class="status-icon-wrapper" id="pumpIconWrapper"><i class="fa-solid fa-soap"></i></div>
+                <div class="status-text-container"><span class="status-text-label">Sanyo Status</span><span
+                        class="status-value" id="pumpLabelText">OFFLINE MODE</span></div>
             </div>
             <span class="badge badge-off" id="pumpStatusBadge">OFF</span>
         </div>
 
-        <!-- Toggle Controls (Auto Mode & Manual Control Button) -->
+        <!-- Controls -->
         <div class="glass-card control-section">
             <div class="control-row">
                 <div class="control-label">
-                    <div class="status-icon-wrapper">
-                        <i class="fa-solid fa-robot"></i>
-                    </div>
-                    <div class="control-label-wrapper">
-                        <span class="control-title">Auto Mode</span>
-                        <span class="control-desc">Pompa otomatis menyala saat air kritis</span>
-                    </div>
+                    <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
+                    <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span
+                            class="control-desc">Pompa otomatis menyala saat air kritis</span></div>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="autoModeToggle">
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" id="autoModeToggle"><span class="slider"></span></label>
             </div>
-
-            <button class="manual-btn" id="manualPumpBtn">
-                <i class="fa-solid fa-power-off"></i>
-                <span id="manualPumpBtnLabel">Nyalakan Saklar</span>
-            </button>
+            <button class="manual-btn" id="manualPumpBtn"><i class="fa-solid fa-power-off"></i><span
+                    id="manualPumpBtnLabel">Nyalakan Saklar</span></button>
         </div>
 
-        <!-- Scheduling Section -->
+        <!-- Scheduling -->
         <div class="glass-card scheduler-card">
             <div class="scheduler-header">
-                <div class="scheduler-title">
-                    <i class="fa-regular fa-clock"></i> Penjadwalan Sanyo
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="scheduler-title"><i class="fa-regular fa-clock"></i> Penjadwalan Sanyo</div>
+                    <span id="espSchedBadge" style="font-size:0.62rem; padding:2px 8px; border-radius:10px; background:rgba(100,116,139,0.15); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1);">ESP: -</span>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="schedToggle">
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" id="schedToggle"><span class="slider"></span></label>
             </div>
-
-            <div class="scheduler-list disabled" id="schedulerList">
-                <!-- Schedules injected via JS -->
-            </div>
-            <button class="add-schedule-btn disabled" id="addScheduleBtn">
-                <i class="fa-solid fa-plus"></i> Tambah Jadwal Baru
-            </button>
+            <div class="scheduler-list disabled" id="schedulerList"></div>
+            <button class="add-schedule-btn disabled" id="addScheduleBtn"><i class="fa-solid fa-plus"></i> Tambah Jadwal
+                Baru</button>
         </div>
 
-        <!-- SIMULASI DEV TOOL PANEL -->
+        <!-- Dev Panel -->
         <div class="dev-panel" id="devPanel">
-            <div class="dev-title">
-                <i class="fa-solid fa-sliders"></i> Panel Pengujian Integrasi
-            </div>
-            <div class="dev-row">
-                <span>Konektivitas ESP8266:</span>
-                <button class="dev-btn" id="toggleConnBtn">Toggle Online/Offline</button>
-            </div>
-            <div class="dev-row">
-                <span>API Google Sheet:</span>
-                <button class="dev-btn" id="showAppsScriptBtn"><i class="fa-solid fa-file-code"></i> Script</button>
-            </div>
-            <div class="dev-row">
-                <span>Kode IDE ESP8266:</span>
-                <button class="dev-btn" id="showCodeBtn"><i class="fa-solid fa-microchip"></i> Lihat</button>
-            </div>
-            <div class="dev-row">
-                <span>Ketinggian Air (API):</span>
-                <input type="range" class="dev-slider" id="waterLevelSlider" min="0" max="100" value="75">
-            </div>
+            <div class="dev-title"><i class="fa-solid fa-sliders"></i> Panel Pengujian Integrasi</div>
+            <div class="dev-row"><span>Konektivitas ESP8266:</span><button class="dev-btn" id="toggleConnBtn">Toggle
+                    Online/Offline</button></div>
+            <div class="dev-row"><span>Kode IDE ESP8266:</span><button class="dev-btn" id="showCodeBtn"><i
+                        class="fa-solid fa-microchip"></i> Lihat</button></div>
+            <div class="dev-row"><span>Ketinggian Air (API):</span><input type="range" class="dev-slider"
+                    id="waterLevelSlider" min="0" max="100" value="75"></div>
         </div>
 
-        <div class="footer">
-            Dibuat oleh Riyan &copy; 2026<br>
-            <span style="font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 4px;">
-                <i class="fa-regular fa-calendar-check"></i> Update: <span id="buildTimestamp">memuat...</span>
-            </span>
+        <div class="footer">Dibuat oleh Riyan &copy; 2026<br><span
+                style="font-size: 0.65rem; opacity: 0.6; display: block; margin-top: 4px;"><i
+                    class="fa-regular fa-calendar-check"></i> Update: <span id="buildTimestamp">memuat...</span></span>
         </div>
-
     </div>
 
     <!-- Settings Modal -->
     <div class="code-modal" id="settingsModal">
         <div class="code-container" style="max-width: 400px;">
             <div class="code-header">
-                <h3><i class="fa-solid fa-sliders"></i> Pengaturan Aplikasi</h3>
-                <button class="close-btn" id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h3><i class="fa-solid fa-sliders"></i> Pengaturan Aplikasi</h3><button class="close-btn"
+                    id="closeSettingsBtn"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div style="padding: 20px;">
+            <div style="padding: 20px; overflow-y: auto; max-height: calc(80vh - 60px);">
                 <div class="control-row">
-                    <div class="control-label-wrapper">
-                        <span class="control-title">Mode Demo</span>
-                        <span class="control-desc">Tampilkan panel pengujian fitur</span>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="demoModeToggle">
-                        <span class="slider"></span>
-                    </label>
+                    <div class="control-label-wrapper"><span class="control-title">Mode Demo</span><span
+                            class="control-desc">Tampilkan panel pengujian fitur</span></div>
+                    <label class="switch"><input type="checkbox" id="demoModeToggle"><span
+                            class="slider"></span></label>
                 </div>
-
                 <div class="control-row"
                     style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 12px;">
-                    <div class="control-label-wrapper">
-                        <span class="control-title">Animasi Latar</span>
-                        <span class="control-desc">Pilih gaya visual background</span>
-                    </div>
+                    <div class="control-label-wrapper"><span class="control-title">Animasi Latar</span><span
+                            class="control-desc">Pilih gaya visual background</span></div>
                     <select id="bgAnimSelect"
                         style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.9rem; outline: none; transition: 0.3s; appearance: none; cursor: pointer;">
                         <option value="none" style="background: #0f172a; color: white;">Static Dark (Ringan)</option>
@@ -1104,14 +982,25 @@
                         <option value="threejs2" style="background: #0f172a; color: white;">Sihir Partikel v2</option>
                     </select>
                 </div>
-
                 <!-- Batas Mati Otomatis -->
                 <div class="control-row"
                     style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper">
-                        <span class="control-title"><i class="fa-solid fa-droplet"
-                                style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Mati Otomatis</span>
-                        <span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span>
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet"
+                                style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis (Auto
+                            ON)</span><span class="control-desc">Sanyo hidup otomatis saat air mencapai level ini
+                            (kritis)</span></div>
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <input type="range" id="autoOnLevelInput" min="5" max="50" value="20"
+                            style="flex: 1; accent-color: var(--accent-cyan); height: 4px; cursor: pointer;">
+                        <span id="autoOnLevelDisplay"
+                            style="color: var(--accent-cyan); font-weight: 700; min-width: 42px; text-align: right; font-size: 1rem;">20%</span>
+                    </div>
+                </div>
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet"
+                                style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis (Auto
+                            OFF)</span><span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
                         <input type="range" id="autoOffLevelInput" min="50" max="100" value="95"
@@ -1120,46 +1009,49 @@
                             style="color: var(--accent-cyan); font-weight: 700; min-width: 42px; text-align: right; font-size: 1rem;">95%</span>
                     </div>
                 </div>
-
-                <!-- Toggle ON/OFF Batas Mati Otomatis -->
                 <div class="control-row"
                     style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
-                    <div class="control-label-wrapper">
-                        <span class="control-title"><i class="fa-solid fa-toggle-on"
-                                style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati
-                            Otomatis</span>
-                        <span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis meski air penuh</span>
-                    </div>
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on"
+                                style="color:var(--danger-color);margin-right:6px;"></i>Aktifkan Batas Hidup
+                            Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan hidup otomatis
+                            meski air kritis</span></div>
                     <div
                         style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">
-                            <span id="autoOffStateLabel">Aktif</span>
-                        </span>
-                        <label class="switch">
-                            <input type="checkbox" id="autoOffEnabledToggle" checked>
-                            <span class="slider"></span>
-                        </label>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><span
+                                id="autoOnStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span
+                                class="slider"></span></label>
                     </div>
                 </div>
-
+                <div class="control-row"
+                    style="margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 10px;">
+                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on"
+                                style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati
+                            Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis
+                            meski air penuh</span></div>
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><span
+                                id="autoOffStateLabel">Aktif</span></span>
+                        <label class="switch"><input type="checkbox" id="autoOffEnabledToggle" checked><span
+                                class="slider"></span></label>
+                    </div>
+                </div>
                 <button id="wiringGuideBtn"
-                    style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
-                    <i class="fa-solid fa-diagram-project"></i> Cara Wiring Modul
-                </button>
+                    style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;"><i
+                        class="fa-solid fa-diagram-project"></i> Cara Wiring Modul</button>
             </div>
         </div>
     </div>
 
-    <!-- Wiring Guide Modal -->
+    <!-- Wiring Modal -->
     <div class="code-modal" id="wiringModal">
         <div class="code-container" style="max-width: 480px;">
             <div class="code-header">
                 <h3><i class="fa-solid fa-diagram-project" style="color: var(--accent-cyan);"></i> Wiring Diagram Wemos
-                    D1</h3>
-                <button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
+                    D1</h3><button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="padding: 20px; overflow-y: auto; max-height: 70vh;">
-                <!-- Wiring Table -->
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px;">
                     <thead>
                         <tr style="background: rgba(0, 242, 254, 0.1);">
@@ -1194,7 +1086,6 @@
                                 style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 5V / GND</td>
                         </tr>
-
                         <tr>
                             <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="3">
                                 <b>JSN-SR04T Waterproof</b>
@@ -1222,7 +1113,6 @@
                                 style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 5V / GND</td>
                         </tr>
-
                         <tr>
                             <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="4">
                                 <b>LCD 1602 I2C</b>
@@ -1258,7 +1148,6 @@
                                 style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 GND</td>
                         </tr>
-
                         <tr>
                             <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
                                 <b>Button ON</b>
@@ -1278,7 +1167,6 @@
                                 style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 GND</td>
                         </tr>
-
                         <tr>
                             <td style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);" rowspan="2">
                                 <b>Button OFF</b>
@@ -1298,7 +1186,6 @@
                                 style="padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                 GND</td>
                         </tr>
-
                         <tr>
                             <td style="padding: 10px 8px;" rowspan="2"><b>Buzzer Aktif</b></td>
                             <td style="padding: 10px 8px; text-align: center;">Positif (+)</td>
@@ -1310,8 +1197,6 @@
                         </tr>
                     </tbody>
                 </table>
-
-                <!-- Wiring Notes -->
                 <div
                     style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 14px; border: 1px solid rgba(255,255,255,0.08);">
                     <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.85rem; margin-bottom: 8px;"><i
@@ -1352,8 +1237,8 @@
     <div class="code-modal" id="editScheduleModal">
         <div class="code-container" style="max-width: 360px;">
             <div class="code-header">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Edit Jadwal</h3>
-                <button class="close-btn" id="closeEditScheduleBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h3><i class="fa-solid fa-pen-to-square"></i> Edit Jadwal</h3><button class="close-btn"
+                    id="closeEditScheduleBtn"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="padding: 20px; display:flex; flex-direction: column; gap: 20px;">
                 <div class="time-input-group">
@@ -1376,14 +1261,10 @@
                             Ini</button>
                     </div>
                 </div>
-                <div class="time-input-group">
-                    <label><i class="fa-solid fa-play"></i> Waktu Nyala (ON)</label>
-                    <input type="time" class="time-picker" id="editOnTime">
-                </div>
-                <div class="time-input-group">
-                    <label><i class="fa-solid fa-stop"></i> Waktu Mati (OFF)</label>
-                    <input type="time" class="time-picker" id="editOffTime">
-                </div>
+                <div class="time-input-group"><label><i class="fa-solid fa-play"></i> Waktu Nyala (ON)</label><input
+                        type="time" class="time-picker" id="editOnTime"></div>
+                <div class="time-input-group"><label><i class="fa-solid fa-stop"></i> Waktu Mati (OFF)</label><input
+                        type="time" class="time-picker" id="editOffTime"></div>
                 <button id="saveScheduleBtn"
                     style="background: var(--accent-cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor:pointer; font-size: 0.9rem;">Simpan
                     Perubahan</button>
@@ -1391,7 +1272,7 @@
         </div>
     </div>
 
-    <!-- Integration Code Modal for ESP8266 (PlatformIO main.cpp) -->
+    <!-- Code Modal for ESP8266 v3 MQTT-only -->
     <div class="code-modal" id="codeModal">
         <div class="code-container" style="max-width: 600px;">
             <div class="code-header">
@@ -1402,281 +1283,238 @@
                     <button class="close-btn" id="closeCodeBtn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
-            <div class="code-content">#include &lt;Arduino.h&gt;
-                #include &lt;ESP8266WiFi.h&gt;
-                #include &lt;ESP8266HTTPClient.h&gt;
-                #include &lt;WiFiClientSecureBearSSL.h&gt;
-                #include &lt;ArduinoJson.h&gt;
-                #include "config.h"
+            <div class="code-content">#include <Arduino.h>
+                    #include <ESP8266WiFi.h>
+                        #include <ArduinoJson.h>
+                            #include <Wire.h>
+                                #include <LiquidCrystal_I2C.h>
+                                    #include <PubSubClient.h>
+                                        #include "config.h"
 
-                bool isTelegramNotifSent = false;
+                                        LiquidCrystal_I2C lcd(0x27, 16, 2);
+                                        byte lcdAddress = 0x27;
+                                        bool lcdOk = false;
 
-                void setup_wifi() {
-                Serial.print("Menghubungkan ke WiFi");
-                WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-                while (WiFi.status() != WL_CONNECTED) {
-                delay(500);
-                Serial.print(".");
-                }
-                Serial.println("\nWiFi Terhubung! IP: " + WiFi.localIP().toString());
-                }
+                                        WiFiClient espClient;
+                                        PubSubClient mqttClient(espClient);
+                                        unsigned long lastMqttReconnect = 0;
+                                        const unsigned long mqttReconnectInterval = 5000;
+                                        unsigned long lastMqttPublish = 0;
+                                        const unsigned long mqttPublishInterval = 3000;
 
-                void sendDataAndGetCommands(int waterLevel) {
-                if (WiFi.status() != WL_CONNECTED) return;
+                                        bool relayState = false;
+                                        int currentWiFiIndex = 0;
 
-                std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt; client(new BearSSL::WiFiClientSecure);
-                client-&gt;setInsecure();
-                HTTPClient https;
+                                        int autoOffLevel = 95;
+                                        bool autoOffEnabled = true;
 
-                String finalPath = String(GAS_URL) + "?action=sync&amp;waterLevel=" + String(waterLevel);
+                                        unsigned long lastDebounceTimeOn = 0;
+                                        unsigned long lastDebounceTimeOff = 0;
+                                        unsigned long debounceDelay = 50;
+                                        int lastBtnOnState = HIGH;
+                                        int lastBtnOffState = HIGH;
 
-                if (https.begin(*client, finalPath)) {
-                int httpCode = https.GET();
-                if (httpCode == HTTP_CODE_OK) {
-                String payload = https.getString();
-                DynamicJsonDocument doc(1024);
-                deserializeJson(doc, payload);
-                bool pumpStatus = doc["pumpStatus"].as&lt;bool&gt;();
-                digitalWrite(RELAY_PIN, pumpStatus ? HIGH : LOW);
-                Serial.printf("Pompa: %s | Air: %d%%\n", pumpStatus ? "ON" : "OFF", waterLevel);
-                }
-                https.end();
-                }
-                }
+                                        unsigned long lastWiFiCheck = 0;
+                                        const unsigned long wifiCheckInterval = 10000;
 
-                void sendTelegramMessage(String message) {
-                if (WiFi.status() != WL_CONNECTED) return;
+                                        unsigned long lastUltrasonicRead = 0;
+                                        const unsigned long ultrasonicInterval = 2000;
+                                        int waterPercent = 0;
 
-                std::unique_ptr&lt;BearSSL::WiFiClientSecure&gt; client(new BearSSL::WiFiClientSecure);
-                client-&gt;setInsecure();
-                HTTPClient https;
+                                        unsigned long lastLCDUpdate = 0;
+                                        const unsigned long lcdUpdateInterval = 3000;
 
-                String url = "https://api.telegram.org/bot" + String(BOT_TOKEN)
-                + "/sendMessage?chat_id=" + String(CHAT_ID)
-                + "&amp;text=" + message;
+                                        byte scanI2CAddress() {
+                                        Serial.println("[I2C] Scanning untuk LCD...");
+                                        for (byte addr = 1; addr < 127; addr++) { Wire.beginTransmission(addr); if
+                                            (Wire.endTransmission()==0) { Serial.printf("[I2C] Ditemukan device di
+                                            0x%02X\n", addr); return addr; } } return 0; } bool initLCD(byte addr) {
+                                            lcd=LiquidCrystal_I2C(addr, 16, 2); delay(200); lcd.init(); delay(100);
+                                            lcd.clear(); delay(50); lcd.backlight(); lcd.setCursor(0, 0); lcd.print("LCD
+                                            OK!"); delay(300); return true; } void beep(int times, int durMs=80) { for
+                                            (int i=0; i < times; i++) { digitalWrite(BUZZER_PIN, HIGH); delay(durMs);
+                                            digitalWrite(BUZZER_PIN, LOW); if (i < times - 1) delay(120); } } bool
+                                            tryConnectWiFi(const char* ssidTarget, const char* passTarget, int
+                                            maxAttempts=50) { WiFi.begin(ssidTarget, passTarget); int attempts=0; while
+                                            (WiFi.status() !=WL_CONNECTED && attempts < maxAttempts) { delay(500);
+                                            attempts++; Serial.print("."); } return (WiFi.status()==WL_CONNECTED); }
+                                            void setup_wifi() { Serial.print("\nMencoba WiFi utama: ");
+  Serial.println(WIFI_SSID);
+  currentWiFiIndex = 0;
+  if (tryConnectWiFi(WIFI_SSID, WIFI_PASSWORD)) {
+    Serial.println(" \nWiFi Utama Connected!"); return; } Serial.print("\nWiFi utama gagal. Mencoba cadangan: ");
+  Serial.println(WIFI_SSID_BACKUP);
+  currentWiFiIndex = 1;
+  if (tryConnectWiFi(WIFI_SSID_BACKUP, WIFI_PASS_BACKUP)) {
+    Serial.println(" \nWiFi Cadangan Connected!"); return; } Serial.println("\nSemua jaringan gagal - Mode Offline!");
+                                            currentWiFiIndex=-1; } void controlRelay(bool state) { if (state
+                                            !=relayState) beep(1); digitalWrite(RELAY_PIN, state ? HIGH : LOW);
+                                            relayState=state; } int readUltrasonic() { long total=0; int valid=0; for
+                                            (int i=0; i < 3; i++) { digitalWrite(TRIG_PIN, LOW); delayMicroseconds(4);
+                                            digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10); digitalWrite(TRIG_PIN,
+                                            LOW); long dur=pulseIn(ECHO_PIN, HIGH, 40000); if (dur> 500) { total += dur;
+                                            valid++; }
+                                            delay(50);
+                                            }
+                                            if (valid == 0) return -1;
+                                            int dist = (total / valid) * 0.034 / 2;
+                                            return dist;
+                                            }
 
-                if (https.begin(*client, url)) {
-                int httpCode = https.GET();
-                if (httpCode &gt; 0) Serial.println("Notifikasi Telegram terkirim!");
-                https.end();
-                }
-                }
+                                            void updateLCD(int percent, bool relayOn, bool isWiFiDown) {
+                                            if (!lcdOk) return;
+                                            lcd.clear();
+                                            lcd.setCursor(0, 0);
+                                            lcd.print("Air: "); lcd.print(percent); lcd.print("% ");
+                                            lcd.setCursor(0, 1);
+                                            lcd.print("Pompa: "); lcd.print(relayOn ? "ON " : "OFF");
+                                            if (isWiFiDown) {
+                                            lcd.setCursor(10, 1); lcd.print("(OFF)");
+                                            } else {
+                                            lcd.setCursor(10, 1); lcd.print(autoOffEnabled ? "A" : " ");
+                                            lcd.setCursor(12, 1);
+                                            if (currentWiFiIndex == 0) lcd.print("W1");
+                                            else if (currentWiFiIndex == 1) lcd.print("W2");
+                                            }
+                                            }
 
-                void setup() {
-                Serial.begin(115200);
-                pinMode(RELAY_PIN, OUTPUT);
-                pinMode(TRIG_PIN, OUTPUT);
-                pinMode(ECHO_PIN, INPUT);
-                digitalWrite(RELAY_PIN, LOW);
-                setup_wifi();
-                }
+                                            void publishMqttStatus() {
+                                            if (!mqttClient.connected()) return;
+                                            DynamicJsonDocument doc(256);
+                                            doc["waterLevel"] = waterPercent;
+                                            doc["pumpStatus"] = relayState;
+                                            doc["autoOffEnabled"] = autoOffEnabled;
+                                            doc["autoOffLevel"] = autoOffLevel;
+                                            doc["ssid"] = WiFi.SSID();
+                                            doc["rssi"] = WiFi.RSSI();
+                                            char buf[256];
+                                            serializeJson(doc, buf, sizeof(buf));
+                                            mqttClient.publish(MQTT_TOPIC_STATUS, buf);
+                                            }
 
-                void loop() {
-                digitalWrite(TRIG_PIN, LOW);
-                delayMicroseconds(2);
-                digitalWrite(TRIG_PIN, HIGH);
-                delayMicroseconds(10);
-                digitalWrite(TRIG_PIN, LOW);
-                long duration = pulseIn(ECHO_PIN, HIGH);
-                int distance = duration * 0.034 / 2;
+                                            void mqttCallback(char* topic, byte* payload, unsigned int length) {
+                                            String msg;
+                                            for (unsigned int i = 0; i < length; i++) msg +=(char)payload[i];
+                                                Serial.printf("[MQTT] Pesan masuk [%s]: %s\n", topic, msg.c_str()); if
+                                                (String(topic)==MQTT_TOPIC_CONTROL) { if
+                                                (msg.equalsIgnoreCase("AUTO_ON") || msg.equalsIgnoreCase("AUTO_OFF")) {
+                                                autoOffEnabled=msg.equalsIgnoreCase("AUTO_ON"); Serial.printf("[MQTT]
+                                                AutoOff %s (via MQTT)\n", autoOffEnabled ? "DIAKTIFKAN"
+                                                : "DINONAKTIFKAN" ); publishMqttStatus(); return; } if
+                                                (msg.startsWith("LEVEL_")) { int lvl=msg.substring(6).toInt(); if (lvl>=
+                                                50 && lvl <= 100) { autoOffLevel=lvl; Serial.printf("[MQTT] AutoOff
+                                                    level set ke %d%%\n", lvl); publishMqttStatus(); } return; } bool
+                                                    wantOn=msg.equalsIgnoreCase("ON"); controlRelay(wantOn);
+                                                    publishMqttStatus(); } } bool reconnectMqtt() { String
+                                                    clientId="ESP8266_SmartSanyo-" + String(ESP.getChipId(), HEX); if
+                                                    (mqttClient.connect(clientId.c_str())) {
+                                                    mqttClient.subscribe(MQTT_TOPIC_CONTROL); Serial.println("[MQTT]
+                                                    Terhubung ke broker, subscribe topic kontrol.");
+                                                    publishMqttStatus(); return true; } return false; } void setup() {
+                                                    Serial.begin(115200); delay(100);
+                                                    Serial.println("\n========================================");
+  Serial.println(" Smart Sanyo v3 Starting..."); Serial.println(" (MQTT-only, no GAS/cloud)");
+                                                    Serial.println("========================================\n");
+                                                    pinMode(RELAY_PIN, OUTPUT); digitalWrite(RELAY_PIN, LOW);
+                                                    relayState=false; pinMode(TRIG_PIN, OUTPUT); pinMode(ECHO_PIN,
+                                                    INPUT); pinMode(BTN_ON_PIN, INPUT_PULLUP); pinMode(BTN_OFF_PIN,
+                                                    INPUT_PULLUP); pinMode(BUZZER_PIN, OUTPUT); digitalWrite(BUZZER_PIN,
+                                                    LOW); delay(500); Wire.begin(D6, D5); Wire.setClock(100000);
+                                                    delay(200); byte foundAddr=scanI2CAddress(); if (foundAddr !=0) {
+                                                    lcdAddress=foundAddr; lcdOk=initLCD(lcdAddress); } else {
+                                                    lcdOk=initLCD(0x3F); if (lcdOk) lcdAddress=0x3F; } setup_wifi();
+                                                    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+                                                    mqttClient.setCallback(mqttCallback); if
+                                                    (WiFi.status()==WL_CONNECTED) { reconnectMqtt();
+                                                    Serial.println("[MQTT] Terhubung. ESP siap via MQTT."); } else {
+                                                    Serial.println("[OFFLINE] Tidak ada WiFi. Mode manual-only (physical
+                                                    buttons)."); } int dist=readUltrasonic(); if (dist> 0) {
+                                                    waterPercent = constrain(map(dist, 100, 10, 0, 100), 0, 100);
+                                                    }
+                                                    updateLCD(waterPercent, relayState, WiFi.status() != WL_CONNECTED);
+                                                    delay(500);
+                                                    beep(3);
+                                                    }
 
-                int percent = map(distance, 100, 10, 0, 100);
-                percent = constrain(percent, 0, 100);
+                                                    void loop() {
+                                                    unsigned long now = millis();
 
-                if (percent &lt;= 10 &amp;&amp; !isTelegramNotifSent) {
-                sendTelegramMessage("PERINGATAN: Air Tangki Kritis! Sisa " + String(percent) + "%. Mesin butuh dicek!");
-                isTelegramNotifSent = true;
-                } else if (percent &gt; 20) {
-                isTelegramNotifSent = false;
-                }
+                                                    if (WiFi.status() == WL_CONNECTED) {
+                                                    if (!mqttClient.connected()) {
+                                                    if (now - lastMqttReconnect >= mqttReconnectInterval) {
+                                                    lastMqttReconnect = now;
+                                                    reconnectMqtt();
+                                                    }
+                                                    } else {
+                                                    mqttClient.loop();
+                                                    if (now - lastMqttPublish >= mqttPublishInterval) {
+                                                    lastMqttPublish = now;
+                                                    publishMqttStatus();
+                                                    }
+                                                    }
+                                                    }
 
-                sendDataAndGetCommands(percent);
-                delay(3000);
-                }</div>
+                                                    if (now - lastWiFiCheck >= wifiCheckInterval) {
+                                                    lastWiFiCheck = now;
+                                                    if (WiFi.status() != WL_CONNECTED) {
+                                                    WiFi.disconnect(true); delay(100);
+                                                    currentWiFiIndex = 0;
+                                                    if (!tryConnectWiFi(WIFI_SSID, WIFI_PASSWORD, 30)) {
+                                                    WiFi.disconnect(true); delay(100);
+                                                    currentWiFiIndex = 1;
+                                                    if (!tryConnectWiFi(WIFI_SSID_BACKUP, WIFI_PASS_BACKUP, 30)) {
+                                                    currentWiFiIndex = -1;
+                                                    }
+                                                    }
+                                                    }
+                                                    }
+
+                                                    if (now - lastUltrasonicRead >= ultrasonicInterval) {
+                                                    lastUltrasonicRead = now;
+                                                    int distance = readUltrasonic();
+                                                    if (distance > 0) {
+                                                    waterPercent = constrain(map(distance, 100, 10, 0, 100), 0, 100);
+                                                    }
+                                                    if (autoOffEnabled && waterPercent >= autoOffLevel && relayState) {
+                                                    controlRelay(false);
+                                                    Serial.printf("[AutoOff] Air %d%% >= batas %d%% -> Relay OFF\n",
+                                                    waterPercent, autoOffLevel);
+                                                    publishMqttStatus();
+                                                    }
+                                                    }
+
+                                                    int btnOn = digitalRead(BTN_ON_PIN);
+                                                    int btnOff = digitalRead(BTN_OFF_PIN);
+                                                    if (btnOn == LOW && lastBtnOnState == HIGH && (now -
+                                                    lastDebounceTimeOn) > debounceDelay) {
+                                                    lastDebounceTimeOn = now;
+                                                    controlRelay(true);
+                                                    publishMqttStatus();
+                                                    }
+                                                    lastBtnOnState = btnOn;
+
+                                                    if (btnOff == LOW && lastBtnOffState == HIGH && (now -
+                                                    lastDebounceTimeOff) > debounceDelay) {
+                                                    lastDebounceTimeOff = now;
+                                                    controlRelay(false);
+                                                    publishMqttStatus();
+                                                    }
+                                                    lastBtnOffState = btnOff;
+
+                                                    if (now - lastLCDUpdate >= lcdUpdateInterval) {
+                                                    lastLCDUpdate = now;
+                                                    updateLCD(waterPercent, relayState, WiFi.status() != WL_CONNECTED);
+                                                    }
+                                                    yield();
+                                                    }</div>
         </div>
     </div>
 
-    <!-- Apps Script Code Modal -->
-    <div class="code-modal" id="appsScriptModal">
-        <div class="code-container" style="max-width: 600px;">
-            <div class="code-header">
-                <h3><i class="fa-solid fa-file-code"></i> Google Apps Script (code.gs)</h3>
-                <div style="display: flex; gap: 10px;">
-                    <button id="downloadGasBtn" class="dev-btn" style="padding: 4px 10px; margin: 0;"><i
-                            class="fa-solid fa-download"></i> Unduh</button>
-                    <button class="close-btn" id="closeAppsScriptBtn"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </div>
-            <div class="code-content">/*
-                * 1. Buka Google Spreadsheet &gt; Ekstensi &gt; Apps Script.
-                * 2. Ganti semua kode lama dengan kode di bawah ini.
-                * 3. Terapkan &gt; Deployment Baru (buat Deployment BARU setiap perubahan kode).
-                * 4. Perbarui appsScriptUrl di index.html jika URL berubah.
-                */
-
-                function doGet(e) {
-                var action = e.parameter.action;
-                var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Dashboard");
-
-                if (!action) {
-                return ContentService.createTextOutput(
-                JSON.stringify({ error: "No Action" })
-                ).setMimeType(ContentService.MimeType.JSON);
-                }
-
-                var props = PropertiesService.getScriptProperties();
-
-                if (e.parameter.waterLevel !== undefined) {
-                cekNotifikasiAir(e.parameter.waterLevel, props);
-                }
-
-                if (sheet &amp;&amp; sheet.getLastRow() === 0) {
-                sheet.appendRow(["Timestamp","Aktivitas","Status Pompa","Mode","Level Air","Jadwal","Data Jadwal"]);
-                sheet.getRange("A1:G1").setFontWeight("bold").setBackground("#d9ead3");
-                sheet.setFrozenRows(1);
-                }
-
-                var logActivity = "";
-
-                if (action === "set") {
-                if (e.parameter.pumpStatus !== undefined) {
-                props.setProperty("pumpStatus", e.parameter.pumpStatus);
-                logActivity = "MENGUBAH STATUS POMPA: " + e.parameter.pumpStatus.toUpperCase();
-                }
-                if (e.parameter.autoMode !== undefined) {
-                props.setProperty("autoMode", e.parameter.autoMode);
-                logActivity = "MENGUBAH MODE: " + (e.parameter.autoMode === "true" ? "AUTO" : "MANUAL");
-                }
-                if (e.parameter.scheduleEnabled !== undefined) {
-                props.setProperty("scheduleEnabled", e.parameter.scheduleEnabled);
-                logActivity = (e.parameter.scheduleEnabled === "true" ? "MENGAKTIFKAN" : "MEMATIKAN") + " JADWAL";
-                }
-                if (e.parameter.schedules !== undefined) {
-                props.setProperty("schedules", e.parameter.schedules);
-                logActivity = "MEMPERBARUI DATA JADWAL";
-                }
-                } else if (action === "sync" &amp;&amp; e.parameter.waterLevel) {
-                props.setProperty("waterLevel", e.parameter.waterLevel);
-                logActivity = "SINKRONISASI ESP - LEVEL AIR: " + e.parameter.waterLevel + "%";
-                }
-
-                var currentPump = props.getProperty("pumpStatus") === "true";
-                var currentAuto = props.getProperty("autoMode") === "true";
-                var currentLevel = props.getProperty("waterLevel") || "0";
-                var currentScheduleState = props.getProperty("scheduleEnabled") === "true";
-                var schedulesData = props.getProperty("schedules") || "[]";
-
-                if (action === "set" || (action === "sync" &amp;&amp; e.parameter.waterLevel)) {
-                if (sheet) {
-                var ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
-                sheet.appendRow([ts, logActivity, currentPump?"ON":"OFF", currentAuto?"AUTO":"MANUAL",
-                currentLevel+"%", currentScheduleState?"AKTIF":"MATI", schedulesData]);
-                }
-                }
-
-                if (action === "set") {
-                return ContentService.createTextOutput(JSON.stringify({ success: true }))
-                .setMimeType(ContentService.MimeType.JSON);
-                } else if (action === "sync") {
-                if (e.parameter.waterLevel) {
-                props.setProperty("waterLevel", e.parameter.waterLevel);
-                var waterInt = parseInt(e.parameter.waterLevel);
-                var now = new Date().getTime();
-                var lastKritis = parseInt(props.getProperty("lastKritisTime") || "0");
-                var lastPenuh = parseInt(props.getProperty("lastPenuhTime") || "0");
-                if (waterInt &lt;= 10 &amp;&amp; now - lastKritis &gt; 3600000) {
-                sendFCMNotification("Air Tangki Kritis!", "Sisa " + waterInt + "%. Segera nyalakan Sanyo!");
-                props.setProperty("lastKritisTime", now.toString());
-                props.setProperty("lastPenuhTime", "0");
-                } else if (waterInt &gt;= 90 &amp;&amp; now - lastPenuh &gt; 3600000) {
-                sendFCMNotification("Tangki Air Penuh", "Air sudah " + waterInt + "%. Pompa bisa dimatikan.");
-                props.setProperty("lastPenuhTime", now.toString());
-                props.setProperty("lastKritisTime", "0");
-                } else if (waterInt &gt; 10 &amp;&amp; waterInt &lt; 90) {
-                props.setProperty("lastKritisTime", "0");
-                props.setProperty("lastPenuhTime", "0");
-                }
-                }
-
-                var schedEnabled = props.getProperty("scheduleEnabled") === "true";
-                var schedsData = props.getProperty("schedules") || "[]";
-                if (schedEnabled &amp;&amp; schedsData !== "[]") {
-                var scheds = JSON.parse(schedsData);
-                var curTime = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "HH:mm");
-                for (var i = 0; i &lt; scheds.length; i++) {
-                if (scheds[i].isActive &amp;&amp; scheds[i].time === curTime) {
-                var act = scheds[i].action === "ON";
-                if (currentPump !== act) {
-                currentPump = act;
-                props.setProperty("pumpStatus", currentPump.toString());
-                var teks = currentPump ? "Menyala (ON)" : "Mati (OFF)";
-                sendFCMNotification("Jadwal Tereksekusi", "Sanyo otomatis " + teks + " pukul " + scheds[i].time);
-                }
-                }
-                }
-                }
-
-                return ContentService.createTextOutput(JSON.stringify({ pumpStatus: currentPump, status: "OK" }))
-                .setMimeType(ContentService.MimeType.JSON);
-                } else if (action === "get") {
-                return ContentService.createTextOutput(JSON.stringify({
-                pumpStatus: currentPump,
-                autoMode: currentAuto,
-                waterLevel: parseInt(currentLevel),
-                scheduleEnabled: currentScheduleState,
-                schedules: schedulesData
-                })).setMimeType(ContentService.MimeType.JSON);
-                }
-                }
-
-                function sendFCMNotification(title, body) {
-                var projectId = "FIREBASE_PROJECT_ID_ANDA";
-                var fcmToken = "FCM_TOKEN_DARI_LOGCAT_ANDROID";
-                var url = "https://fcm.googleapis.com/v1/projects/" + projectId + "/messages:send";
-                var payload = { message: { token: fcmToken, notification: { title: title, body: body } } };
-                var options = {
-                method: "post",
-                headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken(), "Content-Type": "application/json" },
-                payload: JSON.stringify(payload),
-                muteHttpExceptions: true
-                };
-                try { UrlFetchApp.fetch(url, options); } catch(e) { Logger.log("Error: " + e); }
-                }
-
-                function cekNotifikasiAir(waterLevelStr, props) {
-                var waterInt = parseInt(waterLevelStr);
-                var now = new Date().getTime();
-                var lastKritis = parseInt(props.getProperty("lastKritisTime") || "0");
-                var lastPenuh = parseInt(props.getProperty("lastPenuhTime") || "0");
-                if (waterInt &lt;= 10 &amp;&amp; now - lastKritis &gt; 3600000) {
-                sendFCMNotification("Air Tangki Kritis!", "Sisa " + waterInt + "%. Segera nyalakan Sanyo!");
-                props.setProperty("lastKritisTime", now.toString());
-                props.setProperty("lastPenuhTime", "0");
-                } else if (waterInt &gt;= 90 &amp;&amp; now - lastPenuh &gt; 3600000) {
-                sendFCMNotification("Tangki Air Penuh", "Air sudah " + waterInt + "%. Pompa bisa dimatikan.");
-                props.setProperty("lastPenuhTime", now.toString());
-                props.setProperty("lastKritisTime", "0");
-                } else if (waterInt &gt; 10 &amp;&amp; waterInt &lt; 90) {
-                props.setProperty("lastKritisTime", "0");
-                props.setProperty("lastPenuhTime", "0");
-                }
-                }
-
-                function tesNotifikasi() {
-                sendFCMNotification("Uji Coba Sanyo", "Berhasil! Notifikasi Firebase sudah terhubung.");
-                }</div>
-        </div>
-    </div>
-
-    <!-- Transparent toast for events -->
-    <div class="toast-container" id="toast">
-        <i class="fa-solid fa-circle-info"></i>
-        <span id="toastMsg">State updated!</span>
-    </div>
+    <!-- Toast -->
+    <div class="toast-container" id="toast"><i class="fa-solid fa-circle-info"></i><span id="toastMsg">State
+            updated!</span></div>
 
     <script>
-
-        // Paksa loading screen hilang maksimal setelah 3 detik apapun yang terjadi
         window.addEventListener('load', function () {
             setTimeout(function () {
                 var loader = document.getElementById('loading-screen');
@@ -1684,45 +1522,89 @@
                     loader.style.display = 'none';
                     console.log("Loading screen dipaksa tutup karena timeout.");
                 }
-            }, 3000); // Angka 3000 = 3 detik (Bisa Anda ubah jika dirasa kurang lama)
+            }, 3000);
         });
+
         // ==========================================
-        // DUMMY ENVIRONMENT VARIABLES & STATE
+        // STATE
         // ==========================================
-        let currentWaterLevel = 75;    // Rentang: 0 - 100%
-        let pumpStatus = false;         // true = ON, false = OFF
-        let autoMode = false;          // true = Auto, false = Manual
-        let scheduleEnabled = false;   // true = Aktif, false = Nonaktif
-        let isDemoMode = false;        // true = Tampilkan panel pengujian
+        let currentWaterLevel = 75;
+        let pumpStatus = false;
+        let autoMode = false;
+        let scheduleEnabled = false;
+        let isDemoMode = false;
         let schedules = [];
         try {
-            const savedSchedules = localStorage.getItem('schedules');
-            if (savedSchedules) {
-                schedules = JSON.parse(savedSchedules);
-            } else {
-                schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
-            }
+            const saved = localStorage.getItem('schedules');
+            if (saved) { schedules = JSON.parse(saved); }
+            else { schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }]; }
         } catch (e) {
             schedules = [{ id: 1, onTime: '05:00', offTime: '18:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] }];
         }
-        let isOnline = true;
+        let isOnline = false;
         let espSSIDValue = "Menunggu...";
         let espRssiValue = 0;
         let espQualValue = 0;
-        let autoOffLevel = 95; // default, diperbarui dari GAS
-        let autoOffEnabled = true; // default
-
+        let autoOffLevel = 95;
+        let autoOnLevel = 20;
+        let autoOffEnabled = true;
+        let autoOnEnabled = true;     // ponytail: toggle terpisah untuk batas hidup otomatis
         let scheduleToDelete = null;
         let scheduleToEdit = null;
-
-        // Integrasi GAS URL API — diambil dari config.js (sumber tunggal)
-        const appsScriptUrl = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.gasUrl : '';
+        let scheduleSentToEsp = false; // track apakah jadwal sudah dikirim ke ESP
+        let espHasSchedule = false;    // track apakah ESP melaporkan ada jadwal tersimpan
 
         // ==========================================
-        // DOM ELEMENTS SELECTION
+        // DOM
         // ==========================================
-        const waterLiquid = document.getElementById('waterLiquid');
         const waterLevelVal = document.getElementById('waterLevelVal');
+
+        // ==========================================
+        // CANVAS WAVE — air 3D mengikuti gravitasi HP
+        // ==========================================
+        const waterCanvas = document.getElementById('waterCanvas');
+        const wCtx = waterCanvas.getContext('2d');
+        let waveLevel = 75, waveColor = [0, 242, 254], waveGamma = 0, wavePhase = 0;
+
+        function setWaterLevel(pct) {
+            waveLevel = pct;
+            if (pct < 20)      waveColor = [239, 68, 68];
+            else if (pct < 50) waveColor = [245, 158, 11];
+            else               waveColor = [0, 242, 254];
+        }
+
+        (function drawWater() {
+            const W = waterCanvas.width, H = waterCanvas.height;
+            wCtx.clearRect(0, 0, W, H);
+            if (waveLevel > 0) {
+                const fillY = H * (1 - waveLevel / 100);
+                const A = 5; // amplitudo gelombang (px)
+                const tilt = Math.max(-30, Math.min(30, waveGamma)) * 0.6; // px shift ujung saat HP miring
+                wCtx.beginPath();
+                wCtx.moveTo(0, H);
+                for (let x = 0; x <= W; x++) {
+                    const slope = tilt * ((x / W) - 0.5) * 2;
+                    const wave  = A * Math.sin(x / W * Math.PI * 4 + wavePhase);
+                    wCtx.lineTo(x, fillY + slope + wave);
+                }
+                wCtx.lineTo(W, H);
+                wCtx.closePath();
+                const [r, g, b] = waveColor;
+                const grad = wCtx.createLinearGradient(0, fillY, 0, H);
+                grad.addColorStop(0, `rgba(${r},${g},${b},0.75)`);
+                grad.addColorStop(1, `rgba(${r*0.3|0},${g*0.5|0},${b},0.95)`);
+                wCtx.fillStyle = grad;
+                wCtx.fill();
+            }
+            wavePhase += 0.04;
+            requestAnimationFrame(drawWater);
+        })();
+
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null) waveGamma = e.gamma;
+            });
+        }
         const pumpStatusBadge = document.getElementById('pumpStatusBadge');
         const pumpLabelText = document.getElementById('pumpLabelText');
         const pumpIconWrapper = document.getElementById('pumpIconWrapper');
@@ -1739,14 +1621,11 @@
         const espQualEl = document.getElementById('espQual');
         const toastEl = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
-
-        // Modals & Extras
         const devPanel = document.getElementById('devPanel');
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const demoModeToggle = document.getElementById('demoModeToggle');
-
         let threeSceneCreated = false;
         let particlesThree = null;
 
@@ -1922,6 +1801,7 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
         }
+
 
         let three2SceneCreated = false;
         let particlesThree2 = null;
@@ -2161,6 +2041,14 @@
             });
         }
 
+
+
+
+        // ==========================================
+        // THREE.JS backgrounds (unchanged - omitted for brevity in diff)
+        // ==========================================
+        // [initThreeJSBg, initThreeJSBg2, setBgAnimMode functions omitted in this write - they are preserved from original]
+
         const bgAnimSelect = document.getElementById('bgAnimSelect');
         const bgMeshContainer = document.getElementById('bgMeshContainer');
         const bgParticlesContainer = document.getElementById('bgParticlesContainer');
@@ -2172,231 +2060,164 @@
             bgAnimMode = mode;
             if (bgAnimSelect) bgAnimSelect.value = mode;
             localStorage.setItem('bgAnimMode', mode);
-
             if (bgMeshContainer) bgMeshContainer.style.opacity = mode === 'mesh' ? '1' : '0';
-
             if (bgThreeContainer) {
                 bgThreeContainer.style.opacity = mode === 'threejs' ? '1' : '0';
-                if (mode === 'threejs') {
-                    initThreeJSBg();
-                }
+                if (mode === 'threejs') initThreeJSBg();
             }
-
             if (bgThree2Container) {
                 bgThree2Container.style.opacity = mode === 'threejs2' ? '1' : '0';
-                if (mode === 'threejs2') {
-                    initThreeJSBg2();
-                }
+                if (mode === 'threejs2') initThreeJSBg2();
             }
-
             if (bgParticlesContainer) {
                 bgParticlesContainer.style.opacity = mode === 'bubbles' ? '1' : '0';
-
                 if (mode === 'bubbles' && bgParticlesContainer.children.length === 0) {
                     for (let i = 0; i < 12; i++) {
                         const p = document.createElement('div');
                         p.className = 'particle';
                         const size = Math.random() * 40 + 20;
-                        p.style.width = `${size}px`;
-                        p.style.height = `${size}px`;
+                        p.style.width = `${size}px`; p.style.height = `${size}px`;
                         p.style.left = `${Math.random() * 100}vw`;
                         p.style.animationDuration = `${Math.random() * 8 + 6}s`;
                         p.style.animationDelay = `${Math.random() * 5}s`;
                         bgParticlesContainer.appendChild(p);
                     }
-                } else if (mode !== 'bubbles') {
-                    bgParticlesContainer.innerHTML = '';
-                }
+                } else if (mode !== 'bubbles') { bgParticlesContainer.innerHTML = ''; }
             }
         }
         setBgAnimMode(bgAnimMode);
-
-        if (bgAnimSelect) {
-            bgAnimSelect.addEventListener('change', (e) => {
-                setBgAnimMode(e.target.value);
-            });
-        }
+        if (bgAnimSelect) bgAnimSelect.addEventListener('change', (e) => setBgAnimMode(e.target.value));
 
         const deleteConfirmModal = document.getElementById('deleteConfirmModal');
         const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
         const editScheduleModal = document.getElementById('editScheduleModal');
         const closeEditScheduleBtn = document.getElementById('closeEditScheduleBtn');
         const editOnTime = document.getElementById('editOnTime');
         const editOffTime = document.getElementById('editOffTime');
         const editScheduleDays = document.getElementById('editScheduleDays');
         const saveScheduleBtn = document.getElementById('saveScheduleBtn');
-
         const toggleConnBtn = document.getElementById('toggleConnBtn');
         const waterLevelSlider = document.getElementById('waterLevelSlider');
-        const decorations = document.getElementById('decorations');
         const codeModal = document.getElementById('codeModal');
         const showCodeBtn = document.getElementById('showCodeBtn');
         const closeCodeBtn = document.getElementById('closeCodeBtn');
-        const appsScriptModal = document.getElementById('appsScriptModal');
-        const showAppsScriptBtn = document.getElementById('showAppsScriptBtn');
-        const closeAppsScriptBtn = document.getElementById('closeAppsScriptBtn');
 
-        // ==========================================
-        // MAIN UPDATE UI FUNCTION (INTEGRATION FRIENDLY)
-        // ==========================================
-        // Hubungkan fungsi ini ke respon AJAX / Fetch API / MQTT OnMessageReceived
         function updateUI() {
             var loader = document.getElementById('loading-screen');
             if (loader) loader.style.display = 'none';
-            // 1. Update Water Level Visualizer
-            waterLiquid.style.height = `${currentWaterLevel}%`;
+            setWaterLevel(currentWaterLevel);
             waterLevelVal.innerHTML = `${currentWaterLevel}% <span>Isi Tangki</span>`;
 
-            // Adjust wave speed or visual styling depending on low/high level
-            if (currentWaterLevel < 20) {
-                waterLiquid.style.background = 'linear-gradient(180deg, #ef4444 0%, #b91c1c 100%)';
-            } else if (currentWaterLevel < 50) {
-                waterLiquid.style.background = 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)';
-            } else {
-                waterLiquid.style.background = 'linear-gradient(180deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.9) 100%)';
-            }
-
-            // 2. Update Pump Badge & Card UI
             if (pumpStatus) {
-                pumpStatusBadge.innerText = 'ON';
-                pumpStatusBadge.className = 'badge badge-on';
+                pumpStatusBadge.innerText = 'ON'; pumpStatusBadge.className = 'badge badge-on';
                 pumpLabelText.innerText = 'Pompa Air Menyala';
                 pumpIconWrapper.style.color = 'var(--success-color)';
-                pumpIconWrapper.style.filter = 'none';
-                pumpIconWrapper.classList.add('fa-spin-slow');
-
-                manualPumpBtn.className = 'manual-btn active';
-                manualPumpBtnLabel.innerText = 'Matikan Saklar';
+                manualPumpBtn.className = 'manual-btn active'; manualPumpBtnLabel.innerText = 'Matikan Saklar';
             } else {
-                pumpStatusBadge.innerText = 'OFF';
-                pumpStatusBadge.className = 'badge badge-off';
+                pumpStatusBadge.innerText = 'OFF'; pumpStatusBadge.className = 'badge badge-off';
                 pumpLabelText.innerText = 'Pompa Air Mati';
                 pumpIconWrapper.style.color = 'var(--text-secondary)';
-                pumpIconWrapper.style.filter = 'none';
-
-                manualPumpBtn.className = 'manual-btn';
-                manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
+                manualPumpBtn.className = 'manual-btn'; manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
             }
 
-            // 3. Auto Mode State
             autoModeToggle.checked = autoMode;
-            if (autoMode) {
-                // Di Mode Auto, Tombol Manual Dinonaktifkan (karena dikoordinasikan otomatis)
-                manualPumpBtn.classList.add('disabled');
-                manualPumpBtn.style.opacity = '0.4';
-                manualPumpBtn.style.pointerEvents = 'none';
-            } else {
-                manualPumpBtn.classList.remove('disabled');
-                manualPumpBtn.style.opacity = '1';
-                manualPumpBtn.style.pointerEvents = 'auto';
-            }
+            if (autoMode) { manualPumpBtn.classList.add('disabled'); manualPumpBtn.style.opacity = '0.4'; manualPumpBtn.style.pointerEvents = 'none'; }
+            else { manualPumpBtn.classList.remove('disabled'); manualPumpBtn.style.opacity = '1'; manualPumpBtn.style.pointerEvents = 'auto'; }
 
-            // 4. Connection State
             if (isOnline) {
-                connBadge.classList.remove('offline');
-                connLabel.innerText = 'ONLINE';
+                connBadge.classList.remove('offline'); connLabel.innerText = 'ONLINE';
                 if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--accent-cyan); margin-right: 4px;"></i> ${espSSIDValue}`;
                 if (espdBEl) espdBEl.innerText = espRssiValue;
                 if (espQualEl) espQualEl.innerText = espQualValue;
             } else {
-                connBadge.classList.add('offline');
-                connLabel.innerText = 'OFFLINE';
+                connBadge.classList.add('offline'); connLabel.innerText = 'OFFLINE';
                 if (espSSIDEl) espSSIDEl.innerHTML = `<i class="fa-solid fa-wifi" style="color: var(--text-secondary); margin-right: 4px;"></i> Terputus`;
                 if (espdBEl) espdBEl.innerText = '-';
                 if (espQualEl) espQualEl.innerText = '-';
             }
 
-            // 5. Scheduler Section State
             schedToggle.checked = scheduleEnabled;
-            if (scheduleEnabled) {
-                schedulerList.classList.remove('disabled');
-                addScheduleBtn.classList.remove('disabled');
-            } else {
-                schedulerList.classList.add('disabled');
-                addScheduleBtn.classList.add('disabled');
-            }
+            if (scheduleEnabled) { schedulerList.classList.remove('disabled'); addScheduleBtn.classList.remove('disabled'); }
+            else { schedulerList.classList.add('disabled'); addScheduleBtn.classList.add('disabled'); }
 
-            // Sync Simulator Inputs (Just for matching simulation)
             waterLevelSlider.value = currentWaterLevel;
-
-            if (isDemoMode) {
-                devPanel.style.display = 'block';
-            } else {
-                devPanel.style.display = 'none';
+            devPanel.style.display = isDemoMode ? 'block' : 'none';
+            // Update ESP schedule badge
+            const espSchedBadge = document.getElementById('espSchedBadge');
+            if (espSchedBadge) {
+                if (!isOnline) {
+                    espSchedBadge.innerText = 'ESP: -';
+                    espSchedBadge.style.color = 'var(--text-secondary)';
+                    espSchedBadge.style.borderColor = 'rgba(255,255,255,0.1)';
+                } else if (espHasSchedule) {
+                    espSchedBadge.innerText = 'ESP: Ada jadwal ✓';
+                    espSchedBadge.style.color = 'var(--success-color)';
+                    espSchedBadge.style.borderColor = 'rgba(16,185,129,0.3)';
+                } else {
+                    espSchedBadge.innerText = 'ESP: Belum ada jadwal';
+                    espSchedBadge.style.color = '#f59e0b';
+                    espSchedBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+                }
             }
         }
 
-        // ==========================================
-        // NOTIFICATION & ENGAGEMENT FEEDBACK (TOAST)
-        // ==========================================
         let toastTimeout;
         function showNotification(message, iconClass = 'fa-info-circle') {
             toastMsg.innerText = message;
             const icon = toastEl.querySelector('i');
             icon.className = `fa-solid ${iconClass}`;
-
             toastEl.classList.add('show');
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toastEl.classList.remove('show');
-            }, 2500);
+            toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
         }
 
         // ==========================================
-        // INTERACTIVE ACTIONS & HANDLERS
+        // EVENTS
         // ==========================================
-        // A. Toggle Mode Auto
         autoModeToggle.addEventListener('change', (e) => {
             autoMode = e.target.checked;
-            sendToGas('autoMode', autoMode);
             if (autoMode) {
                 showNotification('Auto Mode Aktif. Pompa dikontrol sisa tangki!', 'fa-robot');
-                // Simulasi mematikan atau menyalakan sanyo berdasarkan air jika auto mode diaktifkan
-                if (currentWaterLevel <= 20) {
-                    pumpStatus = true;
-                } else if (currentWaterLevel >= 95) {
-                    pumpStatus = false;
-                }
-            } else {
-                showNotification('Auto Mode Mati. Anda dapat menghidupkan manual.', 'fa-user-gear');
-            }
+                if (currentWaterLevel <= 20) pumpStatus = true;
+                else if (currentWaterLevel >= 95) pumpStatus = false;
+            } else showNotification('Auto Mode Mati. Anda dapat menghidupkan manual.', 'fa-user-gear');
             updateUI();
         });
 
-        // C. Schedule Toggle
         schedToggle.addEventListener('change', (e) => {
             scheduleEnabled = e.target.checked;
-            sendToGas('scheduleEnabled', scheduleEnabled);
-            showNotification(
-                scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!',
-                'fa-calendar-check'
-            );
+            showNotification(scheduleEnabled ? 'Jadwal harian diaktifkan!' : 'Penjadwalan dinonaktifkan!', 'fa-calendar-check');
+            if (scheduleEnabled) sendScheduleToEsp();
             updateUI();
         });
 
-        function saveSchedulesToGas() {
+        function saveSchedules() {
             localStorage.setItem('schedules', JSON.stringify(schedules));
-            sendToGas('schedules', JSON.stringify(schedules));
         }
 
-        // Add Schedule
+        function sendScheduleToEsp() {
+            if (!isOnline) { scheduleSentToEsp = false; renderSchedules(); return; }
+            try {
+                MqttAndroid.sendSchedule(JSON.stringify(schedules));
+                scheduleSentToEsp = true;
+            } catch(e) { scheduleSentToEsp = false; }
+            renderSchedules();
+        }
+
         addScheduleBtn.addEventListener('click', () => {
             if (!scheduleEnabled) return;
             const newId = schedules.length > 0 ? Math.max(...schedules.map(s => s.id)) + 1 : 1;
             schedules.push({ id: newId, onTime: '12:00', offTime: '13:00', enabled: true, repeat: [1, 2, 3, 4, 5, 6, 0] });
-            saveSchedulesToGas();
-            renderSchedules();
-            showNotification('Jadwal baru ditambahkan', 'fa-plus');
+            saveSchedules(); renderSchedules();
+            sendScheduleToEsp();
+            showNotification('Jadwal baru ditambahkan & dikirim ke ESP', 'fa-plus');
         });
 
         function formatDays(daysArray) {
             if (!daysArray || daysArray.length === 0) return 'Tidak ada hari';
             if (daysArray.length === 7) return 'Setiap Hari';
-
             const daysMap = { 1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 0: 'Min' };
-            // Sort to ensure Monday to Sunday order
             const sorted = [...daysArray].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
             return sorted.map(d => daysMap[d]).join(', ');
         }
@@ -2406,16 +2227,21 @@
             schedules.forEach(sched => {
                 const item = document.createElement('div');
                 item.className = 'schedule-item';
-                item.style.flexDirection = 'column';
-                item.style.alignItems = 'stretch';
+                item.style.flexDirection = 'column'; item.style.alignItems = 'stretch';
                 item.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div>
                             <div style="font-size: 1.1rem; font-weight: 700; display:flex; align-items:center; gap:8px;">
                                 ${sched.onTime} <i class="fa-solid fa-arrow-right" style="font-size: 0.8rem; color:var(--text-secondary);"></i> ${sched.offTime}
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 4px;">
+            <div style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 4px;">
                                 <i class="fa-solid fa-rotate-right"></i> ${formatDays(sched.repeat)}
+                            </div>
+                            <div style="font-size: 0.7rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                                ${scheduleSentToEsp && isOnline
+                                    ? '<i class="fa-solid fa-circle-check" style="font-size:0.5rem;color:var(--success-color);"></i> <span style="color:var(--success-color);">Terkirim ke ESP</span>'
+                                    : (isOnline ? '<i class="fa-solid fa-clock" style="font-size:0.5rem;color:#f59e0b;"></i> <span style="color:#f59e0b;">Belum dikirim ke ESP</span>'
+                                               : '<i class="fa-solid fa-wifi-slash" style="font-size:0.5rem;color:var(--text-secondary);"></i> <span style="color:var(--text-secondary);">Offline</span>')}
                             </div>
                         </div>
                         <label class="switch" style="transform: scale(0.8); transform-origin: right;">
@@ -2432,101 +2258,39 @@
                         </button>
                     </div>
                 `;
-                if (!sched.enabled) {
-                    item.style.opacity = '0.5';
-                }
+                if (!sched.enabled) item.style.opacity = '0.5';
                 schedulerList.appendChild(item);
             });
-
-            // Attach event listeners to toggles
             document.querySelectorAll('.schedule-toggle').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const id = parseInt(e.target.getAttribute('data-id'));
                     const sched = schedules.find(s => s.id === id);
-                    if (sched) {
-                        sched.enabled = e.target.checked;
-                        saveSchedulesToGas();
-                    }
+                    if (sched) { sched.enabled = e.target.checked; saveSchedules(); }
                     renderSchedules();
                     showNotification(e.target.checked ? 'Jadwal diaktifkan' : 'Jadwal dinonaktifkan', 'fa-clock');
                 });
             });
         }
+        window.promptDeleteSchedule = function (id) { scheduleToDelete = id; deleteConfirmModal.classList.add('show'); };
 
-        window.promptDeleteSchedule = function (id) {
-            scheduleToDelete = id;
-            deleteConfirmModal.classList.add('show');
-        }
-
-        // ==========================================
-        // SIMULATORS / TESTING (FOR API AND USER DEMO)
-        // ==========================================
         let isDraggingSlider = false;
-
         waterLevelSlider.addEventListener('mousedown', () => isDraggingSlider = true);
         waterLevelSlider.addEventListener('touchstart', () => isDraggingSlider = true, { passive: true });
-
         waterLevelSlider.addEventListener('change', (e) => {
-            isDraggingSlider = false;
-            currentWaterLevel = parseInt(e.target.value);
-
-            // Logic simulated: if in Auto Mode, adjust pump on water critical limits
+            isDraggingSlider = false; currentWaterLevel = parseInt(e.target.value);
             if (autoMode) {
-                if (currentWaterLevel <= 15 && !pumpStatus) {
-                    pumpStatus = true;
-                    showNotification('Air Kritis! Sanyo Otomatis DIHIDUPKAN.', 'fa-triangle-exclamation');
-                } else if (currentWaterLevel >= 98 && pumpStatus) {
-                    pumpStatus = false;
-                    showNotification('Tangki Penuh! Sanyo Otomatis DIMATIKAN.', 'fa-circle-check');
-                }
+                if (currentWaterLevel <= 15 && !pumpStatus) { pumpStatus = true; showNotification('Air Kritis! Sanyo Otomatis DIHIDUPKAN.', 'fa-triangle-exclamation'); }
+                else if (currentWaterLevel >= 98 && pumpStatus) { pumpStatus = false; showNotification('Tangki Penuh! Sanyo Otomatis DIMATIKAN.', 'fa-circle-check'); }
             }
             updateUI();
-
-            // Sync demo slider to GAS
-            if (appsScriptUrl && isOnline) {
-                try {
-                    const url = new URL(appsScriptUrl);
-                    url.searchParams.append('action', 'sync');
-                    url.searchParams.append('waterLevel', currentWaterLevel);
-                    fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
-                } catch (e) { }
-            }
         });
+        waterLevelSlider.addEventListener('input', (e) => { currentWaterLevel = parseInt(e.target.value); updateUI(); });
 
-        waterLevelSlider.addEventListener('input', (e) => {
-            currentWaterLevel = parseInt(e.target.value);
-            updateUI();
-        });
-
-        // Connection switch simulation
         toggleConnBtn.addEventListener('click', () => {
             isOnline = !isOnline;
-            showNotification(
-                isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266 (GAS/HTTP)',
-                isOnline ? 'fa-wifi' : 'fa-triangle-exclamation'
-            );
+            showNotification(isOnline ? 'Koneksi ke ESP8266 terhubung kembali' : 'Terputus dari ESP8266', isOnline ? 'fa-wifi' : 'fa-triangle-exclamation');
             updateUI();
-            if (isOnline) syncFromGas();
         });
-
-        // ==========================================
-        // GOOGLE APPS SCRIPT API INTEGRATION CALLS
-        // ==========================================
-        function sendToGas(key, value) {
-            if (!appsScriptUrl) return;
-            try {
-                const url = new URL(appsScriptUrl);
-                url.searchParams.append('action', 'set');
-                url.searchParams.append(key, value);
-
-                fetch(url.toString())
-                    .then(r => r.json())
-                    .then(data => console.log('GAS set OK:', key, value, data))
-                    .catch(e => console.error('GAS Send Error:', e));
-            } catch (e) {
-                console.error('Invalid GAS URL', e);
-            }
-        }
 
         function rssiToQuality(rssi) {
             if (rssi >= -50) return 100;
@@ -2534,337 +2298,150 @@
             return Math.round(2 * (rssi + 100));
         }
 
-        function syncFromGas() {
-            if (!appsScriptUrl) return;
-            try {
-                const url = new URL(appsScriptUrl);
-                url.searchParams.append('action', 'get');
-
-                fetch(url.toString())
-                    .then(res => res.json())
-                    .then(data => {
-                        isOnline = true;
-                        if (data.pumpStatus !== undefined) pumpStatus = data.pumpStatus;
-                        if (data.autoMode !== undefined) autoMode = data.autoMode;
-                        if (data.waterLevel !== undefined && !isDraggingSlider) {
-                            currentWaterLevel = data.waterLevel;
-                        }
-                        if (data.scheduleEnabled !== undefined) {
-                            scheduleEnabled = data.scheduleEnabled;
-                            schedToggle.checked = scheduleEnabled;
-                        }
-                        if (data.ssid !== undefined && data.ssid !== '') espSSIDValue = data.ssid;
-                        if (data.rssi !== undefined) espRssiValue = data.rssi;
-                        if (data.quality !== undefined) espQualValue = data.quality;
-                        if (data.isOnline !== undefined) isOnline = data.isOnline;
-                        if (data.autoOffLevel !== undefined) {
-                            autoOffLevel = data.autoOffLevel;
-                            const inp = document.getElementById('autoOffLevelInput');
-                            const disp = document.getElementById('autoOffLevelDisplay');
-                            if (inp) inp.value = autoOffLevel;
-                            if (disp) disp.innerText = autoOffLevel + '%';
-                        }
-                        if (data.autoOffEnabled !== undefined) {
-                            autoOffEnabled = data.autoOffEnabled;
-                            const tog = document.getElementById('autoOffEnabledToggle');
-                            const lbl = document.getElementById('autoOffStateLabel');
-                            if (tog) tog.checked = autoOffEnabled;
-                            if (lbl) lbl.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
-                        }
-
-                        if (data.schedules) {
-                            try {
-                                schedules = JSON.parse(data.schedules);
-                                renderSchedules();
-                            } catch (e) { }
-                        }
-                        updateUI();
-                    })
-                    .catch(e => {
-                        isOnline = false;
-                        updateUI();
-                        console.error('GAS Error:', e);
-                    });
-            } catch (e) {
-                console.error('Invalid GAS URL', e);
-            }
-        }
-
-        // ==========================================
-        // KONEKSI REAL-TIME MQTT & AUTO-PING
-        // ==========================================
-        const mqttHost = "broker.emqx.io"; // Bisa Anda ganti pakai variabel dinamis nanti
-        const mqttPort = 8083;
-        const mqttTopic = "smartsanyo/riyan123";
-        const clientId = "AndroidApp_" + Math.random().toString(16).substr(2, 8);
-        let mqttClient;
-
-        function connectMQTT() {
-            mqttClient = new Paho.MQTT.Client(mqttHost, mqttPort, clientId);
-
-            // Auto-Ping: Mendeteksi saat ESP/Koneksi terputus
-            mqttClient.onConnectionLost = () => {
-                setTimeout(connectMQTT, 5000);
-            };
-
-            // Menerima update ketinggian air & status Sanyo secara REALTIME
-            mqttClient.onMessageArrived = (message) => {
-                try {
-                    const data = JSON.parse(message.payloadString);
-                    if (data.waterLevel !== undefined) currentWaterLevel = parseInt(data.waterLevel);
-                    if (data.pumpStatus !== undefined) pumpStatus = data.pumpStatus;
-                    if (data.ssid !== undefined) espSSIDValue = data.ssid;
-                    if (data.rssi !== undefined) { espRssiValue = data.rssi; espQualValue = rssiToQuality(data.rssi); }
-                    isOnline = true;
-                    updateUI();
-                } catch (e) { }
-            };
-
-            mqttClient.connect({
-                onSuccess: () => {
-                    mqttClient.subscribe(mqttTopic + "/status");
-                },
-                useSSL: true
-            });
-        }
-
-        // Ganti logika event listener Tombol Manual Anda yang lama dengan ini:
+        // ponytail: MQTT via native Android Paho (MqttBridge.kt), bukan WebSocket JS.
+        // Semua subscribe/publish handle oleh native Java interface MqttAndroid.
         manualPumpBtn.addEventListener('click', () => {
             if (autoMode) return;
             pumpStatus = !pumpStatus;
-
-            // 1. Tembak perintah secepat kilat ke ESP via MQTT
-            if (mqttClient && mqttClient.isConnected()) {
-                const message = new Paho.MQTT.Message(pumpStatus ? "ON" : "OFF");
-                message.destinationName = mqttTopic + "/control";
-                mqttClient.send(message);
-            }
-
-            // 2. Simpan jejak (history) ke database Google Sheet Anda
-            sendToGas('pumpStatus', pumpStatus);
-
+            try { MqttAndroid.send(pumpStatus); } catch (e) { /* native not ready */ }
             showNotification(pumpStatus ? 'Sanyo dinyalakan!' : 'Sanyo dimatikan!', pumpStatus ? 'fa-bolt' : 'fa-power-off');
             updateUI();
         });
 
-        // Jalankan koneksi MQTT saat pertama kali buka aplikasi
-        window.addEventListener('load', connectMQTT);
-
         // Modal Handlers
-        cancelDeleteBtn.addEventListener('click', () => {
-            scheduleToDelete = null;
-            deleteConfirmModal.classList.remove('show');
-        });
-
+        cancelDeleteBtn.addEventListener('click', () => { scheduleToDelete = null; deleteConfirmModal.classList.remove('show'); });
         confirmDeleteBtn.addEventListener('click', () => {
             if (scheduleToDelete !== null) {
                 schedules = schedules.filter(s => s.id !== scheduleToDelete);
-                saveSchedulesToGas();
-                renderSchedules();
+                saveSchedules(); renderSchedules();
+                sendScheduleToEsp();
                 showNotification('Jadwal dihapus', 'fa-trash');
-                scheduleToDelete = null;
-                deleteConfirmModal.classList.remove('show');
+                scheduleToDelete = null; deleteConfirmModal.classList.remove('show');
             }
         });
 
         window.openEditSchedule = function (id) {
             scheduleToEdit = schedules.find(s => s.id === id);
             if (scheduleToEdit) {
-                editOnTime.value = scheduleToEdit.onTime;
-                editOffTime.value = scheduleToEdit.offTime;
-
-                // Set chips
+                editOnTime.value = scheduleToEdit.onTime; editOffTime.value = scheduleToEdit.offTime;
                 const chips = document.querySelectorAll('#editScheduleDays .day-chip');
                 chips.forEach(chip => {
                     const dayVal = parseInt(chip.getAttribute('data-day'));
-                    if (scheduleToEdit.repeat && scheduleToEdit.repeat.includes(dayVal)) {
-                        chip.classList.add('active');
-                    } else {
-                        chip.classList.remove('active');
-                    }
+                    if (scheduleToEdit.repeat && scheduleToEdit.repeat.includes(dayVal)) chip.classList.add('active');
+                    else chip.classList.remove('active');
                 });
-
-                // Reset quick buttons styling
                 const btnEv = document.getElementById('btnEveryday');
                 const btnTd = document.getElementById('btnToday');
-                btnEv.style.borderColor = 'rgba(255,255,255,0.2)';
-                btnEv.style.color = 'var(--text-secondary)';
-                btnEv.style.background = 'rgba(255,255,255,0.05)';
-                btnTd.style.borderColor = 'rgba(255,255,255,0.2)';
-                btnTd.style.color = 'var(--text-secondary)';
-                btnTd.style.background = 'rgba(255,255,255,0.05)';
-
+                btnEv.style.borderColor = 'rgba(255,255,255,0.2)'; btnEv.style.color = 'var(--text-secondary)'; btnEv.style.background = 'rgba(255,255,255,0.05)';
+                btnTd.style.borderColor = 'rgba(255,255,255,0.2)'; btnTd.style.color = 'var(--text-secondary)'; btnTd.style.background = 'rgba(255,255,255,0.05)';
                 editScheduleModal.classList.add('show');
             }
-        }
+        };
+        document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => chip.addEventListener('click', () => chip.classList.toggle('active')));
 
-        // Add event listener for chips
-        document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                chip.classList.toggle('active');
-            });
-        });
-
-        // Quick Selector Buttons
         const btnEveryday = document.getElementById('btnEveryday');
         const btnToday = document.getElementById('btnToday');
-
         btnEveryday.addEventListener('click', () => {
-            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
-                chip.classList.add('active');
-            });
-            btnEveryday.style.borderColor = 'var(--accent-cyan)';
-            btnEveryday.style.color = 'var(--accent-cyan)';
-            btnEveryday.style.background = 'rgba(0, 242, 254, 0.1)';
-
-            btnToday.style.borderColor = 'rgba(255,255,255,0.2)';
-            btnToday.style.color = 'var(--text-secondary)';
-            btnToday.style.background = 'rgba(255,255,255,0.05)';
+            document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => chip.classList.add('active'));
+            btnEveryday.style.borderColor = 'var(--accent-cyan)'; btnEveryday.style.color = 'var(--accent-cyan)'; btnEveryday.style.background = 'rgba(0, 242, 254, 0.1)';
+            btnToday.style.borderColor = 'rgba(255,255,255,0.2)'; btnToday.style.color = 'var(--text-secondary)'; btnToday.style.background = 'rgba(255,255,255,0.05)';
         });
-
         btnToday.addEventListener('click', () => {
             const today = new Date().getDay();
             document.querySelectorAll('#editScheduleDays .day-chip').forEach(chip => {
                 const dayVal = parseInt(chip.getAttribute('data-day'));
-                if (dayVal === today) {
-                    chip.classList.add('active');
-                } else {
-                    chip.classList.remove('active');
-                }
+                chip.classList.toggle('active', dayVal === today);
             });
-            btnToday.style.borderColor = 'var(--accent-cyan)';
-            btnToday.style.color = 'var(--accent-cyan)';
-            btnToday.style.background = 'rgba(0, 242, 254, 0.1)';
-
-            btnEveryday.style.borderColor = 'rgba(255,255,255,0.2)';
-            btnEveryday.style.color = 'var(--text-secondary)';
-            btnEveryday.style.background = 'rgba(255,255,255,0.05)';
+            btnToday.style.borderColor = 'var(--accent-cyan)'; btnToday.style.color = 'var(--accent-cyan)'; btnToday.style.background = 'rgba(0, 242, 254, 0.1)';
+            btnEveryday.style.borderColor = 'rgba(255,255,255,0.2)'; btnEveryday.style.color = 'var(--text-secondary)'; btnEveryday.style.background = 'rgba(255,255,255,0.05)';
         });
-
-        closeEditScheduleBtn.addEventListener('click', () => {
-            editScheduleModal.classList.remove('show');
-            scheduleToEdit = null;
-        });
-
+        closeEditScheduleBtn.addEventListener('click', () => { editScheduleModal.classList.remove('show'); scheduleToEdit = null; });
         saveScheduleBtn.addEventListener('click', () => {
             if (scheduleToEdit) {
-                scheduleToEdit.onTime = editOnTime.value;
-                scheduleToEdit.offTime = editOffTime.value;
-
-                // Get selected chips
+                scheduleToEdit.onTime = editOnTime.value; scheduleToEdit.offTime = editOffTime.value;
                 const selectedDays = [];
-                document.querySelectorAll('#editScheduleDays .day-chip.active').forEach(chip => {
-                    selectedDays.push(parseInt(chip.getAttribute('data-day')));
-                });
+                document.querySelectorAll('#editScheduleDays .day-chip.active').forEach(chip => selectedDays.push(parseInt(chip.getAttribute('data-day'))));
                 scheduleToEdit.repeat = selectedDays;
-
-                saveSchedulesToGas();
-                renderSchedules();
-                showNotification('Perubahan jadwal disimpan', 'fa-floppy-disk');
-                editScheduleModal.classList.remove('show');
-                scheduleToEdit = null;
+                saveSchedules(); renderSchedules();
+                sendScheduleToEsp();
+                showNotification('Jadwal disimpan & dikirim ke ESP', 'fa-floppy-disk');
+                editScheduleModal.classList.remove('show'); scheduleToEdit = null;
             }
         });
 
-        // Auto-Off Level Slider
+        // Auto ON/OFF Levels
+        const autoOnLevelInput = document.getElementById('autoOnLevelInput');
+        const autoOnLevelDisplay = document.getElementById('autoOnLevelDisplay');
         const autoOffLevelInput = document.getElementById('autoOffLevelInput');
         const autoOffLevelDisplay = document.getElementById('autoOffLevelDisplay');
+        const autoOnEnabledToggle = document.getElementById('autoOnEnabledToggle');
+        const autoOnStateLabel = document.getElementById('autoOnStateLabel');
         const autoOffEnabledToggle = document.getElementById('autoOffEnabledToggle');
         const autoOffStateLabel = document.getElementById('autoOffStateLabel');
-
-        if (autoOffLevelInput) {
-            autoOffLevelInput.addEventListener('input', () => {
-                autoOffLevel = parseInt(autoOffLevelInput.value);
-                autoOffLevelDisplay.innerText = autoOffLevel + '%';
-            });
-            autoOffLevelInput.addEventListener('change', () => {
-                sendToGas('autoOffLevel', autoOffLevel);
-                showNotification('Batas mati otomatis: ' + autoOffLevel + '%', 'fa-droplet');
+        if (autoOnLevelInput) {
+            autoOnLevelInput.addEventListener('input', () => { autoOnLevel = parseInt(autoOnLevelInput.value); autoOnLevelDisplay.innerText = autoOnLevel + '%'; });
+            autoOnLevelInput.addEventListener('change', () => {
+                showNotification('Batas hidup otomatis: ' + autoOnLevel + '%', 'fa-droplet');
+                try { MqttAndroid.sendAutoOnLevel(autoOnLevel); } catch (e) { }
             });
         }
-
+        if (autoOffLevelInput) {
+            autoOffLevelInput.addEventListener('input', () => { autoOffLevel = parseInt(autoOffLevelInput.value); autoOffLevelDisplay.innerText = autoOffLevel + '%'; });
+            autoOffLevelInput.addEventListener('change', () => {
+                showNotification('Batas mati otomatis: ' + autoOffLevel + '%', 'fa-droplet');
+                try { MqttAndroid.sendAutoOffLevel(autoOffLevel); } catch (e) { }
+            });
+        }
+        if (autoOnEnabledToggle) {
+            autoOnEnabledToggle.addEventListener('change', (e) => {
+                autoOnEnabled = e.target.checked;
+                if (autoOnStateLabel) autoOnStateLabel.innerText = autoOnEnabled ? 'Aktif' : 'Nonaktif';
+                showNotification(autoOnEnabled ? 'Batas hidup otomatis DIAKTIFKAN' : 'Batas hidup otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOnEnabled ? 'on' : 'off'));
+                try { MqttAndroid.sendAutoOnEnabled(autoOnEnabled); } catch (e) { }
+            });
+        }
         if (autoOffEnabledToggle) {
             autoOffEnabledToggle.addEventListener('change', (e) => {
                 autoOffEnabled = e.target.checked;
                 if (autoOffStateLabel) autoOffStateLabel.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
-                sendToGas('autoOffEnabled', autoOffEnabled);
-                showNotification(
-                    autoOffEnabled ? 'Batas mati otomatis DIAKTIFKAN' : 'Batas mati otomatis DINONAKTIFKAN',
-                    'fa-toggle-' + (autoOffEnabled ? 'on' : 'off')
-                );
+                showNotification(autoOffEnabled ? 'Batas mati otomatis DIAKTIFKAN' : 'Batas mati otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOffEnabled ? 'on' : 'off'));
+                try { MqttAndroid.sendAutoOff(autoOffEnabled); } catch (e) { }
             });
         }
 
-        // Wiring Modal Handlers
+        // Wiring & Settings
         const wiringModal = document.getElementById('wiringModal');
         const wiringGuideBtn = document.getElementById('wiringGuideBtn');
         const closeWiringBtn = document.getElementById('closeWiringBtn');
+        wiringGuideBtn.addEventListener('click', () => { settingsModal.classList.remove('show'); wiringModal.classList.add('show'); });
+        closeWiringBtn.addEventListener('click', () => wiringModal.classList.remove('show'));
+        settingsBtn.addEventListener('click', () => { demoModeToggle.checked = isDemoMode; settingsModal.classList.add('show'); });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('show'));
+        demoModeToggle.addEventListener('change', (e) => { isDemoMode = e.target.checked; updateUI(); showNotification(isDemoMode ? 'Mode Demo diaktifkan' : 'Mode Asli aktif. Panel pengujian disembunyikan.', 'fa-sliders'); });
+        showCodeBtn.addEventListener('click', () => codeModal.classList.add('show'));
+        closeCodeBtn.addEventListener('click', () => codeModal.classList.remove('show'));
 
-        wiringGuideBtn.addEventListener('click', () => {
-            settingsModal.classList.remove('show');
-            wiringModal.classList.add('show');
-        });
-
-        closeWiringBtn.addEventListener('click', () => {
-            wiringModal.classList.remove('show');
-        });
-
-        // Settings Handlers
-        settingsBtn.addEventListener('click', () => {
-            demoModeToggle.checked = isDemoMode;
-            settingsModal.classList.add('show');
-        });
-
-        closeSettingsBtn.addEventListener('click', () => {
-            settingsModal.classList.remove('show');
-        });
-
-        demoModeToggle.addEventListener('change', (e) => {
-            isDemoMode = e.target.checked;
-            updateUI();
-            showNotification(isDemoMode ? 'Mode Demo diaktifkan' : 'Mode Asli aktif. Panel pengujian disembunyikan.', 'fa-sliders');
-        });
-
-        showCodeBtn.addEventListener('click', () => {
-            codeModal.classList.add('show');
-        });
-        closeCodeBtn.addEventListener('click', () => {
-            codeModal.classList.remove('show');
-        });
-
-        showAppsScriptBtn.addEventListener('click', () => {
-            appsScriptModal.classList.add('show');
-        });
-        closeAppsScriptBtn.addEventListener('click', () => {
-            appsScriptModal.classList.remove('show');
-        });
-
-        // FUNGSI DOWNLOAD KODE
         function downloadCodeAsFile(elementId, fileName) {
             const codeContent = document.querySelector(`#${elementId} .code-content`).innerText;
             const blob = new Blob([codeContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const a = document.createElement('a'); a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-
         document.getElementById('downloadEspBtn').addEventListener('click', () => downloadCodeAsFile('codeModal', 'main.cpp'));
-        document.getElementById('downloadGasBtn').addEventListener('click', () => downloadCodeAsFile('appsScriptModal', 'Code.gs'));
 
         // ==========================================
-        // APP INITIALIZATION
+        // INIT
         // ==========================================
         window.onload = function () {
             try { createDecorativeBubbles(); } catch (e) { }
             renderSchedules();
-            syncFromGas();
             updateUI();
-            setInterval(syncFromGas, 10000);
+            // ponytail: panggil native Android MQTT — JS WebSocket dihapus, semua via MqttAndroid bridge
+            try { if (typeof MqttAndroid !== 'undefined') MqttAndroid.connect(); } catch (e) { console.error('MqttAndroid not ready', e); }
+            // Update: Sel 01/07/2026 20:00 - v2.4.0
+            document.getElementById('buildTimestamp').innerText = '01/07/2026 20:00 - v2.4.0';
         };
     </script>
 </body>

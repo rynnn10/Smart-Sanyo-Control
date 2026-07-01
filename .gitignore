@@ -21,9 +21,4 @@ debug.keystore
 *.jks
 *.keystore
 
-# Kredensial pribadi (gunakan config.h.template untuk versi placeholder)
-# SmartSanyo_ESP8266/include/config.h  <- JANGAN uncomment baris ini kecuali pakai secrets manager
-
-# clasp: Script ID pribadi (jangan di-commit!)
-.clasp.json
-.clasp.json.bak
+node_modules

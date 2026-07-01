@@ -1,13 +1,12 @@
 // ============================================================
-//  KONFIGURASI UTAMA — SUMBER TUNGGAL GAS URL
-//  Jika URL GAS berubah, edit file ini SAJA lalu jalankan:
-//      .\sync-config.ps1
-//  Perubahan akan otomatis disinkronkan ke firmware ESP8266.
+//  KONFIGURASI UTAMA — MQTT-only, no GAS/cloud
+//  Update: 07/01/2026 05:25 - v2.2.0
 // ============================================================
 const APP_CONFIG = {
-  gasUrl: 'https://script.google.com/macros/s/AKfycbwZ6omAYIcQWndSVs-X7ZLp4JriwwnA4DQH7qP25PYcWcp3kvofK_hPUorTB8YYXHU/exec',
-  // Auto-off toggle: jika true → pompa mati otomatis saat air >= autoOffLevel
-  // Jika false → pompa TIDAK mati otomatis (harus manual atau via jadwal)
+  mqttBroker: 'broker.emqx.io',
+  mqttPort: 1883,
+  mqttTopicStatus: 'smartsanyo/riyan123/status',
+  mqttTopicControl: 'smartsanyo/riyan123/control',
   autoOffEnabled: true,
   autoOffLevel: 95
 };
