@@ -1,10 +1,11 @@
 // ============================================================
 //  Smart Sanyo Control — Web MQTT shim (versi website)
-//  Update: Rab 01/07/2026 - web v1.1.0
+//  Update: Rab 01/07/2026 - web v1.2.0
 //  Meniru kontrak native `MqttAndroid` (MainActivity.kt) pakai mqtt.js over WSS,
 //  supaya index.html yang sama jalan di browser tanpa diubah.
 //  v1.1.0: sinkron jadwal solat + riwayat notifikasi lintas device — ESP jadi sumber
 //    bersama via status MQTT ("prayerTimes"+"notifLog"), sama seperti SanyoService.kt.
+//  v1.2.0: deleteNotifications() — hapus notif terpilih dari webNotifHistory (paritas app).
 // ============================================================
 (function () {
   var BROKER        = 'wss://broker.emqx.io:8084/mqtt'; // ponytail: WSS publik EMQX; ganti kalau pindah broker
@@ -98,6 +99,13 @@
     sendBuzzer:        function (count)   { pub('BUZZER_' + count); },
     savePrayerTimes:   function (json)    { try { localStorage.setItem('prayerTimes', json); } catch (e) {} pub('PRAYER_' + json); },
     getStoredNotifications: function ()   { try { return localStorage.getItem('webNotifHistory') || '[]'; } catch (e) { return '[]'; } },
+    deleteNotifications: function (json) {
+      try {
+        var del = new Set(JSON.parse(json));
+        var hist = JSON.parse(localStorage.getItem('webNotifHistory') || '[]');
+        localStorage.setItem('webNotifHistory', JSON.stringify(hist.filter(function (n) { return !del.has(n.time); })));
+      } catch (e) {}
+    },
     shareApp: function () {
       if (navigator.share) navigator.share({ title: 'Smart Sanyo Control', text: 'Kontrol pompa air cerdas via MQTT', url: location.href });
       else if (navigator.clipboard) navigator.clipboard.writeText(location.href);
@@ -113,7 +121,7 @@
 
   // App inject versi/timestamp via onPageFinished; di web set sendiri.
   document.addEventListener('DOMContentLoaded', function () {
-    var vn = document.getElementById('appVersion');    if (vn) vn.innerHTML  = 'web 1.0.1';
-    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 12:51 - web v1.1.0';
+    var vn = document.getElementById('appVersion');    if (vn) vn.innerHTML  = 'web 1.2.0';
+    var bt = document.getElementById('buildTimestamp'); if (bt) bt.innerText = 'Rab 01/07/2026 - web v1.2.0';
   });
 })();

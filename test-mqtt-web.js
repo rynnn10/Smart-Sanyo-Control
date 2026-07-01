@@ -90,4 +90,10 @@ hist = JSON.parse(localStorage.getItem('webNotifHistory'));
 assert.strictEqual(hist.length, 2, 'notifLog dobel — dedupe (type,menit) gagal');
 assert.strictEqual(global._adzanPlayed, 1, 'playAdzanWeb terpanggil lagi utk entri yg sudah pernah — dedupe gagal');
 
+// Hapus notif terpilih (by time) — v1.2.0
+MqttAndroid.deleteNotifications(JSON.stringify([1000000000]));
+hist = JSON.parse(localStorage.getItem('webNotifHistory'));
+assert.strictEqual(hist.length, 1, 'deleteNotifications tidak menghapus entri terpilih');
+assert.strictEqual(hist[0].time, 1000060000, 'entri yang tersisa salah');
+
 console.log('OK');

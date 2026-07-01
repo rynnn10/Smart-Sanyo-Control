@@ -1064,15 +1064,11 @@
                         <button class="theme-btn" data-theme="purple" id="themePurple">🔮 Purple Night</button>
                     </div>
                 </div>
-                <!-- Tombol buka Auto Mode -->
-                <button id="openAutoModeFromSettings"
-                    style="width:100%; margin-top:16px; padding:14px; border-radius:12px; background:rgba(79,147,254,0.1); border:1px solid rgba(79,147,254,0.3); color:var(--accent-blue); font-size:0.9rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.3s;">
-                    <span><i class="fa-solid fa-robot" style="margin-right:8px;"></i>Pengaturan Auto Mode</span>
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
+                <!-- v3.5.0: tombol "Pengaturan Auto Mode" dihapus dari sini — sudah ada di kartu
+                     Auto Mode di halaman utama. Tombol wiring diubah jadi Info & Panduan. -->
                 <button id="wiringGuideBtn"
                     style="width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); color: var(--accent-cyan); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;"><i
-                        class="fa-solid fa-diagram-project"></i> Cara Wiring Modul</button>
+                        class="fa-solid fa-circle-info"></i> Info &amp; Panduan Aplikasi</button>
                 <!-- Update: Sel 01/07/2026 [UPDATE] - v3.1.2: share APK via Android native chooser -->
                 <button id="shareAppBtn"
                     style="width:100%; margin-top:16px; padding:14px; border-radius:12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success-color); font-size:0.9rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.3s;">
@@ -1087,7 +1083,8 @@
         <div class="code-container" style="max-width:400px;">
             <div class="code-header">
                 <h3><i class="fa-solid fa-bell"></i> Notifikasi</h3>
-                <div style="display:flex;gap:8px;align-items:center;">
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button id="deleteSelectedNotifsBtn" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--danger-color);border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;white-space:nowrap;"><i class="fa-solid fa-trash"></i> Hapus (<span id="notifSelCount">0</span>)</button>
                     <button id="clearNotifsBtn" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--danger-color);border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;white-space:nowrap;">Hapus Semua</button>
                     <button class="close-btn" id="closeNotifBtn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -1103,41 +1100,35 @@
                 <h3><i class="fa-solid fa-robot"></i> Pengaturan Auto Mode</h3>
                 <button class="close-btn" id="closeAutoModeBtn"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <!-- v3.5.0: toggle master "Auto Mode" dihapus (redundan). Tiap batas jadi kartu
+                 mandiri: switch aktif/nonaktif + slider persen dalam satu elemen. -->
             <div style="padding:20px; overflow-y:auto; max-height:calc(80vh - 60px);">
-                <div class="control-row">
-                    <div class="control-label">
-                        <div class="status-icon-wrapper"><i class="fa-solid fa-robot"></i></div>
-                        <div class="control-label-wrapper"><span class="control-title">Auto Mode</span><span class="control-desc">Pompa otomatis menyala saat air kritis</span></div>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.5;">Atur dua batas otomatis secara terpisah. Masing-masing punya sakelar aktif/nonaktif sendiri dan level airnya sendiri.</p>
+
+                <!-- Kartu: Batas Hidup Otomatis (Auto ON) -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(0,242,254,0.18); border-radius:14px; padding:16px; margin-bottom:14px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis</span><span class="control-desc">Pompa HIDUP saat air ≤ level ini (kritis)</span></div>
+                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span class="slider"></span></label>
                     </div>
-                    <label class="switch"><input type="checkbox" id="autoModeToggle"><span class="slider"></span></label>
-                </div>
-                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--accent-cyan);margin-right:6px;"></i>Batas Hidup Otomatis (Auto ON)</span><span class="control-desc">Sanyo hidup otomatis saat air mencapai level ini (kritis)</span></div>
-                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; margin-top:14px;">
                         <input type="range" id="autoOnLevelInput" min="5" max="50" value="20" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
                         <span id="autoOnLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">20%</span>
                     </div>
+                    <div style="font-size:0.72rem; color:var(--text-secondary); opacity:0.7; margin-top:6px;">Status: <span id="autoOnStateLabel">Aktif</span></div>
                 </div>
-                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis (Auto OFF)</span><span class="control-desc">Sanyo mati otomatis saat air mencapai level ini</span></div>
-                    <div style="display:flex; align-items:center; gap:12px; width:100%;">
-                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95" style="flex:1; accent-color:var(--accent-cyan); height:4px; cursor:pointer;">
-                        <span id="autoOffLevelDisplay" style="color:var(--accent-cyan); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">95%</span>
-                    </div>
-                </div>
-                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--danger-color);margin-right:6px;"></i>Aktifkan Batas Hidup Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan hidup otomatis meski air kritis</span></div>
-                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
-                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOnStateLabel">Aktif</span></span>
-                        <label class="switch"><input type="checkbox" id="autoOnEnabledToggle" checked><span class="slider"></span></label>
-                    </div>
-                </div>
-                <div class="control-row" style="margin-top:16px; align-items:flex-start; flex-direction:column; gap:10px;">
-                    <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-toggle-on" style="color:var(--success-color);margin-right:6px;"></i>Aktifkan Batas Mati Otomatis</span><span class="control-desc">Jika dimatikan, pompa tidak akan mati otomatis meski air penuh</span></div>
-                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
-                        <span style="font-size:0.85rem; color:var(--text-secondary);"><span id="autoOffStateLabel">Aktif</span></span>
+
+                <!-- Kartu: Batas Mati Otomatis (Auto OFF) -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(16,185,129,0.18); border-radius:14px; padding:16px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div class="control-label-wrapper"><span class="control-title"><i class="fa-solid fa-droplet" style="color:var(--success-color);margin-right:6px;"></i>Batas Mati Otomatis</span><span class="control-desc">Pompa MATI saat air ≥ level ini (penuh)</span></div>
                         <label class="switch"><input type="checkbox" id="autoOffEnabledToggle" checked><span class="slider"></span></label>
                     </div>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; margin-top:14px;">
+                        <input type="range" id="autoOffLevelInput" min="50" max="100" value="95" style="flex:1; accent-color:var(--success-color); height:4px; cursor:pointer;">
+                        <span id="autoOffLevelDisplay" style="color:var(--success-color); font-weight:700; min-width:42px; text-align:right; font-size:1rem;">95%</span>
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--text-secondary); opacity:0.7; margin-top:6px;">Status: <span id="autoOffStateLabel">Aktif</span></div>
                 </div>
             </div>
         </div>
@@ -1147,10 +1138,25 @@
     <div class="code-modal" id="wiringModal">
         <div class="code-container" style="max-width: 480px;">
             <div class="code-header">
-                <h3><i class="fa-solid fa-diagram-project" style="color: var(--accent-cyan);"></i> Wiring Diagram Wemos
-                    D1</h3><button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h3><i class="fa-solid fa-circle-info" style="color: var(--accent-cyan);"></i> Info &amp;
+                    Panduan</h3><button class="close-btn" id="closeWiringBtn"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div style="padding: 20px; overflow-y: auto; max-height: 70vh;">
+                <!-- v3.5.0: modal wiring diperluas jadi Info & Panduan -->
+                <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 6px;"><i class="fa-solid fa-house-signal"></i> Tentang</p>
+                <p style="color: var(--text-secondary); font-size: 0.82rem; line-height: 1.6; margin-bottom: 16px;">Smart Sanyo Control memantau level air tangki (sensor JSN-SR04T) dan mengendalikan pompa via relay, terhubung <b>WeMos D1 Mini (ESP8266)</b> ke aplikasi lewat <b>MQTT</b> (broker publik <code>broker.emqx.io</code>) — tanpa server sendiri. Bisa dipakai dari APK & website sekaligus, tersinkron lintas perangkat.</p>
+
+                <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 6px;"><i class="fa-solid fa-list-check"></i> Cara Pakai</p>
+                <ul style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.75; padding-left: 18px; margin-bottom: 16px;">
+                    <li><b>Kontrol pompa:</b> tombol Nyalakan/Matikan Saklar di halaman utama (kirim perintah langsung ke ESP).</li>
+                    <li><b>Auto Mode:</b> buka kartu <i>Auto Mode</i> → atur <b>Batas Hidup</b> (pompa hidup saat air kritis) &amp; <b>Batas Mati</b> (pompa mati saat penuh), masing-masing bisa diaktifkan sendiri + diatur persennya.</li>
+                    <li><b>Jadwal harian:</b> aktifkan Jadwal → tambah waktu ON/OFF &amp; hari → Simpan (dikirim ke ESP, dieksekusi walau HP mati).</li>
+                    <li><b>Jadwal Solat &amp; Azan:</b> ambil via <i>Auto Lokasi</i> (GPS) atau isi manual → azan berbunyi tiap waktu solat (tetap jalan walau app ditutup).</li>
+                    <li><b>Notifikasi:</b> ikon lonceng → riwayat air kritis/penuh &amp; waktu solat; centang untuk hapus yang dipilih.</li>
+                    <li><b>Tombol fisik ESP:</b> saat WiFi putus = ON/OFF pompa darurat; saat terhubung = ganti tampilan layar LCD.</li>
+                </ul>
+
+                <p style="color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-diagram-project"></i> Wiring Modul (WeMos D1 Mini)</p>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 18px;">
                     <thead>
                         <tr style="background: rgba(0, 242, 254, 0.1);">
@@ -1707,7 +1713,6 @@
         const pumpStatusBadge = document.getElementById('pumpStatusBadge');
         const pumpLabelText = document.getElementById('pumpLabelText');
         const pumpIconWrapper = document.getElementById('pumpIconWrapper');
-        const autoModeToggle = document.getElementById('autoModeToggle');
         const manualPumpBtn = document.getElementById('manualPumpBtn');
         const manualPumpBtnLabel = document.getElementById('manualPumpBtnLabel');
         const schedToggle = document.getElementById('schedToggle');
@@ -2220,9 +2225,10 @@
                 manualPumpBtn.className = 'manual-btn'; manualPumpBtnLabel.innerText = 'Nyalakan Saklar';
             }
 
-            autoModeToggle.checked = autoMode;
-            if (autoMode) { manualPumpBtn.classList.add('disabled'); manualPumpBtn.style.opacity = '0.4'; manualPumpBtn.style.pointerEvents = 'none'; }
-            else { manualPumpBtn.classList.remove('disabled'); manualPumpBtn.style.opacity = '1'; manualPumpBtn.style.pointerEvents = 'auto'; }
+            // v3.5.0: master toggle dihapus — autoMode = turunan dari 2 batas. Pompa manual
+            // selalu bisa ditekan (batas otomatis tetap dijalankan ESP secara independen).
+            autoMode = (autoOnEnabled || autoOffEnabled);
+            manualPumpBtn.classList.remove('disabled'); manualPumpBtn.style.opacity = '1'; manualPumpBtn.style.pointerEvents = 'auto';
 
             if (isOnline) {
                 connBadge.classList.remove('offline'); connLabel.innerText = 'ONLINE';
@@ -2243,7 +2249,7 @@
             waterLevelSlider.value = currentWaterLevel;
             devPanel.style.display = isDemoMode ? 'block' : 'none';
             const amd = document.getElementById('autoModeStatusDesc');
-            if (amd) amd.innerText = autoMode ? 'Auto Mode AKTIF — pompa terkontrol otomatis' : 'Ketuk untuk buka pengaturan otomatis';
+            if (amd) amd.innerText = autoMode ? 'Batas otomatis aktif — ketuk untuk atur' : 'Ketuk untuk atur batas otomatis';
             // Update ESP schedule badge
             const espSchedBadge = document.getElementById('espSchedBadge');
             if (espSchedBadge) {
@@ -2276,15 +2282,7 @@
         // ==========================================
         // EVENTS
         // ==========================================
-        autoModeToggle.addEventListener('change', (e) => {
-            autoMode = e.target.checked;
-            if (autoMode) {
-                showNotification('Auto Mode Aktif. Pompa dikontrol sisa tangki!', 'fa-robot');
-                if (currentWaterLevel <= autoOnLevel) pumpStatus = true;
-                else if (currentWaterLevel >= autoOffLevel) pumpStatus = false;
-            } else showNotification('Auto Mode Mati. Anda dapat menghidupkan manual.', 'fa-user-gear');
-            updateUI();
-        });
+        // v3.5.0: handler master autoModeToggle dihapus — kontrol lewat 2 kartu batas di bawah.
 
         schedToggle.addEventListener('change', (e) => {
             scheduleEnabled = e.target.checked;
@@ -2402,7 +2400,7 @@
         // ponytail: MQTT via native Android Paho (MqttBridge.kt), bukan WebSocket JS.
         // Semua subscribe/publish handle oleh native Java interface MqttAndroid.
         manualPumpBtn.addEventListener('click', () => {
-            if (autoMode) return;
+            // v3.5.0: manual selalu bisa (batas otomatis dijalankan ESP secara independen)
             pumpStatus = !pumpStatus;
             try { MqttAndroid.send(pumpStatus); } catch (e) { /* native not ready */ }
             showNotification(pumpStatus ? 'Sanyo dinyalakan!' : 'Sanyo dimatikan!', pumpStatus ? 'fa-bolt' : 'fa-power-off');
@@ -2499,6 +2497,7 @@
                 if (autoOnStateLabel) autoOnStateLabel.innerText = autoOnEnabled ? 'Aktif' : 'Nonaktif';
                 showNotification(autoOnEnabled ? 'Batas hidup otomatis DIAKTIFKAN' : 'Batas hidup otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOnEnabled ? 'on' : 'off'));
                 try { MqttAndroid.sendAutoOnEnabled(autoOnEnabled); } catch (e) { }
+                updateUI(); // refresh status Auto Mode turunan
             });
         }
         if (autoOffEnabledToggle) {
@@ -2507,6 +2506,7 @@
                 if (autoOffStateLabel) autoOffStateLabel.innerText = autoOffEnabled ? 'Aktif' : 'Nonaktif';
                 showNotification(autoOffEnabled ? 'Batas mati otomatis DIAKTIFKAN' : 'Batas mati otomatis DINONAKTIFKAN', 'fa-toggle-' + (autoOffEnabled ? 'on' : 'off'));
                 try { MqttAndroid.sendAutoOff(autoOffEnabled); } catch (e) { }
+                updateUI(); // refresh status Auto Mode turunan
             });
         }
 
@@ -2530,7 +2530,6 @@
         // ─── AUTO MODE MODAL ──────────────────────────────────────
         const autoModeModal = document.getElementById('autoModeModal');
         document.getElementById('openAutoModeBtn').addEventListener('click', () => autoModeModal.classList.add('show'));
-        document.getElementById('openAutoModeFromSettings').addEventListener('click', () => { settingsModal.classList.remove('show'); autoModeModal.classList.add('show'); });
         document.getElementById('closeAutoModeBtn').addEventListener('click', () => autoModeModal.classList.remove('show'));
 
         // ─── THEME SWITCHER ───────────────────────────────────────
@@ -2596,6 +2595,7 @@
                                 n.type === 'water_high' ? 'var(--accent-cyan)' :
                                 n.type === 'prayer' ? 'var(--accent-purple)' : 'var(--text-secondary)';
                 return '<div class="notif-item'+(isRead?'':' unread')+(isSelected?' selected':'')+'" onclick="markNotifRead('+n.time+');updateNotifBadge();this.classList.remove(\'unread\',\'selected\');">'+
+                    '<input type="checkbox" class="notif-check" data-time="'+n.time+'" onclick="event.stopPropagation()" onchange="updateNotifSelUI()" style="margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:var(--danger-color);cursor:pointer;">'+
                     '<i class="fa-solid '+icon+'" style="color:'+iconColor+';margin-top:2px;font-size:1.1rem;min-width:20px;flex-shrink:0;"></i>'+
                     '<div style="flex:1;min-width:0;">'+
                         '<div style="font-weight:'+(isRead?'500':'700')+';font-size:0.88rem;margin-bottom:2px;">'+n.title+'</div>'+
@@ -2606,6 +2606,7 @@
                 '</div>';
             }).join('');
             updateNotifBadge();
+            updateNotifSelUI(); // reset tombol "Hapus Terpilih" tiap render ulang
             if (notifSelectedType) {
                 setTimeout(function(){
                     var el = list.querySelector('.selected');
@@ -2629,14 +2630,31 @@
         document.getElementById('closeNotifBtn').addEventListener('click', function() {
             document.getElementById('notifModal').classList.remove('show');
         });
-        document.getElementById('clearNotifsBtn').addEventListener('click', function() {
-            // Mark all as read (we can't delete from SharedPrefs via JS, so mark all read)
-            var notifs = loadNotifFromNative();
-            var s = getReadSet();
-            notifs.forEach(function(n){ s.add(n.time); });
-            localStorage.setItem('notifReadTimes', JSON.stringify([...s]));
+        // v3.5.0: ceklis notifikasi → hapus terpilih (native SharedPrefs / web localStorage)
+        function updateNotifSelUI() {
+            var checks = document.querySelectorAll('#notifList .notif-check:checked');
+            var btn = document.getElementById('deleteSelectedNotifsBtn');
+            var cnt = document.getElementById('notifSelCount');
+            if (cnt) cnt.innerText = checks.length;
+            if (btn) btn.style.display = checks.length > 0 ? 'inline-flex' : 'none';
+        }
+        function deleteNotifs(times) {
+            try { MqttAndroid.deleteNotifications(JSON.stringify(times)); } catch (e) { /* web: shim handle localStorage */ }
             renderNotifList();
-            showNotification('Semua notifikasi ditandai terbaca', 'fa-check');
+            updateNotifBadge();
+        }
+        document.getElementById('deleteSelectedNotifsBtn').addEventListener('click', function() {
+            var checks = document.querySelectorAll('#notifList .notif-check:checked');
+            if (!checks.length) return;
+            var times = Array.prototype.map.call(checks, function(c){ return parseInt(c.dataset.time); });
+            deleteNotifs(times);
+            showNotification(times.length + ' notifikasi dihapus', 'fa-trash');
+        });
+        document.getElementById('clearNotifsBtn').addEventListener('click', function() {
+            var notifs = loadNotifFromNative();
+            if (!notifs.length) return;
+            deleteNotifs(notifs.map(function(n){ return n.time; }));
+            showNotification('Semua notifikasi dihapus', 'fa-trash');
         });
 
         // ─── REAL-TIME CLOCK ──────────────────────────────────────
@@ -2786,8 +2804,8 @@
             updateNotifBadge();
             // ponytail: panggil native Android MQTT — JS WebSocket dihapus, semua via MqttAndroid bridge
             try { if (typeof MqttAndroid !== 'undefined') MqttAndroid.connect(); } catch (e) { console.error('MqttAndroid not ready', e); }
-            // Update: Rab 01/07/2026 - v3.3.0
-            document.getElementById('buildTimestamp').innerText = 'Rab 01/07/2026 - v3.3.0';
+            // Update: Rab 01/07/2026 - v3.5.0
+            document.getElementById('buildTimestamp').innerText = 'Rab 01/07/2026 - v3.5.0';
         };
     </script>
 </body>
