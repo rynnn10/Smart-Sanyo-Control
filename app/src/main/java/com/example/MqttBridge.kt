@@ -130,6 +130,17 @@ class MqttBridge(private val onMessageCallback: (String) -> Unit) {
         }
     }
 
+    // Update: Rab 01/07/2026 12:51 - v3.2.1 — kirim jadwal solat ke ESP untuk tampil di LCD
+    fun sendPrayerTimes(json: String) {
+        try {
+            val msg = MqttMessage("PRAYER_$json".toByteArray()).apply { qos = 0 }
+            client?.publish(TOPIC_CONTROL, msg)
+            Log.d(TAG, "MQTT sent prayer times")
+        } catch (e: Exception) {
+            Log.e(TAG, "MQTT prayer error: ${e.message}")
+        }
+    }
+
     fun sendBuzzer(count: Int) {
         try {
             val msg = MqttMessage("BUZZER_$count".toByteArray()).apply { qos = 0 }

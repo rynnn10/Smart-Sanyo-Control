@@ -41,13 +41,14 @@ import androidx.core.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.Manifest
 
-// Update: Sel 01/07/2026 22:00 - v3.0.0
-// Tambah: SanyoService (background notif), sendBuzzer, savePrayerTimes, geolocation WebView
+// Update: Sel 01/07/2026 22:00 - v3.0.0 | Sel 01/07/2026 [UPDATE] - v3.1.0
+// v3.1.0: hapus auto mode UI, notif center in-app, deep link dari status bar → panel notif
 class MainActivity : ComponentActivity() {
 
     private var mqttBridge: MqttBridge? = null
     private var webViewRef: WebView? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var pendingNotifType: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +68,8 @@ class MainActivity : ComponentActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ), 1002)
         }
+        pendingNotifType = intent.getStringExtra("notif_type")
+
         // Mulai SanyoService (background MQTT + notifikasi)
         val svcIntent = Intent(this, SanyoService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(svcIntent)
@@ -145,6 +148,11 @@ class MainActivity : ComponentActivity() {
                                             })()
                                         """.trimIndent().replace("\n", " ")
                                         view.evaluateJavascript(js, null)
+                                        pendingNotifType?.let { type ->
+                                            val safe = type.replace("'", "\\'")
+                                            view.evaluateJavascript("if(window.openNotifPanel)window.openNotifPanel('$safe')", null)
+                                            pendingNotifType = null
+                                        }
                                     }
                                 }
 
@@ -170,8 +178,8 @@ class MainActivity : ComponentActivity() {
 
     // ============================================================
     // MQTT Bridge — native Java (Paho library), all comm via MQTT
-    // Update: Sel 01/07/2026 14:00 - v2.3.0
-    // Tambah sendAutoOnEnabled + hasSchedule/scheduleCount ke JS
+    // Update: Sel 01/07/2026 14:00 - v2.3.0 | Sel 01/07/2026 [UPDATE] - v3.1.2
+    // v3.1.2: tambah shareApp() — salin APK ke cache & launch Android share chooser
     // ============================================================
     inner class MQTTBridge {
         @JavascriptInterface
@@ -223,6 +231,38 @@ class MainActivity : ComponentActivity() {
         fun sendBuzzer(count: Int) { mqttBridge?.sendBuzzer(count) }
 
         @JavascriptInterface
+        fun shareApp() {
+            // Salin APK ke cacheDir (background thread), lalu launch chooser di main thread
+            Thread {
+                try {
+                    val src = java.io.File(packageCodePath)
+                    val dst = java.io.File(cacheDir, "SmartSanyoControl_v${BuildConfig.VERSION_NAME}.apk")
+                    src.copyTo(dst, overwrite = true)
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        this@MainActivity, "${packageName}.provider", dst
+                    )
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "application/vnd.android.package-archive"
+                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Smart Sanyo Control v${BuildConfig.VERSION_NAME}")
+                        putExtra(android.content.Intent.EXTRA_TEXT,
+                            "Smart Sanyo Control v${BuildConfig.VERSION_NAME}\nAplikasi kontrol pompa air cerdas via MQTT & IoT")
+                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    mainHandler.post {
+                        startActivity(android.content.Intent.createChooser(intent, "Bagikan Aplikasi"))
+                    }
+                } catch (e: Exception) { Log.e("ShareApp", "Error: ${e.message}") }
+            }.start()
+        }
+
+        @JavascriptInterface
+        fun getStoredNotifications(): String = try {
+            getSharedPreferences(SanyoService.PREF_NOTIF_HISTORY, MODE_PRIVATE)
+                .getString(SanyoService.NOTIF_HISTORY_KEY, "[]") ?: "[]"
+        } catch (_: Exception) { "[]" }
+
+        @JavascriptInterface
         fun savePrayerTimes(json: String) {
             // Simpan ke SharedPreferences agar SanyoService bisa baca waktu salat saat background
             try {
@@ -230,6 +270,7 @@ class MainActivity : ComponentActivity() {
                 val obj = org.json.JSONObject(json)
                 obj.keys().forEach { key -> prefs.putString(key, obj.getString(key)) }
                 prefs.apply()
+                mqttBridge?.sendPrayerTimes(json) // teruskan ke ESP untuk tampil di LCD
             } catch (_: Exception) {}
         }
 
@@ -238,6 +279,15 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun isConnected(): Boolean = mqttBridge != null
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val type = intent.getStringExtra("notif_type") ?: return
+        val safe = type.replace("'", "\\'")
+        mainHandler.post {
+            webViewRef?.evaluateJavascript("if(window.openNotifPanel)window.openNotifPanel('$safe')", null)
+        }
     }
 
     override fun onDestroy() {

@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Sel 01/07/2026 23:30 — v2.5.1 (firmware) / v3.0.0 (app Android)
+> Update terakhir: Rab 01/07/2026 12:51 — v2.5.1 (firmware) / v3.2.0 (app Android) / v1.0.0 (web)
 
 ---
 
@@ -279,6 +279,12 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.2.0 — App Android + Web — Rab 01/07/2026 12:51
+- **Baru (App)**: Suara azan diputar otomatis saat waktu solat via `MediaPlayer` (stream ALARM, tembus mode senyap) — jalan walau app terbuka maupun tertutup lewat `SanyoService`. Taruh file di `app/src/main/res/raw/adzan.mp3` (lihat `res/raw/readme.txt`). Bila file belum ada, otomatis dilewati (buzzer ESP + notif tetap jalan). *Catatan: "mati total"/HP mati fisik tidak bisa diputar — perlu perangkat menyala.*
+- **Baru (Web)**: Versi website standalone di folder `web/` — UI identik dengan APK, MQTT via WebSocket (`wss://broker.emqx.io:8084`). Digenerate dari sumber app (`web/build-web.ps1`), tanpa duplikasi UI. Lihat `web/README.md`.
+- File berubah: `SanyoService.kt` (azan), `app/build.gradle.kts` (v3.2.0/vc15), `assets/index.html` (stempel versi), + baru: `web/*`, `res/raw/readme.txt`.
+- **LCD I2C**: menunggu file firmware `main.cpp` (tidak ada di repo ini — project PlatformIO terpisah).
 
 ### v2.5.1 — Firmware — Sel 01/07/2026
 - **Fix krusial**: blind zone tidak lagi menyebabkan relay ON saat tangki penuh setelah reboot
