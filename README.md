@@ -2,7 +2,9 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 12:51 — v2.5.1 (firmware) / v3.2.0 (app Android) / v1.0.0 (web)
+> Update terakhir: Rab 01/07/2026 12:51 — v2.6.0 (firmware) / v3.2.1 (app Android) / v1.0.1 (web)
+>
+> 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
 ---
 
@@ -68,7 +70,8 @@ Tidak ada server cloud buatan sendiri. Semua komunikasi real-time via MQTT publi
 - **Penjadwalan** ON/OFF mingguan — terima jadwal JSON dari app via MQTT, eksekusi sesuai waktu
 - Dual WiFi failover: otomatis pindah ke jaringan cadangan
 - Mode offline: tombol fisik tetap berfungsi tanpa WiFi
-- LCD 16x2: level air, status relay, status WiFi, kode blind zone
+- **LCD 16x2 multi-layar bergilir** (v2.6.0): air+pompa (rata tengah) → SSID+dBm+kualitas → hari/tanggal+jam → jadwal solat. Teks >16 kolom otomatis berjalan (scroll)
+- **Layar prioritas azan**: saat waktu solat tiba, LCD tampil `Waktu <Solat>` ~3 menit lalu kembali bergilir
 - Buzzer: 1 beep = relay berubah, 3 beep = startup
 
 ### Aplikasi Android
@@ -111,6 +114,13 @@ Tidak ada server cloud buatan sendiri. Semua komunikasi real-time via MQTT publi
   {"onTime":"06:00","offTime":"07:00","days":["Senin","Selasa","Rabu","Kamis","Jumat"]},
   {"onTime":"18:00","offTime":"19:00","days":["Sabtu","Minggu"]}
 ]
+```
+
+Perintah string lain (bukan JSON, langsung ke topic control):
+
+```
+BUZZER_5                                   # bunyikan buzzer ESP 5× (azan)
+PRAYER_{"Subuh":"04:40","Dzuhur":"11:55"}  # jadwal solat → tampil di LCD ESP (v2.6.0)
 ```
 
 ### Alur Penjadwalan
@@ -279,6 +289,15 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.2.1 (app) / v2.6.0 (firmware) / v1.0.1 (web) — Rab 01/07/2026 12:51
+- **Baru (Firmware v2.6.0)**: LCD 16x2 **multi-layar bergilir** — (0) air+pompa rata tengah, (1) SSID+dBm+kualitas sinyal, (2) hari/tanggal + jam:menit:detik, (3) jadwal solat tersimpan (bergilir per solat). Baris >16 kolom **berjalan otomatis** (scroll wrap).
+- **Baru (Firmware)**: **Layar prioritas** saat waktu solat tiba → tampil `Waktu <Solat>` selama ~3 menit (`PRAYER_PRIORITY_MS`, kalibrasi bila azan lebih panjang), lalu kembali bergilir.
+- **Fix (Firmware)**: glitch karakter `A` setelah ON/OFF (mis. `ON A`, `OFFA`) — indikator auto-mode & `W1/W2` di layar utama dihapus (SSID pindah ke layar WiFi).
+- **Baru (Firmware)**: MQTT command `PRAYER_{json}` — terima jadwal solat dari app untuk ditampilkan di LCD.
+- **Baru (App v3.2.1)**: `savePrayerTimes()` kini juga mengirim jadwal solat ke ESP via `PRAYER_` (`MqttBridge.sendPrayerTimes`).
+- **Baru (Web v1.0.1)**: shim web ikut publish `PRAYER_`; web di-deploy ke **GitHub Pages** (branch `gh-pages`) → https://rynnn10.github.io/Smart-Sanyo-Control/
+- File berubah: `src/main.cpp` (firmware, folder PlatformIO terpisah), `MqttBridge.kt`, `MainActivity.kt`, `app/build.gradle.kts` (v3.2.1/vc16), `web/mqtt-web.js`, `README.md`. Self-check: `lcd_format_check.js`, `web/test-mqtt-web.js` → OK.
 
 ### v3.2.0 — App Android + Web — Rab 01/07/2026 12:51
 - **Baru (App)**: Suara azan diputar otomatis saat waktu solat via `MediaPlayer` (stream ALARM, tembus mode senyap) — jalan walau app terbuka maupun tertutup lewat `SanyoService`. Taruh file di `app/src/main/res/raw/adzan.mp3` (lihat `res/raw/readme.txt`). Bila file belum ada, otomatis dilewati (buzzer ESP + notif tetap jalan). *Catatan: "mati total"/HP mati fisik tidak bisa diputar — perlu perangkat menyala.*
