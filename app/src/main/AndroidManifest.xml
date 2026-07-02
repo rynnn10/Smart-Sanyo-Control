@@ -30,6 +30,8 @@
 
         <!-- v3.4.0: alarm exact waktu solat + restart setelah boot (azan tahan app ditutup) -->
         <receiver android:name=".AzanAlarmReceiver" android:exported="false" />
+        <!-- v3.6.0: tombol Batal di notif air (override relay dari bilah notifikasi) -->
+        <receiver android:name=".RelayCancelReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

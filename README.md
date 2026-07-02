@@ -2,7 +2,7 @@
 
 Sistem IoT monitoring dan kontrol otomatis pompa air menggunakan **WeMos D1 Mini (ESP8266)** dan **Aplikasi Android**, terhubung via **MQTT**.
 
-> Update terakhir: Rab 01/07/2026 — v2.8.1 (firmware) / v3.5.0 (app Android) / v1.2.0 (web)
+> Update terakhir: Rab 01/07/2026 — v2.8.1 (firmware) / v3.6.0 (app Android) / v1.2.0 (web)
 >
 > 🌐 Web live: **https://rynnn10.github.io/Smart-Sanyo-Control/** (branch `gh-pages`)
 
@@ -232,6 +232,59 @@ PRAYER_{"Subuh":"04:40","Dzuhur":"11:55"}  # jadwal solat → tampil di LCD ESP 
 
 ---
 
+## Teknik: Tombol Aksi di Notifikasi (bisa ditiru project lain)
+
+Fitur **tombol "Batal" di bilah notifikasi** (untuk override relay tanpa membuka aplikasi) memakai fitur **native Android** — bukan library pihak ketiga, bukan firmware ESP. Ringkasnya: notifikasi Android boleh punya *action button*; tombolnya memicu `PendingIntent` → `BroadcastReceiver` → `Service` → publish MQTT. Semua jalan walau app tertutup.
+
+**Bahasa/stack:** Kotlin + `androidx.core` (`NotificationCompat`) + Eclipse Paho MQTT. Tanpa dependency tambahan.
+
+**Kenapa perlu override "kebalikan":** ESP menjalankan auto ON/OFF sendiri berdasarkan sensor. Saat notif muncul, ESP sudah eksekusi. Maka "Batal" = kirim perintah kebalikan **+ matikan batas otomatis arah itu** (kalau tidak, ESP auto-trigger lagi ~2 dtk kemudian).
+
+**Penerapan (4 potong kode):**
+
+1. **Tambah action ke notifikasi** — `SanyoService.notify()`:
+```kotlin
+val ci = Intent(this, RelayCancelReceiver::class.java).apply {
+    action = ACTION_RELAY_CANCEL
+    putExtra(EXTRA_CANCEL_TYPE, type)          // "water_low" | "water_high"
+}
+val cpi = PendingIntent.getBroadcast(this, reqCode, ci,
+    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Batal", cpi)
+```
+
+2. **Receiver** (jalan walau app mati) — `RelayCancelReceiver`:
+```kotlin
+class RelayCancelReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val svc = Intent(context, SanyoService::class.java).apply {
+            action = SanyoService.ACTION_RELAY_CANCEL
+            putExtra(SanyoService.EXTRA_CANCEL_TYPE, intent.getStringExtra(SanyoService.EXTRA_CANCEL_TYPE))
+        }
+        ContextCompat.startForegroundService(context, svc) // FGS boleh di-start dari action notif
+    }
+}
+```
+
+3. **Service eksekusi** — `SanyoService.onStartCommand`:
+```kotlin
+"water_low"  -> publishOverride("OFF", "OFFENABLED_") // relay OFF + matikan Auto-ON
+"water_high" -> publishOverride("ON",  "AUTO_OFF")    // relay ON  + matikan Auto-OFF
+// publishOverride: tunggu MQTT connect ≤5s lalu publish QoS 1 (jalur kontrol penting)
+```
+
+4. **Manifest** — daftarkan receiver:
+```xml
+<receiver android:name=".RelayCancelReceiver" android:exported="false" />
+```
+
+**Catatan untuk peniru:**
+- Notif yang punya action **tidak boleh** dari channel yang di-`setAutoCancel` sebelum aksi selesai — di sini notif diganti (ID sama) jadi notif konfirmasi "Dibatalkan ✓" setelah aksi.
+- Android 12+: mulai foreground service dari action notif itu diizinkan (bukan background start biasa).
+- Web tidak bisa meniru action button notif sistem — ini khusus APK. Untuk web, override relay dilakukan dari dalam halaman.
+
+---
+
 ## Setup Firmware ESP8266 (PlatformIO)
 
 ### Prasyarat
@@ -373,6 +426,59 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 
 ---
 
+## Push & Deploy ke GitHub
+
+Repo: `https://github.com/rynnn10/Smart-Sanyo-Control.git` — **2 branch**:
+- **`main`** → seluruh kode project (app Android + folder `web/`).
+- **`gh-pages`** → **isi folder `web/` saja di root**, dilayani GitHub Pages → **https://rynnn10.github.io/Smart-Sanyo-Control/**
+
+> Firmware ESP (`Smart-Sanyo/`) ada di project PlatformIO **terpisah**, tidak ikut repo ini — upload lewat `pio run -t upload`, bukan git.
+
+### 1. Push kode ke `main` (rutin tiap ada perubahan)
+
+```bash
+git add <file-yang-diubah>          # jangan `git add .` — hindari file sampah/kredensial
+git commit -m "feat: ringkas perubahan"
+git push origin main
+```
+
+> `.env`, `*.jks`, `debug.keystore` sudah di-`.gitignore` — jangan pernah commit kredensial ke repo publik.
+
+### 2. Deploy versi web ke GitHub Pages (kalau UI/`web/` berubah)
+
+`web/index.html` di-*generate* dari sumber app, jadi **regenerate dulu**, baru split ke `gh-pages`:
+
+```bash
+# a) regenerate web/ dari app/src/main/assets (index.html + config.js + favicon.png)
+powershell -ExecutionPolicy Bypass -File web\build-web.ps1
+
+# b) commit hasilnya ke main
+git add web/ && git commit -m "chore: regenerate web"
+git push origin main
+
+# c) dorong ISI web/ jadi root branch gh-pages
+git branch -D gh-pages 2>/dev/null            # hapus branch lokal lama (kalau ada)
+git subtree split --prefix web -b gh-pages    # buat branch gh-pages = isi web/ di root
+git push -f origin gh-pages                    # force push (branch ini selalu di-regenerate)
+git switch main                                # kembali ke main
+```
+
+> Kunci deploy = `git subtree split --prefix web` — itu yang mengubah `web/` jadi **root** branch `gh-pages` (Pages hanya bisa melayani root atau `/docs`, bukan subfolder sembarang).
+
+### 3. Aktifkan GitHub Pages (sekali saja)
+
+Settings → **Pages** → *Source*: **Deploy from a branch** → Branch **`gh-pages`** / **`/ (root)`** → Save. Live ~1 menit kemudian. Ganti kode → cukup ulangi langkah 2 (Pages auto-update tiap push `gh-pages`).
+
+### Ringkas (satu tempel, untuk update web sekaligus kode)
+
+```bash
+powershell -ExecutionPolicy Bypass -File web\build-web.ps1
+git add -A && git commit -m "feat: <perubahan>" && git push origin main
+git branch -D gh-pages 2>/dev/null; git subtree split --prefix web -b gh-pages && git push -f origin gh-pages && git switch main
+```
+
+---
+
 ## Troubleshooting
 
 | Masalah | Solusi |
@@ -389,6 +495,12 @@ Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
 ---
 
 ## Changelog
+
+### v3.6.0 (app Android) — Rab 01/07/2026
+- **Baru**: tombol **"Batal"** di bilah notifikasi air kritis/penuh — override relay ke kebalikannya tanpa membuka app. "Air kritis, pompa ON otomatis" → Batal = pompa OFF; "air hampir penuh, pompa OFF otomatis" → Batal = pompa ON. Default (tak ditekan) = auto tetap jalan.
+- Karena ESP menjalankan auto sendiri, "Batal" juga **mematikan batas otomatis arah itu** (app-only) agar tidak di-trigger ulang; aktifkan lagi di popup Auto Mode bila perlu.
+- Teknik notification-action-button didokumentasikan di bagian *Teknik: Tombol Aksi di Notifikasi* agar bisa ditiru project lain.
+- File berubah: `SanyoService.kt` (action + handler), `AzanReceivers.kt` (`RelayCancelReceiver`), `AndroidManifest.xml`, `app/build.gradle.kts` (v3.6.0/vc20), `assets/index.html` (stempel versi).
 
 ### v2.8.1 (firmware) — Rab 01/07/2026
 - **Kapasitas jadwal 5 → 20** (`MAX_SCHEDULES`). Buffer parse JSON `1024 → 8192` (20 jadwal ≈ 5 KB di ArduinoJson) + `MQTT_MAX_PACKET_SIZE 2048 → 3072` (payload 20 jadwal ≈ 1,55 KB). RAM aman — 20 jadwal ≈ 400 byte, heap ESP8266 ~40 KB bebas.

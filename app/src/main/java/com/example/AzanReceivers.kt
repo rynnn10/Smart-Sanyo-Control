@@ -76,3 +76,14 @@ class BootReceiver : BroadcastReceiver() {
         ContextCompat.startForegroundService(context, Intent(context, SanyoService::class.java))
     }
 }
+
+// v3.6.0: tombol "Batal" di notif air → teruskan ke service utk override relay via MQTT.
+class RelayCancelReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val svc = Intent(context, SanyoService::class.java).apply {
+            action = SanyoService.ACTION_RELAY_CANCEL
+            putExtra(SanyoService.EXTRA_CANCEL_TYPE, intent.getStringExtra(SanyoService.EXTRA_CANCEL_TYPE))
+        }
+        ContextCompat.startForegroundService(context, svc)
+    }
+}

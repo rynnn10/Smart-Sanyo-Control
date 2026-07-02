@@ -8,6 +8,8 @@ package com.example
 //   sumber bersama, ganti deteksi level air lokal (debounce) yg dulu bisa beda antar device
 // v3.4.0: azan tahan app ditutup total — AlarmManager exact per waktu solat (AzanScheduler)
 //   + BootReceiver restart setelah HP nyala; volume azan pakai stream MEDIA (bisa diatur tombol)
+// v3.6.0: tombol "Batal" di notif air kritis/penuh → override relay ke kebalikannya + matikan
+//   batas otomatis arah itu (app-only), atur relay dari bilah notifikasi tanpa buka app
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -39,6 +41,8 @@ class SanyoService : Service() {
         const val NOTIF_HISTORY_KEY  = "notifs_json"
         const val ACTION_PLAY_AZAN   = "com.example.PLAY_AZAN"
         const val EXTRA_PRAYER_NAME  = "prayer_name"
+        const val ACTION_RELAY_CANCEL = "com.example.RELAY_CANCEL" // tombol "Batal" di notif air
+        const val EXTRA_CANCEL_TYPE   = "cancel_type"              // "water_low" | "water_high"
         private const val TAG             = "SanyoService"
         private const val BROKER          = "tcp://broker.emqx.io:1883"
         private const val TOPIC_STATUS    = "smartsanyo/riyan123/status"
@@ -82,9 +86,31 @@ class SanyoService : Service() {
             val name = intent.getStringExtra(EXTRA_PRAYER_NAME) ?: "Solat"
             firePrayer(name)
             AzanScheduler.scheduleAll(this) // jadwalkan ulang utk besok
+        } else if (intent?.action == ACTION_RELAY_CANCEL) {
+            handleRelayCancel(intent.getStringExtra(EXTRA_CANCEL_TYPE) ?: "")
         }
         return START_STICKY
     }
+
+    // Tombol "Batal" di notif air → override relay ke kebalikannya + matikan batas otomatis
+    // arah itu (app-only) supaya ESP tidak auto-trigger ulang. Aktifkan lagi di app bila perlu.
+    private fun handleRelayCancel(type: String) {
+        when (type) {
+            "water_low"  -> { publishOverride("OFF", "OFFENABLED_")
+                notify(NOTIF_WATER, "Dibatalkan ✓ — Pompa OFF", "Batas hidup otomatis dimatikan. Aktifkan lagi di app bila perlu.", "info") }
+            "water_high" -> { publishOverride("ON", "AUTO_OFF")
+                notify(NOTIF_WATER, "Dibatalkan ✓ — Pompa ON", "Batas mati otomatis dimatikan. Aktifkan lagi di app bila perlu.", "info") }
+        }
+    }
+
+    // Kirim perintah kontrol (QoS 1 — jalur kontrol penting) setelah MQTT siap (tunggu ≤5s).
+    private fun publishOverride(vararg payloads: String) = Thread {
+        var tries = 0
+        while (mqttClient?.isConnected != true && tries++ < 25) Thread.sleep(200)
+        payloads.forEach { p ->
+            try { mqttClient?.publish(TOPIC_CONTROL, MqttMessage(p.toByteArray()).apply { qos = 1 }) } catch (_: Exception) {}
+        }
+    }.start()
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
@@ -267,11 +293,25 @@ class SanyoService : Service() {
             this, id, i,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val n = NotificationCompat.Builder(this, CHANNEL_ALERT)
+        val b = NotificationCompat.Builder(this, CHANNEL_ALERT)
             .setContentTitle(title).setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setAutoCancel(true).setContentIntent(pi).build()
-        getSystemService(NotificationManager::class.java).notify(id, n)
+            .setAutoCancel(true).setContentIntent(pi)
+        // v3.6.0: tombol "Batal" hanya utk notif auto air — override relay tanpa buka app.
+        if (type == "water_low" || type == "water_high") {
+            val label = if (type == "water_low") "Batal (pompa OFF)" else "Batal (pompa ON)"
+            val reqCode = if (type == "water_low") 5100 else 5101
+            val ci = Intent(this, RelayCancelReceiver::class.java).apply {
+                action = ACTION_RELAY_CANCEL
+                putExtra(EXTRA_CANCEL_TYPE, type)
+            }
+            var f = PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) f = f or PendingIntent.FLAG_IMMUTABLE
+            val cpi = PendingIntent.getBroadcast(this, reqCode, ci, f)
+            b.addAction(android.R.drawable.ic_menu_close_clear_cancel, label, cpi)
+        }
+        getSystemService(NotificationManager::class.java).notify(id, b.build())
     }
 
     private fun saveNotifHistory(title: String, text: String, type: String) {

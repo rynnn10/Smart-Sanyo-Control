@@ -21,8 +21,9 @@ android {
     // v3.3.0: sinkron jadwal solat + riwayat notifikasi lintas device via ESP (firmware v2.7.0)
     // v3.4.0: azan tahan app ditutup (AlarmManager exact + boot) + volume azan via tombol; firmware v2.8.0 tombol LCD
     // v3.5.0: popup Auto Mode dirapikan (2 kartu batas, master toggle dihapus), modal Info & Panduan, hapus notif via ceklis
-    versionCode = 19
-    versionName = "3.5.0"
+    // v3.6.0: tombol "Batal" di notif air kritis/penuh — override relay + matikan batas otomatis arah itu
+    versionCode = 20
+    versionName = "3.6.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
