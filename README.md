@@ -408,20 +408,64 @@ Miringkan HP ke kiri/kanan → permukaan air di dashboard akan ikut miring mengi
 ## Struktur Project
 
 ```
-Smart-Sanyo-Control/           ← Repo ini (Android app)
+Smart-Sanyo-Control/            ← Repo ini (app Android + web)
 ├── app/src/main/
-│   ├── assets/index.html      # Dashboard WebView (UI + MQTT JS)
+│   ├── assets/index.html       # UI dashboard (HTML/CSS/JS) — sumber tunggal, dipakai APK & web
+│   ├── assets/config.js        # Konstanta MQTT (broker, topic)
 │   ├── java/com/example/
-│   │   ├── MainActivity.kt    # WebView wrapper + Java-JS bridge
-│   │   └── MqttBridge.kt      # Paho MQTT client (Android)
+│   │   ├── MainActivity.kt     # Host WebView + jembatan JS↔native (MqttAndroid)
+│   │   ├── MqttBridge.kt       # Klien MQTT Paho (foreground, saat app dibuka)
+│   │   ├── SanyoService.kt     # ForegroundService: MQTT background, notifikasi, azan, alarm
+│   │   └── AzanReceivers.kt    # AlarmManager azan + BootReceiver + RelayCancelReceiver
 │   └── AndroidManifest.xml
-├── run.ps1                    # Script build + install ADB
+├── web/                        # Versi web (digenerate dari assets/) → branch gh-pages
+│   ├── index.html  mqtt-web.js  config.js  favicon.png  build-web.ps1
+├── run.ps1                     # Script build + install ADB
 └── README.md
 
-Smart-Sanyo/ (PlatformIO)      ← Project terpisah (firmware ESP8266)
-├── src/main.cpp               # Firmware utama v2.4.1
-├── include/config.h           # Kredensial WiFi + pin + MQTT config
-└── platformio.ini             # Board: d1_mini
+Smart-Sanyo/ (PlatformIO)       ← Project terpisah (firmware ESP8266)
+├── src/main.cpp                # Firmware utama (C++/Arduino)
+├── include/config.h            # Kredensial WiFi + pin + MQTT config
+└── platformio.ini              # Board: d1_mini
+```
+
+---
+
+## Bahasa Pemrograman & Struktur Kode
+
+Project ini gabungan **3 bahasa** di 3 lapisan, disatukan oleh **MQTT** (tanpa server sendiri):
+
+| Lapisan | Bahasa / Stack | Peran |
+|---------|----------------|-------|
+| **UI dashboard** | **HTML + CSS + JavaScript murni** (tanpa framework; Three.js hanya utk animasi latar) | Satu file `assets/index.html` jadi seluruh tampilan. Di APK ditampilkan lewat **WebView**; untuk web, file yang sama di-*generate* ke `web/`. |
+| **Shell Android** | **Kotlin** (Jetpack Compose tipis + WebView) | `MainActivity.kt` membungkus WebView & menyediakan jembatan `MqttAndroid`. `SanyoService.kt` = ForegroundService (MQTT background, notifikasi, azan, alarm). `MqttBridge.kt` = klien MQTT Paho. |
+| **Firmware** | **C++ (Arduino / PlatformIO)** | `main.cpp` di WeMos D1 Mini — baca sensor, kontrol relay, LCD, jadwal, siar status MQTT. |
+
+**Kenapa WebView + JS, bukan UI Kotlin native?** Satu file HTML dipakai ulang **persis** untuk APK *dan* website — nol duplikasi UI. Kotlin hanya menangani hal yang JS tak bisa: notifikasi sistem, service background, audio azan, alarm. Jembatan `window.MqttAndroid` (native) di APK diganti shim `mqtt-web.js` (MQTT via WebSocket) di web — JS pemanggilnya sama.
+
+### Cara Kerja Fitur Notifikasi
+
+Notifikasi ada **2 jenis**, bahasa berbeda:
+
+**1. Notifikasi sistem (bilah status HP) — Kotlin, `SanyoService.kt`**
+- Dibangun dgn `NotificationCompat` di 2 channel: `sanyo_ongoing` (LOW, notif tetap "service aktif") & `sanyo_alert` (HIGH + getar, utk alert).
+- **Pemicu air** (kritis/penuh): ESP menyiarkan `notifLog` di status MQTT → `SanyoService` parse → `notify()`. *Bukan* JS — biar tetap muncul walau app tertutup.
+- **Pemicu solat**: cek jam lokal + **AlarmManager exact** (`AzanReceivers.kt`) → `firePrayer()` → `notify()` + putar azan. Tahan app ditutup.
+- **Tombol aksi "Batal"** pada notif air → `PendingIntent` → `RelayCancelReceiver` → `SanyoService` → publish MQTT (detail di bagian *Teknik: Tombol Aksi di Notifikasi*).
+
+**2. Pusat notifikasi dalam-app (ikon lonceng) — JavaScript, `index.html`**
+- Panel riwayat + badge belum-dibaca + ceklis hapus. Ditulis JS murni.
+- Baca riwayat: APK → `MqttAndroid.getStoredNotifications()` (SharedPrefs `notif_history`); web → `localStorage.webNotifHistory`.
+- Hapus: `MqttAndroid.deleteNotifications(times)` (native tulis ulang SharedPrefs) / filter localStorage di web.
+
+**Sinkron lintas perangkat:** ESP = sumber bersama. Ia menyiarkan `notifLog` (±8 event terakhir) di status MQTT tiap 3 detik; setiap device (APK & web) membaca lalu **dedup via kunci `type_menit`**, jadi riwayat identik di semua perangkat tanpa akun/backend.
+
+```
+[ESP: sensor/relay/solat] --notifLog di status MQTT--> broker.emqx.io
+        │                                                  │
+        ▼ (Kotlin SanyoService)                            ▼ (JS index.html / mqtt-web.js)
+  notif SISTEM di bilah status                     pusat notif DALAM-APP (lonceng)
+  + tombol Batal → MQTT balik ke ESP               + ceklis hapus
 ```
 
 ---
